@@ -1,0 +1,536 @@
+import { useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { useAssetStore } from '../../src/stores/assetStore';
+import { useAuthStore } from '../../src/stores/authStore';
+import { usePriceStore } from '../../src/stores/priceStore';
+import { formatKrw, formatSats } from '../../src/utils/formatters';
+
+type AssetType = 'fiat' | 'bitcoin';
+type WalletType = 'onchain' | 'lightning';
+
+export default function AddAssetScreen() {
+  const [assetType, setAssetType] = useState<AssetType>('fiat');
+  const [name, setName] = useState('');
+  const [balance, setBalance] = useState('');
+  const [isNegativeBalance, setIsNegativeBalance] = useState(false); // 마이너스 잔액 여부
+  const [walletType, setWalletType] = useState<WalletType>('onchain');
+  // 마이너스통장 관련
+  const [isOverdraft, setIsOverdraft] = useState(false);
+  const [creditLimit, setCreditLimit] = useState('');
+  const [interestRate, setInterestRate] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { addFiatAsset, addBitcoinAsset } = useAssetStore();
+  const { encryptionKey } = useAuthStore();
+  const { btcKrw } = usePriceStore();
+
+  const balanceNumber = parseInt(balance.replace(/[^0-9]/g, '')) || 0;
+  const actualBalance = isNegativeBalance ? -balanceNumber : balanceNumber;
+  const creditLimitNumber = parseInt(creditLimit.replace(/[^0-9]/g, '')) || 0;
+  const interestRateNumber = parseFloat(interestRate.replace(/[^0-9.]/g, '')) || 0;
+
+  // 비트코인 원화 환산
+  const btcKrwValue = assetType === 'bitcoin' && btcKrw
+    ? balanceNumber * (btcKrw / 100_000_000)
+    : 0;
+
+  const handleBalanceChange = (text: string) => {
+    const numbers = text.replace(/[^0-9]/g, '');
+    if (numbers) {
+      setBalance(parseInt(numbers).toLocaleString());
+    } else {
+      setBalance('');
+    }
+  };
+
+  const handleCreditLimitChange = (text: string) => {
+    const numbers = text.replace(/[^0-9]/g, '');
+    if (numbers) {
+      setCreditLimit(parseInt(numbers).toLocaleString());
+    } else {
+      setCreditLimit('');
+    }
+  };
+
+  const handleInterestRateChange = (text: string) => {
+    // 숫자와 소수점만 허용
+    const cleaned = text.replace(/[^0-9.]/g, '');
+    // 소수점이 두 개 이상이면 첫 번째만 유지
+    const parts = cleaned.split('.');
+    const formatted = parts.length > 2 ? parts[0] + '.' + parts.slice(1).join('') : cleaned;
+    setInterestRate(formatted);
+  };
+
+  const handleSave = async () => {
+    if (!encryptionKey) {
+      Alert.alert('오류', '인증이 필요합니다.');
+      return;
+    }
+
+    if (!name.trim()) {
+      Alert.alert('오류', '자산명을 입력해주세요.');
+      return;
+    }
+
+    // 마이너스통장 유효성 검사
+    if (isOverdraft) {
+      if (creditLimitNumber <= 0) {
+        Alert.alert('오류', '마이너스통장 한도를 입력해주세요.');
+        return;
+      }
+      if (interestRateNumber <= 0 || interestRateNumber > 30) {
+        Alert.alert('오류', '연이자율을 올바르게 입력해주세요. (0.1~30%)');
+        return;
+      }
+      // 마이너스 잔액이 한도를 초과하는지 확인
+      if (isNegativeBalance && balanceNumber > creditLimitNumber) {
+        Alert.alert('오류', '마이너스 잔액이 한도를 초과할 수 없습니다.');
+        return;
+      }
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      if (assetType === 'fiat') {
+        await addFiatAsset(
+          {
+            name: name.trim(),
+            balance: actualBalance,
+            ...(isOverdraft ? {
+              isOverdraft: true,
+              creditLimit: creditLimitNumber,
+              interestRate: interestRateNumber,
+            } : {}),
+          },
+          encryptionKey
+        );
+      } else {
+        await addBitcoinAsset(
+          {
+            name: name.trim(),
+            balance: balanceNumber,
+            walletType,
+          },
+          encryptionKey
+        );
+      }
+
+      router.back();
+    } catch (error) {
+      console.error('자산 추가 실패:', error);
+      Alert.alert('오류', '자산 추가에 실패했습니다.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+      >
+        {/* 헤더 */}
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: 20,
+            borderBottomWidth: 1,
+            borderBottomColor: '#E5E7EB',
+          }}
+        >
+          <TouchableOpacity onPress={() => router.back()}>
+            <Text style={{ fontSize: 16, color: '#666666' }}>취소</Text>
+          </TouchableOpacity>
+          <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1A1A1A' }}>자산 추가</Text>
+          <TouchableOpacity onPress={handleSave} disabled={isSubmitting}>
+            <Text
+              style={{
+                fontSize: 16,
+                fontWeight: '600',
+                color: isSubmitting ? '#9CA3AF' : '#22C55E',
+              }}
+            >
+              저장
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled">
+          <View style={{ padding: 20 }}>
+            {/* 자산 유형 선택 */}
+            <View style={{ marginBottom: 24 }}>
+              <Text style={{ fontSize: 14, color: '#666666', marginBottom: 12 }}>자산 유형</Text>
+              <View style={{ flexDirection: 'row', gap: 12 }}>
+                <TouchableOpacity
+                  style={{
+                    flex: 1,
+                    padding: 16,
+                    borderRadius: 12,
+                    backgroundColor: assetType === 'fiat' ? '#22C55E' : '#F3F4F6',
+                    alignItems: 'center',
+                  }}
+                  onPress={() => setAssetType('fiat')}
+                >
+                  <Text style={{ fontSize: 24, marginBottom: 4 }}>🏦</Text>
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontWeight: '600',
+                      color: assetType === 'fiat' ? '#FFFFFF' : '#666666',
+                    }}
+                  >
+                    법정화폐
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: 11,
+                      color: assetType === 'fiat' ? 'rgba(255,255,255,0.8)' : '#9CA3AF',
+                    }}
+                  >
+                    은행, 증권 등
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={{
+                    flex: 1,
+                    padding: 16,
+                    borderRadius: 12,
+                    backgroundColor: assetType === 'bitcoin' ? '#F7931A' : '#F3F4F6',
+                    alignItems: 'center',
+                  }}
+                  onPress={() => setAssetType('bitcoin')}
+                >
+                  <Text style={{ fontSize: 24, marginBottom: 4 }}>₿</Text>
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontWeight: '600',
+                      color: assetType === 'bitcoin' ? '#FFFFFF' : '#666666',
+                    }}
+                  >
+                    비트코인
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: 11,
+                      color: assetType === 'bitcoin' ? 'rgba(255,255,255,0.8)' : '#9CA3AF',
+                    }}
+                  >
+                    sats 단위
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* 자산명 */}
+            <View style={{ marginBottom: 24 }}>
+              <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>
+                {assetType === 'fiat' ? '계좌/자산명' : '지갑명'} *
+              </Text>
+              <TextInput
+                style={{
+                  backgroundColor: '#F9FAFB',
+                  borderRadius: 8,
+                  padding: 16,
+                  fontSize: 16,
+                  color: '#1A1A1A',
+                }}
+                placeholder={assetType === 'fiat' ? '예: KB국민 급여통장' : '예: 콜드월렛'}
+                value={name}
+                onChangeText={setName}
+              />
+            </View>
+
+            {/* 마이너스통장 토글 (법정화폐만) */}
+            {assetType === 'fiat' && (
+              <View style={{ marginBottom: 24 }}>
+                <TouchableOpacity
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    backgroundColor: isOverdraft ? '#FEF3C7' : '#F9FAFB',
+                    borderRadius: 12,
+                    padding: 16,
+                  }}
+                  onPress={() => {
+                    setIsOverdraft(!isOverdraft);
+                    if (!isOverdraft) {
+                      // 마이너스통장 켜면 마이너스 잔액 허용
+                    } else {
+                      // 마이너스통장 끄면 초기화
+                      setCreditLimit('');
+                      setInterestRate('');
+                      setIsNegativeBalance(false);
+                    }
+                  }}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Text style={{ fontSize: 20, marginRight: 12 }}>💳</Text>
+                    <View>
+                      <Text style={{ fontSize: 16, fontWeight: '600', color: '#1A1A1A' }}>
+                        마이너스통장
+                      </Text>
+                      <Text style={{ fontSize: 12, color: '#9CA3AF' }}>
+                        한도 내 마이너스 잔액 허용
+                      </Text>
+                    </View>
+                  </View>
+                  <View
+                    style={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: 12,
+                      backgroundColor: isOverdraft ? '#F7931A' : '#E5E7EB',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    {isOverdraft && <Ionicons name="checkmark" size={16} color="#FFFFFF" />}
+                  </View>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* 마이너스통장 설정 (한도, 이자율) */}
+            {assetType === 'fiat' && isOverdraft && (
+              <>
+                {/* 한도 */}
+                <View style={{ marginBottom: 24 }}>
+                  <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>
+                    마이너스 한도 (원) *
+                  </Text>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      backgroundColor: '#F9FAFB',
+                      borderRadius: 8,
+                      paddingHorizontal: 16,
+                    }}
+                  >
+                    <Text style={{ fontSize: 18, color: '#EF4444', marginRight: 4 }}>₩</Text>
+                    <TextInput
+                      style={{
+                        flex: 1,
+                        fontSize: 20,
+                        fontWeight: 'bold',
+                        paddingVertical: 16,
+                        color: '#1A1A1A',
+                      }}
+                      placeholder="10,000,000"
+                      keyboardType="number-pad"
+                      value={creditLimit}
+                      onChangeText={handleCreditLimitChange}
+                    />
+                  </View>
+                  <Text style={{ fontSize: 12, color: '#9CA3AF', marginTop: 4 }}>
+                    예: 1,000만원 한도라면 10,000,000 입력
+                  </Text>
+                </View>
+
+                {/* 연이자율 */}
+                <View style={{ marginBottom: 24 }}>
+                  <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>
+                    연이자율 (%) *
+                  </Text>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      backgroundColor: '#F9FAFB',
+                      borderRadius: 8,
+                      paddingHorizontal: 16,
+                    }}
+                  >
+                    <TextInput
+                      style={{
+                        flex: 1,
+                        fontSize: 20,
+                        fontWeight: 'bold',
+                        paddingVertical: 16,
+                        color: '#1A1A1A',
+                      }}
+                      placeholder="10.5"
+                      keyboardType="decimal-pad"
+                      value={interestRate}
+                      onChangeText={handleInterestRateChange}
+                    />
+                    <Text style={{ fontSize: 18, color: '#EF4444' }}>%</Text>
+                  </View>
+                  <Text style={{ fontSize: 12, color: '#9CA3AF', marginTop: 4 }}>
+                    연 이자율 입력 (예: 연 10.5%라면 10.5 입력)
+                  </Text>
+                </View>
+              </>
+            )}
+
+            {/* 비트코인 지갑 유형 */}
+            {assetType === 'bitcoin' && (
+              <View style={{ marginBottom: 24 }}>
+                <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>지갑 유형</Text>
+                <View style={{ flexDirection: 'row', gap: 12 }}>
+                  <TouchableOpacity
+                    style={{
+                      flex: 1,
+                      padding: 12,
+                      borderRadius: 8,
+                      backgroundColor: walletType === 'onchain' ? '#F7931A' : '#F3F4F6',
+                      alignItems: 'center',
+                    }}
+                    onPress={() => setWalletType('onchain')}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 14,
+                        fontWeight: '600',
+                        color: walletType === 'onchain' ? '#FFFFFF' : '#666666',
+                      }}
+                    >
+                      Onchain
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={{
+                      flex: 1,
+                      padding: 12,
+                      borderRadius: 8,
+                      backgroundColor: walletType === 'lightning' ? '#F7931A' : '#F3F4F6',
+                      alignItems: 'center',
+                    }}
+                    onPress={() => setWalletType('lightning')}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 14,
+                        fontWeight: '600',
+                        color: walletType === 'lightning' ? '#FFFFFF' : '#666666',
+                      }}
+                    >
+                      Lightning
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+
+            {/* 잔액 */}
+            <View style={{ marginBottom: 24 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <Text style={{ fontSize: 14, color: '#666666' }}>
+                  잔액 {assetType === 'bitcoin' ? '(sats)' : '(원)'}
+                </Text>
+                {/* 마이너스 잔액 토글 (마이너스통장인 경우만) */}
+                {assetType === 'fiat' && isOverdraft && (
+                  <TouchableOpacity
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      backgroundColor: isNegativeBalance ? '#FEE2E2' : '#F3F4F6',
+                      paddingHorizontal: 12,
+                      paddingVertical: 6,
+                      borderRadius: 16,
+                    }}
+                    onPress={() => setIsNegativeBalance(!isNegativeBalance)}
+                  >
+                    <Text style={{ fontSize: 12, color: isNegativeBalance ? '#EF4444' : '#666666', fontWeight: '600' }}>
+                      {isNegativeBalance ? '- 마이너스' : '+ 플러스'}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  backgroundColor: isNegativeBalance ? '#FEE2E2' : '#F9FAFB',
+                  borderRadius: 8,
+                  paddingHorizontal: 16,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 18,
+                    color: isNegativeBalance ? '#EF4444' : assetType === 'fiat' ? '#22C55E' : '#F7931A',
+                    marginRight: 4,
+                  }}
+                >
+                  {isNegativeBalance ? '-₩' : assetType === 'fiat' ? '₩' : '₿'}
+                </Text>
+                <TextInput
+                  style={{
+                    flex: 1,
+                    fontSize: 24,
+                    fontWeight: 'bold',
+                    paddingVertical: 16,
+                    color: isNegativeBalance ? '#EF4444' : '#1A1A1A',
+                  }}
+                  placeholder="0"
+                  keyboardType="number-pad"
+                  value={balance}
+                  onChangeText={handleBalanceChange}
+                />
+                {assetType === 'bitcoin' && (
+                  <Text style={{ fontSize: 14, color: '#F7931A' }}>sats</Text>
+                )}
+              </View>
+
+              {/* 원화 환산 (비트코인인 경우) */}
+              {assetType === 'bitcoin' && btcKrw && balanceNumber > 0 && (
+                <Text style={{ fontSize: 12, color: '#9CA3AF', marginTop: 8 }}>
+                  = {formatKrw(Math.round(btcKrwValue))} (현재 시세)
+                </Text>
+              )}
+
+              {/* 마이너스통장 가용 금액 표시 */}
+              {assetType === 'fiat' && isOverdraft && creditLimitNumber > 0 && (
+                <Text style={{ fontSize: 12, color: isNegativeBalance ? '#EF4444' : '#22C55E', marginTop: 8 }}>
+                  가용 한도: {formatKrw(creditLimitNumber - (isNegativeBalance ? balanceNumber : 0))}
+                </Text>
+              )}
+            </View>
+
+            {/* 안내 */}
+            <View
+              style={{
+                backgroundColor: '#F0F9FF',
+                borderRadius: 12,
+                padding: 16,
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                <Ionicons name="information-circle" size={20} color="#0284C7" />
+                <Text style={{ fontSize: 14, fontWeight: '600', color: '#0284C7', marginLeft: 8 }}>
+                  참고
+                </Text>
+              </View>
+              <Text style={{ fontSize: 13, color: '#0369A1', lineHeight: 20 }}>
+                {assetType === 'fiat'
+                  ? '잔액은 수동으로 업데이트해주세요. 자동 연동 기능은 추후 지원 예정입니다.'
+                  : '비트코인 잔액은 sats 단위로 입력해주세요. 1 BTC = 100,000,000 sats'}
+              </Text>
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+}

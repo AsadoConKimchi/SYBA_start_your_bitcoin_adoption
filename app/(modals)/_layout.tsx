@@ -1,0 +1,31 @@
+import { Stack } from 'expo-router';
+
+export default function ModalsLayout() {
+  return (
+    <Stack screenOptions={{ headerShown: false, presentation: 'modal' }}>
+      {/* 기록 관련 */}
+      <Stack.Screen name="add-expense" />
+      <Stack.Screen name="add-income" />
+      <Stack.Screen name="edit-record" />
+
+      {/* 카드 관련 */}
+      <Stack.Screen name="add-card" />
+      <Stack.Screen name="card-list" />
+
+      {/* 부채 관련 */}
+      <Stack.Screen name="add-loan" />
+      <Stack.Screen name="add-installment" />
+      <Stack.Screen name="loan-detail" />
+      <Stack.Screen name="installment-detail" />
+
+      {/* 자산 관련 */}
+      <Stack.Screen name="add-asset" />
+      <Stack.Screen name="asset-detail" />
+
+      {/* 설정 관련 */}
+      <Stack.Screen name="change-password" />
+      <Stack.Screen name="subscription" />
+      <Stack.Screen name="payment" />
+    </Stack>
+  );
+}

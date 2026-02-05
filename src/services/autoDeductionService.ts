@@ -1,0 +1,281 @@
+/**
+ * 자동 자산 차감 서비스
+ * - 카드 결제일에 연결 계좌에서 자동 차감
+ * - 대출 상환일에 연결 계좌에서 자동 차감
+ */
+
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAssetStore } from '../stores/assetStore';
+import { useCardStore } from '../stores/cardStore';
+import { useDebtStore } from '../stores/debtStore';
+import { useLedgerStore } from '../stores/ledgerStore';
+import { useAuthStore } from '../stores/authStore';
+import { calculateAllCardsPayment } from '../utils/cardPaymentCalculator';
+import { Card } from '../types/card';
+import { Loan } from '../types/debt';
+
+const STORAGE_KEYS = {
+  LAST_CARD_DEDUCTION: 'lastCardDeduction', // { cardId: 'YYYY-MM' }
+  LAST_LOAN_DEDUCTION: 'lastLoanDeduction', // { loanId: 'YYYY-MM' }
+};
+
+/**
+ * 오늘 날짜 정보 가져오기
+ */
+function getTodayInfo() {
+  const today = new Date();
+  return {
+    year: today.getFullYear(),
+    month: today.getMonth() + 1,
+    day: today.getDate(),
+    yearMonth: `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`,
+  };
+}
+
+/**
+ * 카드 결제일 자동 차감 처리
+ */
+export async function processCardPayments(): Promise<{
+  processed: number;
+  skipped: number;
+  errors: string[];
+}> {
+  const result = { processed: 0, skipped: 0, errors: [] as string[] };
+
+  const encryptionKey = useAuthStore.getState().encryptionKey;
+  if (!encryptionKey) {
+    result.errors.push('인증 필요');
+    return result;
+  }
+
+  const { cards } = useCardStore.getState();
+  const { records } = useLedgerStore.getState();
+  const { installments } = useDebtStore.getState();
+  const { adjustAssetBalance } = useAssetStore.getState();
+
+  // 마지막 차감 기록 로드
+  const lastDeductionStr = await AsyncStorage.getItem(STORAGE_KEYS.LAST_CARD_DEDUCTION);
+  const lastDeduction: Record<string, string> = lastDeductionStr
+    ? JSON.parse(lastDeductionStr)
+    : {};
+
+  const today = getTodayInfo();
+
+  // 결제 계좌가 연결된 카드만 필터링
+  const linkedCards = cards.filter(
+    (card): card is Card & { linkedAssetId: string; paymentDay: number } =>
+      !!card.linkedAssetId && !!card.paymentDay
+  );
+
+  // 각 카드의 결제 예정액 계산
+  const cardPayments = calculateAllCardsPayment(cards, records, installments);
+
+  for (const card of linkedCards) {
+    try {
+      // 오늘이 결제일인지 확인
+      if (card.paymentDay !== today.day) {
+        continue;
+      }
+
+      // 이번 달 이미 처리했는지 확인
+      if (lastDeduction[card.id] === today.yearMonth) {
+        result.skipped++;
+        console.log(`[AutoDeduction] 카드 ${card.name}: 이번 달 이미 처리됨`);
+        continue;
+      }
+
+      // 결제 예정액 찾기
+      const payment = cardPayments.find((p) => p.cardId === card.id);
+      if (!payment || payment.totalPayment <= 0) {
+        console.log(`[AutoDeduction] 카드 ${card.name}: 결제 예정액 없음`);
+        lastDeduction[card.id] = today.yearMonth;
+        continue;
+      }
+
+      // 자산에서 차감
+      await adjustAssetBalance(
+        card.linkedAssetId,
+        -payment.totalPayment,
+        encryptionKey
+      );
+
+      // 처리 기록 저장
+      lastDeduction[card.id] = today.yearMonth;
+      result.processed++;
+
+      console.log(
+        `[AutoDeduction] 카드 ${card.name}: ${payment.totalPayment.toLocaleString()}원 차감 완료`
+      );
+    } catch (error) {
+      const errorMsg = `카드 ${card.name} 차감 실패: ${error}`;
+      result.errors.push(errorMsg);
+      console.error('[AutoDeduction]', errorMsg);
+    }
+  }
+
+  // 마지막 차감 기록 저장
+  await AsyncStorage.setItem(
+    STORAGE_KEYS.LAST_CARD_DEDUCTION,
+    JSON.stringify(lastDeduction)
+  );
+
+  return result;
+}
+
+/**
+ * 대출 상환일 자동 차감 처리
+ */
+export async function processLoanRepayments(): Promise<{
+  processed: number;
+  skipped: number;
+  errors: string[];
+}> {
+  const result = { processed: 0, skipped: 0, errors: [] as string[] };
+
+  const encryptionKey = useAuthStore.getState().encryptionKey;
+  if (!encryptionKey) {
+    result.errors.push('인증 필요');
+    return result;
+  }
+
+  const { loans, updateLoan } = useDebtStore.getState();
+  const { adjustAssetBalance } = useAssetStore.getState();
+
+  // 마지막 차감 기록 로드
+  const lastDeductionStr = await AsyncStorage.getItem(STORAGE_KEYS.LAST_LOAN_DEDUCTION);
+  const lastDeduction: Record<string, string> = lastDeductionStr
+    ? JSON.parse(lastDeductionStr)
+    : {};
+
+  const today = getTodayInfo();
+
+  // 연결 계좌가 있고 활성 상태인 대출만 필터링
+  const linkedLoans = loans.filter(
+    (loan): loan is Loan & { linkedAssetId: string } =>
+      !!loan.linkedAssetId && loan.status === 'active'
+  );
+
+  for (const loan of linkedLoans) {
+    try {
+      // 상환일 계산 (repaymentDay가 없으면 시작일 기준)
+      const repaymentDay = loan.repaymentDay ?? parseInt(loan.startDate.split('-')[2]);
+
+      // 오늘이 상환일인지 확인
+      if (repaymentDay !== today.day) {
+        continue;
+      }
+
+      // 이번 달 이미 처리했는지 확인
+      if (lastDeduction[loan.id] === today.yearMonth) {
+        result.skipped++;
+        console.log(`[AutoDeduction] 대출 ${loan.name}: 이번 달 이미 처리됨`);
+        continue;
+      }
+
+      // 이미 완납했는지 확인
+      if (loan.paidMonths >= loan.termMonths) {
+        console.log(`[AutoDeduction] 대출 ${loan.name}: 이미 완납됨`);
+        lastDeduction[loan.id] = today.yearMonth;
+        continue;
+      }
+
+      // 자산에서 차감
+      await adjustAssetBalance(
+        loan.linkedAssetId,
+        -loan.monthlyPayment,
+        encryptionKey
+      );
+
+      // 대출 상환 상태 업데이트
+      const newPaidMonths = loan.paidMonths + 1;
+      const isCompleted = newPaidMonths >= loan.termMonths;
+
+      // 잔여 원금 계산 (상환 방식에 따라 다름)
+      let newRemainingPrincipal = loan.remainingPrincipal;
+      if (loan.repaymentType === 'equalPrincipal') {
+        // 원금균등: 매월 동일 원금 상환
+        const monthlyPrincipal = loan.principal / loan.termMonths;
+        newRemainingPrincipal = Math.max(0, loan.remainingPrincipal - monthlyPrincipal);
+      } else if (loan.repaymentType === 'equalPrincipalAndInterest') {
+        // 원리금균등: 월상환금에서 이자 빼면 원금
+        const monthlyInterest = (loan.remainingPrincipal * loan.interestRate) / 100 / 12;
+        const monthlyPrincipal = loan.monthlyPayment - monthlyInterest;
+        newRemainingPrincipal = Math.max(0, loan.remainingPrincipal - monthlyPrincipal);
+      }
+      // 만기일시: 만기 전까지 원금 그대로
+      if (isCompleted && loan.repaymentType === 'bullet') {
+        newRemainingPrincipal = 0;
+      }
+
+      await updateLoan(
+        loan.id,
+        {
+          paidMonths: newPaidMonths,
+          remainingPrincipal: Math.round(newRemainingPrincipal),
+          status: isCompleted ? 'completed' : 'active',
+        },
+        encryptionKey
+      );
+
+      // 처리 기록 저장
+      lastDeduction[loan.id] = today.yearMonth;
+      result.processed++;
+
+      console.log(
+        `[AutoDeduction] 대출 ${loan.name}: ${loan.monthlyPayment.toLocaleString()}원 차감 완료 (${newPaidMonths}/${loan.termMonths}회차)`
+      );
+    } catch (error) {
+      const errorMsg = `대출 ${loan.name} 차감 실패: ${error}`;
+      result.errors.push(errorMsg);
+      console.error('[AutoDeduction]', errorMsg);
+    }
+  }
+
+  // 마지막 차감 기록 저장
+  await AsyncStorage.setItem(
+    STORAGE_KEYS.LAST_LOAN_DEDUCTION,
+    JSON.stringify(lastDeduction)
+  );
+
+  return result;
+}
+
+/**
+ * 모든 자동 차감 처리 (앱 시작 시 호출)
+ */
+export async function processAllAutoDeductions(): Promise<{
+  cards: { processed: number; skipped: number; errors: string[] };
+  loans: { processed: number; skipped: number; errors: string[] };
+}> {
+  console.log('[AutoDeduction] 자동 차감 처리 시작...');
+
+  const [cardResult, loanResult] = await Promise.all([
+    processCardPayments(),
+    processLoanRepayments(),
+  ]);
+
+  console.log('[AutoDeduction] 카드 결과:', cardResult);
+  console.log('[AutoDeduction] 대출 결과:', loanResult);
+
+  return { cards: cardResult, loans: loanResult };
+}
+
+/**
+ * 특정 카드/대출의 차감 기록 초기화 (테스트용)
+ */
+export async function resetDeductionRecord(
+  type: 'card' | 'loan',
+  id: string
+): Promise<void> {
+  const key =
+    type === 'card'
+      ? STORAGE_KEYS.LAST_CARD_DEDUCTION
+      : STORAGE_KEYS.LAST_LOAN_DEDUCTION;
+
+  const recordStr = await AsyncStorage.getItem(key);
+  if (recordStr) {
+    const record = JSON.parse(recordStr);
+    delete record[id];
+    await AsyncStorage.setItem(key, JSON.stringify(record));
+  }
+}

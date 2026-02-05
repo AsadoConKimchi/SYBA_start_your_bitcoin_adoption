@@ -1,0 +1,59 @@
+{
+  "expo": {
+    "name": "SYBA",
+    "slug": "byob",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "syba",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F7931A"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.byob.finance",
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "생체 인증으로 앱에 로그인합니다"
+      }
+    },
+    "android": {
+      "package": "com.byob.finance",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#F7931A"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-web-browser",
+      "expo-secure-store",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "생체 인증으로 앱에 로그인합니다"
+        }
+      ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "3ff16ccd-51d5-4acd-b11c-f3006753e837"
+      }
+    },
+    "owner": "asadoconkimchi"
+  }
+}
