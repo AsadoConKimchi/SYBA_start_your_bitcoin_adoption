@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import QRCode from 'react-native-qrcode-svg';
 import { useSubscriptionStore } from '../../src/stores/subscriptionStore';
 import { CONFIG } from '../../src/constants/config';
+import { getSubscriptionPriceSats } from '../../src/services/appConfigService';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { waitForPayment, PaymentStatus } from '../../src/services/blinkProxy';
@@ -45,6 +46,7 @@ export default function SubscriptionScreen() {
   const [copied, setCopied] = useState(false);
   const [invoiceCopied, setInvoiceCopied] = useState(false);
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [subscriptionPrice, setSubscriptionPrice] = useState(CONFIG.SUBSCRIPTION_PRICE_SATS);
 
   // 결제 모달 상태
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -70,6 +72,8 @@ export default function SubscriptionScreen() {
 
   useEffect(() => {
     initialize();
+    // 구독 가격 조회
+    getSubscriptionPriceSats().then(setSubscriptionPrice);
   }, []);
 
   // LNURL-auth 폴링
@@ -285,7 +289,7 @@ export default function SubscriptionScreen() {
             </View>
             <View style={{ alignItems: 'flex-end' }}>
               <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#F7931A' }}>
-                {CONFIG.SUBSCRIPTION_PRICE_SATS.toLocaleString()}
+                {subscriptionPrice.toLocaleString()}
               </Text>
               <Text style={{ fontSize: 11, color: '#666666' }}>sats / 월</Text>
             </View>
@@ -545,7 +549,7 @@ export default function SubscriptionScreen() {
             <View style={{ marginBottom: 20, alignItems: 'center' }}>
               <Text style={{ fontSize: 14, color: '#666666', marginBottom: 4 }}>결제 금액</Text>
               <Text style={{ fontSize: 28, fontWeight: 'bold', color: '#F7931A' }}>
-                {CONFIG.SUBSCRIPTION_PRICE_SATS.toLocaleString()} sats
+                {subscriptionPrice.toLocaleString()} sats
               </Text>
             </View>
 

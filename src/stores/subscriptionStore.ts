@@ -25,6 +25,7 @@ import {
 } from '../services/notifications';
 import { CONFIG } from '../constants/config';
 import { getSecure, saveSecure } from '../utils/encryption';
+import { getSubscriptionPriceSats } from '../services/appConfigService';
 
 // 사용자 타입 (LNURL-auth 기반)
 interface User {
@@ -243,12 +244,15 @@ export const useSubscriptionStore = create<SubscriptionState & SubscriptionActio
     if (!user) return null;
 
     try {
+      // Supabase에서 구독 가격 조회 (실패 시 기본값 사용)
+      const priceSats = await getSubscriptionPriceSats();
+
       const invoice = await createLightningInvoice(
-        CONFIG.SUBSCRIPTION_PRICE_SATS,
+        priceSats,
         `SYBA 프리미엄 구독`
       );
 
-      const payment = await createPayment(user.id, CONFIG.SUBSCRIPTION_PRICE_SATS);
+      const payment = await createPayment(user.id, priceSats);
       if (!payment) return null;
 
       await supabase

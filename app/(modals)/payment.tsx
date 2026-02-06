@@ -14,6 +14,7 @@ import QRCode from 'react-native-qrcode-svg';
 import { useSubscriptionStore } from '../../src/stores/subscriptionStore';
 import { CONFIG } from '../../src/constants/config';
 import { waitForPayment, PaymentStatus } from '../../src/services/blinkProxy';
+import { getSubscriptionPriceSats } from '../../src/services/appConfigService';
 
 export default function PaymentScreen() {
   const {
@@ -25,6 +26,12 @@ export default function PaymentScreen() {
   const [status, setStatus] = useState<'waiting' | 'checking' | 'success' | 'expired' | 'error'>('waiting');
   const [copied, setCopied] = useState(false);
   const isCancelledRef = useRef(false);
+  const [subscriptionPrice, setSubscriptionPrice] = useState(CONFIG.SUBSCRIPTION_PRICE_SATS);
+
+  // 구독 가격 조회
+  useEffect(() => {
+    getSubscriptionPriceSats().then(setSubscriptionPrice);
+  }, []);
 
   // 폴링으로 결제 상태 확인
   useEffect(() => {
@@ -133,7 +140,7 @@ export default function PaymentScreen() {
         <View style={{ marginBottom: 24, alignItems: 'center' }}>
           <Text style={{ fontSize: 14, color: '#666666', marginBottom: 4 }}>결제 금액</Text>
           <Text style={{ fontSize: 32, fontWeight: 'bold', color: '#F7931A' }}>
-            {CONFIG.SUBSCRIPTION_PRICE_SATS.toLocaleString()} sats
+            {subscriptionPrice.toLocaleString()} sats
           </Text>
         </View>
 
