@@ -24,6 +24,7 @@ import { useDebtStore } from '../../src/stores/debtStore';
 import { useSubscriptionStore } from '../../src/stores/subscriptionStore';
 import { createBackup, restoreBackup } from '../../src/utils/storage';
 import { CONFIG, AutoLockTime } from '../../src/constants/config';
+import { SUPABASE_CONFIG } from '../../src/constants/supabase';
 import {
   requestNotificationPermissions,
   cancelAllSubscriptionNotifications,
@@ -892,6 +893,29 @@ export default function SettingsScreen() {
             <Text style={{ fontSize: 11, color: '#9CA3AF', marginTop: 8, textAlign: 'center' }}>
               테스트 데이터는 "DUMMY_" 접두사로 구분되어 안전하게 삭제됩니다
             </Text>
+
+            {/* 환경 변수 상태 */}
+            <View
+              style={{
+                backgroundColor: '#F0F9FF',
+                borderRadius: 12,
+                padding: 16,
+                marginTop: 12,
+              }}
+            >
+              <Text style={{ fontSize: 12, fontWeight: '600', color: '#0369A1', marginBottom: 8 }}>
+                환경 변수 상태
+              </Text>
+              <Text style={{ fontSize: 11, color: '#0C4A6E', fontFamily: 'monospace' }}>
+                SUPABASE_URL: {SUPABASE_CONFIG.URL ? '✅ 설정됨' : '❌ 없음'}
+              </Text>
+              <Text style={{ fontSize: 11, color: '#0C4A6E', fontFamily: 'monospace' }}>
+                ANON_KEY: {SUPABASE_CONFIG.ANON_KEY ? '✅ 설정됨' : '❌ 없음'}
+              </Text>
+              <Text style={{ fontSize: 11, color: '#0C4A6E', fontFamily: 'monospace', marginTop: 4 }}>
+                URL: {SUPABASE_CONFIG.URL?.substring(0, 30) || 'N/A'}...
+              </Text>
+            </View>
           </View>
         )}
 

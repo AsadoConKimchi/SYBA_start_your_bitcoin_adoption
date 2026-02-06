@@ -116,6 +116,12 @@ export async function createLnurlAuthSession(): Promise<{
 
     if (error || !data) {
       console.error('LNURL-auth 세션 생성 실패:', error);
+      console.error('에러 상세:', JSON.stringify(error, null, 2));
+      // 개발/테스트용 상세 에러
+      if (__DEV__) {
+        console.error('Supabase URL:', SUPABASE_CONFIG.URL);
+        console.error('ANON_KEY 존재:', !!SUPABASE_CONFIG.ANON_KEY);
+      }
       return null;
     }
 
