@@ -121,15 +121,21 @@ export const useSubscriptionStore = create<SubscriptionState & SubscriptionActio
 
   // LNURL-auth 시작
   startLnurlAuth: async () => {
+    console.log('[SubscriptionStore] startLnurlAuth 시작');
     try {
       set({ authStatus: 'waiting' });
 
+      console.log('[SubscriptionStore] createLnurlAuthSession 호출');
       const session = await createLnurlAuthSession();
+      console.log('[SubscriptionStore] createLnurlAuthSession 결과:', session ? 'success' : 'null');
+
       if (!session) {
+        console.error('[SubscriptionStore] 세션 생성 실패');
         set({ authStatus: 'error' });
         return null;
       }
 
+      console.log('[SubscriptionStore] LNURL 생성 성공:', session.sessionId);
       set({
         authSessionId: session.sessionId,
         authLnurl: session.lnurl,
@@ -138,7 +144,7 @@ export const useSubscriptionStore = create<SubscriptionState & SubscriptionActio
 
       return session.lnurl;
     } catch (error) {
-      console.error('LNURL-auth 시작 실패:', error);
+      console.error('[SubscriptionStore] LNURL-auth 시작 실패:', error);
       set({ authStatus: 'error' });
       return null;
     }

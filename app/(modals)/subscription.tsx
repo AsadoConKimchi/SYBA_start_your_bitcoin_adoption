@@ -49,6 +49,7 @@ export default function SubscriptionScreen() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'waiting' | 'checking' | 'success' | 'expired' | 'error'>('waiting');
   const paymentCancelledRef = useRef(false);
+  const isProcessingRef = useRef(false);
 
   const handleCopyLnurl = () => {
     if (authLnurlEncoded) {
@@ -91,10 +92,16 @@ export default function SubscriptionScreen() {
   }, [authStatus, authLnurl]);
 
   const handleStartAuth = async () => {
+    console.log('[Subscription] handleStartAuth 시작');
     setIsStartingAuth(true);
     try {
-      await startLnurlAuth();
+      const result = await startLnurlAuth();
+      console.log('[Subscription] startLnurlAuth 결과:', result);
+      if (!result) {
+        Alert.alert('오류', 'LNURL 생성에 실패했습니다. 네트워크를 확인해주세요.');
+      }
     } catch (error) {
+      console.error('[Subscription] handleStartAuth 에러:', error);
       Alert.alert('오류', '로그인 시작에 실패했습니다.');
     } finally {
       setIsStartingAuth(false);
