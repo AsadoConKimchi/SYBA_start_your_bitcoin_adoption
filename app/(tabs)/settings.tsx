@@ -7,7 +7,6 @@ import {
   Switch,
   Alert,
   Modal,
-  Share,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -16,6 +15,7 @@ import Constants from 'expo-constants';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as DocumentPicker from 'expo-document-picker';
 import * as Clipboard from 'expo-clipboard';
+import * as Sharing from 'expo-sharing';
 import { useAuthStore } from '../../src/stores/authStore';
 import { useSettingsStore } from '../../src/stores/settingsStore';
 import { useCardStore } from '../../src/stores/cardStore';
@@ -140,11 +140,10 @@ export default function SettingsScreen() {
     try {
       const { path, filename } = await createBackup(encryptionKey);
 
-      // 공유 옵션 제공
-      await Share.share({
-        url: path,
-        title: filename,
-        message: `SYBA 백업 파일: ${filename}`,
+      // 파일 공유 (expo-sharing: Android/iOS 모두 실제 파일 공유)
+      await Sharing.shareAsync(path, {
+        mimeType: 'application/octet-stream',
+        dialogTitle: `SYBA 백업 파일: ${filename}`,
       });
 
       Alert.alert('완료', '백업 파일이 생성되었습니다.');
@@ -610,6 +609,10 @@ export default function SettingsScreen() {
               <Text style={{ fontSize: 12, color: '#9CA3AF', marginRight: 8 }}>준비 중</Text>
               <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
             </TouchableOpacity>
+
+            <Text style={{ fontSize: 12, color: '#9CA3AF', paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4 }}>
+              AES-256 암호화로 보호됩니다. 비밀번호 없이는 누구도 열람할 수 없습니다.
+            </Text>
 
             <TouchableOpacity
               style={{

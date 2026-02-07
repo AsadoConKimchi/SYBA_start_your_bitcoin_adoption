@@ -356,7 +356,7 @@ export default function SubscriptionScreen() {
                 activeOpacity={0.8}
               >
                 <QRCode
-                  value={authLnurl}
+                  value={authLnurlEncoded}
                   size={200}
                   backgroundColor="#FFFFFF"
                   color="#000000"

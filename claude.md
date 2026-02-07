@@ -319,6 +319,29 @@
 
 ---
 
+### 16. React Native Share API 플랫폼 차이
+
+**잘못된 구현:**
+- `Share.share({ url: path, message: filename })`으로 파일 공유
+
+**문제점:**
+- `Share.share()`의 `url` 속성은 **iOS 전용**
+- Android에서는 `url`이 무시되고 `message` 텍스트만 공유됨
+- Android에서 "텍스트 공유"로 표시, 실제 파일 전달 안 됨
+
+**교훈:**
+```
+✅ 파일 공유 구현 시 확인사항:
+1. Share.share()의 url은 iOS 전용 — Android에서 파일 공유 불가
+2. Android 파일 공유: expo-sharing (shareAsync) 사용 필수
+3. 크로스 플랫폼 파일 공유 패턴:
+   - Platform.OS === 'ios' → Share.share({ url })
+   - Platform.OS === 'android' → Sharing.shareAsync(path)
+4. 또는 expo-sharing으로 통일 (양 플랫폼 지원)
+```
+
+---
+
 ## 🚀 릴리즈 워크플로우 (필독)
 
 > 코드 수정 후 배포까지 **반드시 이 순서대로** 진행
