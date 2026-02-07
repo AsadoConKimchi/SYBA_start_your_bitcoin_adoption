@@ -319,6 +319,63 @@
 
 ---
 
+## 🚀 릴리즈 워크플로우 (필독)
+
+> 코드 수정 후 배포까지 **반드시 이 순서대로** 진행
+
+### 전체 과정
+```
+코드 수정 → 버전 업데이트 → 로컬 빌드 → 커밋/푸시 → GitHub Release 생성
+```
+
+### 상세 단계
+
+**1. 코드 수정 완료**
+
+**2. app.json 버전 업데이트**
+```json
+"version": "0.1.X" → "0.1.Y"
+```
+
+**3. 로컬 Android 빌드**
+```bash
+export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+cd android && ./gradlew assembleRelease
+```
+
+**4. APK 복사**
+```bash
+cp android/app/build/outputs/apk/release/app-release.apk syba-v{버전}-android.apk
+```
+
+**5. 커밋 & 푸시**
+```bash
+git add .
+git commit -m "chore: v{버전} 버전 업데이트"
+git push origin main
+```
+
+**6. GitHub Release 생성**
+```bash
+gh release create v{버전} \
+  --title "v{버전} - {제목}" \
+  --notes "## 변경 사항
+- 변경1
+- 변경2
+
+## 다운로드
+- **Android**: syba-v{버전}-android.apk" \
+  syba-v{버전}-android.apk
+```
+
+### ⚠️ 주의사항
+- **EAS 클라우드 빌드 사용 안 함** (무료 한도 소진)
+- APK는 .gitignore → GitHub에 직접 커밋 안 됨
+- APK 배포는 **GitHub Releases**로만
+- 빌드 전 **반드시 버전 업데이트** 확인
+
+---
+
 ## 코드 스타일
 
 ### 컴포넌트
