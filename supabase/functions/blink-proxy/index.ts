@@ -6,10 +6,58 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 const BLINK_API_URL = 'https://api.blink.sv/graphql';
 const BLINK_API_KEY = Deno.env.get('BLINK_API_KEY') || '';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+// --- CORS 설정: 허용된 오리진만 통과 ---
+const ALLOWED_ORIGINS = [
+  'http://localhost:8081',    // Expo 개발 서버
+  'http://localhost:19006',   // Expo 웹
+];
+
+function getCorsHeaders(origin: string | null): Record<string, string> {
+  // 모바일 앱은 Origin 헤더를 보내지 않음 → 허용
+  if (!origin) {
+    return {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    };
+  }
+  // 허용된 오리진 → 해당 오리진 반환
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    return {
+      'Access-Control-Allow-Origin': origin,
+      'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    };
+  }
+  // 미허용 오리진 → CORS 헤더 없음 (브라우저가 차단)
+  return {};
+}
+
+// --- Rate Limiting: IP별 요청 횟수 제한 ---
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT_WINDOW_MS = 60 * 1000;   // 1분
+const RATE_LIMIT_MAX_REQUESTS = 10;        // 1분당 최대 10회
+
+function isRateLimited(identifier: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(identifier);
+
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(identifier, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return false;
+  }
+
+  entry.count++;
+  return entry.count > RATE_LIMIT_MAX_REQUESTS;
+}
+
+// 오래된 rate limit 항목 정리 (메모리 누수 방지)
+function cleanupRateLimitMap() {
+  const now = Date.now();
+  for (const [key, entry] of rateLimitMap) {
+    if (now > entry.resetAt) {
+      rateLimitMap.delete(key);
+    }
+  }
+}
 
 interface BlinkRequest {
   action: 'getWalletInfo' | 'createInvoice' | 'checkPaymentStatus';
@@ -135,9 +183,28 @@ async function checkPaymentStatus(paymentRequest: string) {
 }
 
 serve(async (req) => {
+  const origin = req.headers.get('origin');
+  const corsHeaders = getCorsHeaders(origin);
+
   // CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
+  }
+
+  // Rate limiting (IP 기반)
+  const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+    || req.headers.get('cf-connecting-ip')
+    || 'unknown';
+
+  if (isRateLimited(clientIp)) {
+    cleanupRateLimitMap();
+    return new Response(
+      JSON.stringify({ success: false, error: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.' }),
+      {
+        status: 429,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
   }
 
   try {

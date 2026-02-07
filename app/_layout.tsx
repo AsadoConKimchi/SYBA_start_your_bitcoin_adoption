@@ -7,6 +7,7 @@ import { View, ActivityIndicator } from 'react-native';
 import { useAuthStore } from '../src/stores/authStore';
 import { useSettingsStore } from '../src/stores/settingsStore';
 import { usePriceStore } from '../src/stores/priceStore';
+import { ErrorBoundary } from '../src/components/ErrorBoundary';
 
 export default function RootLayout() {
   const { isLoading: authLoading, initialize: initAuth } = useAuthStore();
@@ -33,7 +34,7 @@ export default function RootLayout() {
   }
 
   return (
-    <>
+    <ErrorBoundary>
       <StatusBar style="dark" />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
@@ -44,6 +45,6 @@ export default function RootLayout() {
           options={{ presentation: 'modal' }}
         />
       </Stack>
-    </>
+    </ErrorBoundary>
   );
 }
