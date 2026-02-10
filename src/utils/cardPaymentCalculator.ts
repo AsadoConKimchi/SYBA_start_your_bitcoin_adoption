@@ -2,6 +2,7 @@ import { Card } from '../types/card';
 import { LedgerRecord, isExpense } from '../types/ledger';
 import { Installment } from '../types/debt';
 import { getBillingPeriodByCompany } from '../constants/billingPeriods';
+import { getCurrentRegion } from '../regions';
 import { krwToSats } from './calculations';
 
 interface CardPaymentSummary {

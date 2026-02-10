@@ -141,7 +141,7 @@ export async function createLnurlAuthSession(): Promise<{
     }
 
     // LNURL-auth URL 생성 (Vercel 프록시 사용)
-    const LNURL_AUTH_PROXY = 'https://syba-citadel.vercel.app';
+    const LNURL_AUTH_PROXY = 'https://syba-sats.vercel.app';
     const callbackUrl = `${LNURL_AUTH_PROXY}?tag=login&k1=${k1}&action=login`;
 
     // Bech32 인코딩된 LNURL (복사용)

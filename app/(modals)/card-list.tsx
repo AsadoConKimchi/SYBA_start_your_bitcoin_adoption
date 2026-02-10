@@ -113,7 +113,7 @@ export default function CardListScreen() {
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <View>
                       <Text style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)' }}>
-                        {card.company}
+                        {t('cardCompanies.' + card.company)}
                       </Text>
                       <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#FFFFFF', marginTop: 2 }}>
                         {card.name}

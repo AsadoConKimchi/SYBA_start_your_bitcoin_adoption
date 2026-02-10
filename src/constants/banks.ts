@@ -1,6 +1,7 @@
 import i18n from '../i18n';
+import { getCurrentRegion } from '../regions';
 
-// Korean bank list (legacy, used for type definitions)
+// Legacy Korean bank list (kept for backward compatibility)
 export const BANKS = [
   { id: 'kb', name: 'KB국민은행' },
   { id: 'shinhan', name: '신한은행' },
@@ -21,10 +22,11 @@ export const BANKS = [
   { id: 'etc', name: '기타' },
 ] as const;
 
-export type BankId = (typeof BANKS)[number]['id'];
+export type BankId = string;
 
-export function getBankById(id: BankId) {
-  return BANKS.find((b) => b.id === id);
+export function getBankById(id: string) {
+  const region = getCurrentRegion();
+  return region.banks.find((b) => b.id === id);
 }
 
 export function getBankName(id: string): string {

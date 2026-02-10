@@ -25,7 +25,7 @@ import {
   REPAYMENT_TYPE_LABELS,
   REPAYMENT_TYPE_DESCRIPTIONS,
 } from '../../src/types/debt';
-import { BANKS } from '../../src/constants/banks';
+import { getCurrentRegion } from '../../src/regions';
 
 const LOAN_TERMS = [12, 24, 36, 48, 60, 120, 240, 360]; // 개월
 
@@ -34,6 +34,7 @@ export default function AddLoanScreen() {
   const { encryptionKey } = useAuthStore();
   const { addLoan } = useDebtStore();
   const { assets } = useAssetStore();
+  const region = getCurrentRegion();
 
   const [name, setName] = useState('');
   const [institution, setInstitution] = useState('');
@@ -626,7 +627,7 @@ export default function AddLoanScreen() {
             </View>
 
             <ScrollView>
-              {BANKS.map((bank) => (
+              {region.banks.map((bank) => (
                 <TouchableOpacity
                   key={bank.id}
                   style={{
@@ -640,11 +641,11 @@ export default function AddLoanScreen() {
                   }}
                   onPress={() => {
                     setSelectedBankId(bank.id);
-                    setInstitution(bank.name);
+                    setInstitution(bank.id);
                     setShowBankPicker(false);
                   }}
                 >
-                  <Text style={{ fontSize: 16, color: '#1A1A1A' }}>{bank.name}</Text>
+                  <Text style={{ fontSize: 16, color: '#1A1A1A' }}>{t('banks.' + bank.id)}</Text>
                   {selectedBankId === bank.id && (
                     <Ionicons name="checkmark" size={20} color="#3B82F6" />
                   )}

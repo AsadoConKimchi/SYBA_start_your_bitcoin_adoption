@@ -1,9 +1,5 @@
 import { CardCompanyId } from '../constants/cardCompanies';
-import {
-  CARD_COMPANY_BILLING_RULES,
-  getAvailablePaymentDays,
-  getBillingPeriodByCompany,
-} from '../constants/billingPeriods';
+import { getCurrentRegion } from '../regions';
 
 export type CardType = 'credit' | 'debit' | 'prepaid';
 
@@ -26,7 +22,13 @@ export interface Card {
 
 // 카드사별 결제일 옵션 가져오기
 export function getPaymentDayOptions(companyId: string): number[] {
-  return getAvailablePaymentDays(companyId);
+  const region = getCurrentRegion();
+  const companyRules = region.billingRules[companyId];
+  if (companyRules) {
+    return companyRules.availablePaymentDays || [1, 5, 10, 14, 15, 20, 25];
+  }
+  // No billing rules for this region/company, allow all days 1-28
+  return Array.from({ length: 28 }, (_, i) => i + 1);
 }
 
 // 기본 결제일 옵션 (전체 목록)
@@ -42,7 +44,8 @@ export function getBillingPeriodForCard(
   companyId: string,
   paymentDay: number
 ): { startDay: number; endDay: number } {
-  const companyRules = CARD_COMPANY_BILLING_RULES[companyId];
+  const region = getCurrentRegion();
+  const companyRules = region.billingRules[companyId];
 
   if (companyRules && companyRules.rules[paymentDay]) {
     const rule = companyRules.rules[paymentDay];
@@ -52,7 +55,6 @@ export function getBillingPeriodForCard(
     };
   }
 
-  // 규칙이 없으면 기본값: 결제일 다음날 ~ 결제일
   return {
     startDay: paymentDay + 1 > 28 ? 1 : paymentDay + 1,
     endDay: paymentDay,

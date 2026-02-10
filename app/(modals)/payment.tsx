@@ -14,7 +14,7 @@ import QRCode from 'react-native-qrcode-svg';
 import { useTranslation } from 'react-i18next';
 import { useSubscriptionStore } from '../../src/stores/subscriptionStore';
 import { CONFIG } from '../../src/constants/config';
-import { waitForPayment, PaymentStatus } from '../../src/services/blinkProxy';
+import { waitForPaymentWs, PaymentStatus } from '../../src/services/blinkProxy';
 import { getSubscriptionPriceSats } from '../../src/services/appConfigService';
 
 export default function PaymentScreen() {
@@ -43,7 +43,7 @@ export default function PaymentScreen() {
     isCancelledRef.current = false;
 
     const checkPayment = async () => {
-      const paid = await waitForPayment(
+      const paid = await waitForPaymentWs(
         lightningInvoice,
         (paymentStatus: PaymentStatus) => {
           if (isCancelledRef.current) return;
@@ -55,8 +55,7 @@ export default function PaymentScreen() {
             setStatus('expired');
           }
         },
-        10 * 60 * 1000, // 10분
-        3000 // 3초 간격
+        10 * 60 * 1000 // 10분
       );
 
       if (isCancelledRef.current) return;

@@ -25,7 +25,7 @@ import {
   REPAYMENT_TYPE_LABELS,
   REPAYMENT_TYPE_DESCRIPTIONS,
 } from '../../src/types/debt';
-import { BANKS } from '../../src/constants/banks';
+import { getCurrentRegion } from '../../src/regions';
 
 const LOAN_TERMS = [12, 24, 36, 48, 60, 120, 240, 360];
 
@@ -35,6 +35,7 @@ export default function LoanDetailScreen() {
   const { encryptionKey } = useAuthStore();
   const { loans, updateLoan, deleteLoan } = useDebtStore();
   const { assets } = useAssetStore();
+  const region = getCurrentRegion();
 
   const loan = loans.find((l) => l.id === id);
 
@@ -240,7 +241,9 @@ export default function LoanDetailScreen() {
             <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#1A1A1A', marginBottom: 4 }}>
               {loan.name}
             </Text>
-            <Text style={{ fontSize: 14, color: '#9CA3AF' }}>{loan.institution}</Text>
+            <Text style={{ fontSize: 14, color: '#9CA3AF' }}>
+              {t('banks.' + loan.institution, { defaultValue: loan.institution })}
+            </Text>
           </View>
 
           {/* 금액 정보 */}
@@ -860,12 +863,12 @@ export default function LoanDetailScreen() {
             </View>
 
             <ScrollView>
-              {BANKS.map((bank) => (
+              {region.banks.map((bank) => (
                 <TouchableOpacity
                   key={bank.id}
                   style={{
                     padding: 16,
-                    backgroundColor: institution === bank.name ? '#EFF6FF' : '#F9FAFB',
+                    backgroundColor: selectedBankId === bank.id ? '#EFF6FF' : '#F9FAFB',
                     borderRadius: 8,
                     marginBottom: 8,
                     flexDirection: 'row',
@@ -874,12 +877,12 @@ export default function LoanDetailScreen() {
                   }}
                   onPress={() => {
                     setSelectedBankId(bank.id);
-                    setInstitution(bank.name);
+                    setInstitution(bank.id);
                     setShowBankPicker(false);
                   }}
                 >
-                  <Text style={{ fontSize: 16, color: '#1A1A1A' }}>{bank.name}</Text>
-                  {institution === bank.name && <Ionicons name="checkmark" size={20} color="#3B82F6" />}
+                  <Text style={{ fontSize: 16, color: '#1A1A1A' }}>{t('banks.' + bank.id)}</Text>
+                  {selectedBankId === bank.id && <Ionicons name="checkmark" size={20} color="#3B82F6" />}
                 </TouchableOpacity>
               ))}
             </ScrollView>

@@ -1,5 +1,7 @@
 import i18n from '../i18n';
+import { getCurrentRegion } from '../regions';
 
+// Legacy Korean card companies (kept for type backward compatibility)
 export const CARD_COMPANIES = [
   { id: 'samsung', name: '삼성카드', color: '#1428A0' },
   { id: 'shinhan', name: '신한카드', color: '#E60012' },
@@ -16,14 +18,21 @@ export const CARD_COMPANIES = [
   { id: 'etc', name: '기타', color: '#9CA3AF' },
 ] as const;
 
-export type CardCompanyId = typeof CARD_COMPANIES[number]['id'];
+export type CardCompanyId = string;
 
-export function getCardCompanyById(id: CardCompanyId) {
-  return CARD_COMPANIES.find(c => c.id === id);
+export function getCardCompanyById(id: string) {
+  // Search in current region first, then fall back to all regions
+  const region = getCurrentRegion();
+  return region.cardCompanies.find(c => c.id === id);
 }
 
 export function getCardCompanyColor(id: string): string {
-  return CARD_COMPANIES.find(c => c.id === id)?.color ?? '#9CA3AF';
+  const region = getCurrentRegion();
+  const found = region.cardCompanies.find(c => c.id === id);
+  if (found) return found.color;
+  // Fallback: search legacy Korean data
+  const legacy = CARD_COMPANIES.find(c => c.id === id);
+  return legacy?.color ?? '#9CA3AF';
 }
 
 export function getCardCompanyName(id: string): string {

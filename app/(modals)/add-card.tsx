@@ -17,9 +17,9 @@ import { useTranslation } from 'react-i18next';
 import { useCardStore } from '../../src/stores/cardStore';
 import { useAssetStore } from '../../src/stores/assetStore';
 import { useSubscriptionStore } from '../../src/stores/subscriptionStore';
-import { CARD_COMPANIES, CardCompanyId } from '../../src/constants/cardCompanies';
+import { CardCompanyId } from '../../src/constants/cardCompanies';
 import { CardType, getPaymentDayOptions, getBillingPeriodForCard } from '../../src/types/card';
-import { CARD_COMPANY_BILLING_RULES } from '../../src/constants/billingPeriods';
+import { getCurrentRegion } from '../../src/regions';
 import { isFiatAsset } from '../../src/types/asset';
 
 const CARD_COLORS = [
@@ -50,6 +50,7 @@ export default function AddCardScreen() {
   const { addCard, cards } = useCardStore();
   const { assets } = useAssetStore();
   const { isSubscribed } = useSubscriptionStore();
+  const region = getCurrentRegion();
 
   // 무료 사용자 카드 3장 제한
   const FREE_CARD_LIMIT = 3;
@@ -85,14 +86,14 @@ export default function AddCardScreen() {
   const billingPeriodText = useMemo(() => {
     if (!paymentDay || !company || !billingStartDay || !billingEndDay) return null;
 
-    const rules = CARD_COMPANY_BILLING_RULES[company]?.rules[paymentDay];
+    const rules = region.billingRules[company]?.rules[paymentDay];
     if (!rules) return `${t('card.prevMonth')} ${billingStartDay}${t('card.dayUnit')} ~ ${t('card.currentMonth')} ${billingEndDay}${t('card.dayUnit')}`;
 
     const startMonth = rules.start.monthOffset === -2 ? t('card.twoMonthsAgo') : t('card.prevMonth');
     const endMonth = rules.end.monthOffset === -1 ? t('card.prevMonth') : t('card.currentMonth');
 
     return `${startMonth} ${billingStartDay}${t('card.dayUnit')} ~ ${endMonth} ${billingEndDay}${t('card.dayUnit')}`;
-  }, [paymentDay, company, billingStartDay, billingEndDay, t]);
+  }, [paymentDay, company, billingStartDay, billingEndDay, t, region]);
 
   const selectedCompanyName = company
     ? t('cardCompanies.' + company)
@@ -226,7 +227,7 @@ export default function AddCardScreen() {
           <View style={{ marginBottom: 24 }}>
             <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('card.company')}</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              {CARD_COMPANIES.map(comp => (
+              {region.cardCompanies.map(comp => (
                 <TouchableOpacity
                   key={comp.id}
                   style={{

@@ -19,7 +19,7 @@ import { CONFIG } from '../../src/constants/config';
 import { getSubscriptionPriceSats } from '../../src/services/appConfigService';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { waitForPayment, PaymentStatus } from '../../src/services/blinkProxy';
+import { waitForPaymentWs, PaymentStatus } from '../../src/services/blinkProxy';
 import { lastLnurlError } from '../../src/services/lnurlAuth';
 
 export default function SubscriptionScreen() {
@@ -171,7 +171,7 @@ export default function SubscriptionScreen() {
     paymentCancelledRef.current = false;
 
     const checkPayment = async () => {
-      const paid = await waitForPayment(
+      const paid = await waitForPaymentWs(
         lightningInvoice,
         (status: PaymentStatus) => {
           if (paymentCancelledRef.current) return;
@@ -183,8 +183,7 @@ export default function SubscriptionScreen() {
             setPaymentStatus('expired');
           }
         },
-        10 * 60 * 1000, // 10분
-        3000 // 3초 간격
+        10 * 60 * 1000 // 10분
       );
 
       if (paymentCancelledRef.current) return;
