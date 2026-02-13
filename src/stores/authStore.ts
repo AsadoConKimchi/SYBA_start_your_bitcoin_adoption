@@ -84,7 +84,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
     const salt = await generateSalt();
     console.log('[DEBUG] salt 생성됨:', salt ? '있음' : '없음');
     const hash = hashPassword(password, salt);
-    const key = deriveKey(password, salt);
+    const key = await deriveKey(password, salt);
     console.log('[DEBUG] key 생성됨:', key ? '있음 (길이: ' + key.length + ')' : '없음');
 
     // 암호화 키도 SecureStore에 저장 (다음 로그인 시 빠르게 불러오기 위해)
@@ -133,7 +133,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       let key = storedKey;
       if (!key) {
         console.log('[DEBUG] 저장된 키 없음, 새로 생성');
-        key = deriveKey(password, salt);
+        key = await deriveKey(password, salt);
         await saveSecure(SECURE_KEYS.ENCRYPTION_KEY, key);
       } else {
         console.log('[DEBUG] 저장된 키 사용 (빠른 로그인)');
@@ -184,7 +184,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
     // 새 비밀번호로 키 생성
     const newSalt = await generateSalt();
     const newHash = hashPassword(newPassword, newSalt);
-    const newKey = deriveKey(newPassword, newSalt);
+    const newKey = await deriveKey(newPassword, newSalt);
 
     // 모든 데이터를 새 키로 재암호화
     try {

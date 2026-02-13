@@ -161,7 +161,13 @@
     "enableBiometric": "Enable biometrics",
     "later": "Maybe later",
     "biometricPrompt": "Authenticate with biometrics",
-    "biometricFallback": "Use password"
+    "biometricFallback": "Use password",
+    "forgotPassword": "Forgot your password?",
+    "forgotPasswordWarning": "If you've lost your password, encrypted data cannot be recovered.\n\nResetting the app will permanently delete all data (ledger, assets, cards, etc.).\n\nDo you want to continue?",
+    "forgotPasswordContinue": "Proceed with reset",
+    "forgotPasswordFinalTitle": "⚠️ Final Confirmation",
+    "forgotPasswordFinalWarning": "Are you sure you want to delete all data and reset the app?\n\nThis action cannot be undone.",
+    "forgotPasswordConfirmDelete": "Delete all data"
   },
   "errors": {
     "authRequired": "Authentication required",

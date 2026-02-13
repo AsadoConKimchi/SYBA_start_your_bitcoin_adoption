@@ -12,6 +12,7 @@ import { useDebtStore } from '../../src/stores/debtStore';
 import { useAssetStore } from '../../src/stores/assetStore';
 import { usePriceStore } from '../../src/stores/priceStore';
 import { useSnapshotStore } from '../../src/stores/snapshotStore';
+import { useSubscriptionStore } from '../../src/stores/subscriptionStore';
 // [TODO: 공식 배포 전 주석 해제] Push Notification - Personal 개발자 계정에서 미지원
 // import {
 //   scheduleLoanRepaymentNotifications,
@@ -19,6 +20,7 @@ import { useSnapshotStore } from '../../src/stores/snapshotStore';
 // } from '../../src/services/debtAutoRecord';
 // import { scheduleMonthlySummaryNotification } from '../../src/services/notifications';
 import { processAllAutoDeductions } from '../../src/services/autoDeductionService';
+import { getSubscriptionPriceSats } from '../../src/services/appConfigService';
 import { checkDataIntegrity, deleteCorruptedFiles, FILE_PATHS } from '../../src/utils/storage';
 
 export default function TabsLayout() {
@@ -30,6 +32,7 @@ export default function TabsLayout() {
   const { loadAssets } = useAssetStore();
   const { loadCachedPrices, fetchPrices } = usePriceStore();
   const { loadSnapshots, checkAndSaveMonthlySnapshot } = useSnapshotStore();
+  const { initialize: initSubscription } = useSubscriptionStore();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const { theme } = useTheme();
@@ -42,6 +45,8 @@ export default function TabsLayout() {
     const initPrices = async () => {
       await loadCachedPrices();
       fetchPrices();
+      // Prefetch subscription price from Supabase
+      getSubscriptionPriceSats().catch(() => {});
     };
     initPrices();
   }, []);
@@ -82,6 +87,7 @@ export default function TabsLayout() {
           loadDebts(encryptionKey),
           loadAssets(encryptionKey),
           loadSnapshots(encryptionKey),
+          initSubscription(),
         ]);
 
         if (!autoDeductionProcessed.current) {

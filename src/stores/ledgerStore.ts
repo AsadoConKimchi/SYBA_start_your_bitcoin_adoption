@@ -38,7 +38,8 @@ interface LedgerActions {
     expense: Omit<Expense, 'id' | 'type' | 'createdAt' | 'updatedAt' | 'btcKrwAtTime' | 'satsEquivalent' | 'needsPriceSync'> & { installmentMonths?: number | null }
   ) => Promise<string>; // Returns expense ID
   addIncome: (
-    income: Omit<Income, 'id' | 'type' | 'createdAt' | 'updatedAt' | 'btcKrwAtTime' | 'satsEquivalent' | 'needsPriceSync'>
+    income: Omit<Income, 'id' | 'type' | 'createdAt' | 'updatedAt' | 'btcKrwAtTime' | 'satsEquivalent' | 'needsPriceSync'>,
+    overrideBtcKrw?: number | null
   ) => Promise<string>; // Returns income ID
   updateRecord: (id: string, updates: Partial<LedgerRecord>) => Promise<void>;
   deleteRecord: (id: string) => Promise<void>;
@@ -101,35 +102,41 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
   },
 
   // 지출 추가
-  addExpense: async (expenseData) => {
+  addExpense: async (expenseData, overrideBtcKrw) => {
     console.log('[DEBUG] addExpense 시작', expenseData);
     try {
       const now = new Date().toISOString();
-      let btcKrwAtTime: number | null = null;
+      let btcKrwAtTime: number | null = overrideBtcKrw ?? null;
       let satsEquivalent: number | null = null;
       let needsPriceSync = false;
 
       // 원화 기록 시 BTC 시세 조회하여 sats 환산
       if (expenseData.currency === 'KRW') {
-        try {
-          console.log('[DEBUG] BTC 시세 조회 시도');
-          btcKrwAtTime = await fetchHistoricalBtcPrice(expenseData.date);
+        if (!btcKrwAtTime) {
+          try {
+            console.log('[DEBUG] BTC 시세 조회 시도');
+            btcKrwAtTime = await fetchHistoricalBtcPrice(expenseData.date);
+            console.log('[DEBUG] BTC 시세 조회 성공:', btcKrwAtTime);
+          } catch (e) {
+            console.log('[DEBUG] BTC 시세 조회 실패, 나중에 동기화:', e);
+            needsPriceSync = true;
+          }
+        }
+        if (btcKrwAtTime) {
           satsEquivalent = krwToSats(expenseData.amount, btcKrwAtTime);
-          console.log('[DEBUG] BTC 시세 조회 성공:', btcKrwAtTime);
-        } catch (e) {
-          console.log('[DEBUG] BTC 시세 조회 실패, 나중에 동기화:', e);
-          needsPriceSync = true;
         }
       }
       // SATS 기록 시: amount가 sats 값, satsEquivalent에 그대로 저장
       else if (expenseData.currency === 'SATS') {
         satsEquivalent = expenseData.amount; // sats 값 그대로
-        try {
-          btcKrwAtTime = await fetchHistoricalBtcPrice(expenseData.date);
-          console.log('[DEBUG] SATS 기록 - BTC 시세 조회 성공:', btcKrwAtTime);
-        } catch (e) {
-          console.log('[DEBUG] SATS 기록 - BTC 시세 조회 실패:', e);
-          needsPriceSync = true;
+        if (!btcKrwAtTime) {
+          try {
+            btcKrwAtTime = await fetchHistoricalBtcPrice(expenseData.date);
+            console.log('[DEBUG] SATS 기록 - BTC 시세 조회 성공:', btcKrwAtTime);
+          } catch (e) {
+            console.log('[DEBUG] SATS 기록 - BTC 시세 조회 실패:', e);
+            needsPriceSync = true;
+          }
         }
       }
 
@@ -194,31 +201,37 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
   },
 
   // 수입 추가
-  addIncome: async (incomeData) => {
+  addIncome: async (incomeData, overrideBtcKrw) => {
     const now = new Date().toISOString();
-    let btcKrwAtTime: number | null = null;
+    let btcKrwAtTime: number | null = overrideBtcKrw ?? null;
     let satsEquivalent: number | null = null;
     let needsPriceSync = false;
 
     // 원화 기록 시 BTC 시세 조회하여 sats 환산
     if (incomeData.currency === 'KRW') {
-      try {
-        btcKrwAtTime = await fetchHistoricalBtcPrice(incomeData.date);
+      if (!btcKrwAtTime) {
+        try {
+          btcKrwAtTime = await fetchHistoricalBtcPrice(incomeData.date);
+        } catch (error) {
+          console.log('[오프라인] BTC 시세 조회 실패, 나중에 동기화:', error);
+          needsPriceSync = true;
+        }
+      }
+      if (btcKrwAtTime) {
         satsEquivalent = krwToSats(incomeData.amount, btcKrwAtTime);
-      } catch (error) {
-        console.log('[오프라인] BTC 시세 조회 실패, 나중에 동기화:', error);
-        needsPriceSync = true;
       }
     }
     // SATS 기록 시: amount가 sats 값, satsEquivalent에 그대로 저장
     else if (incomeData.currency === 'SATS') {
       satsEquivalent = incomeData.amount; // sats 값 그대로
-      try {
-        btcKrwAtTime = await fetchHistoricalBtcPrice(incomeData.date);
-        console.log('[DEBUG] SATS 수입 - BTC 시세 조회 성공:', btcKrwAtTime);
-      } catch (error) {
-        console.log('[DEBUG] SATS 수입 - BTC 시세 조회 실패:', error);
-        needsPriceSync = true;
+      if (!btcKrwAtTime) {
+        try {
+          btcKrwAtTime = await fetchHistoricalBtcPrice(incomeData.date);
+          console.log('[DEBUG] SATS 수입 - BTC 시세 조회 성공:', btcKrwAtTime);
+        } catch (error) {
+          console.log('[DEBUG] SATS 수입 - BTC 시세 조회 실패:', error);
+          needsPriceSync = true;
+        }
       }
     }
 

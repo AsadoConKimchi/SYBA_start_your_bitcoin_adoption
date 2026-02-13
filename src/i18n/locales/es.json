@@ -161,7 +161,13 @@
     "enableBiometric": "Activar biometría",
     "later": "Más tarde",
     "biometricPrompt": "Autenticación biométrica",
-    "biometricFallback": "Usar contraseña"
+    "biometricFallback": "Usar contraseña",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "forgotPasswordWarning": "Si perdiste tu contraseña, los datos cifrados no se pueden recuperar.\n\nRestablecer la app eliminará permanentemente todos los datos (registros, activos, tarjetas, etc.).\n\n¿Deseas continuar?",
+    "forgotPasswordContinue": "Proceder con el restablecimiento",
+    "forgotPasswordFinalTitle": "⚠️ Confirmación final",
+    "forgotPasswordFinalWarning": "¿Estás seguro de que deseas eliminar todos los datos y restablecer la app?\n\nEsta acción no se puede deshacer.",
+    "forgotPasswordConfirmDelete": "Eliminar todos los datos"
   },
   "errors": {
     "authRequired": "Autenticación requerida",

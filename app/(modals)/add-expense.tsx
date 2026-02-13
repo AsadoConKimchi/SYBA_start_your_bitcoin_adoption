@@ -179,6 +179,7 @@ export default function AddExpenseScreen() {
       // 1. 지출 기록 추가
       // - KRW 모드: amount는 원화, currency는 'KRW'
       // - SATS 모드: amount는 sats, currency는 'SATS'
+      // Pass current btcKrw so saved btcKrwAtTime matches the preview value
       const expenseId = await addExpense({
         date: dateString,
         amount: currencyMode === 'KRW' ? amountNumber : amountNumber,
@@ -191,7 +192,7 @@ export default function AddExpenseScreen() {
         installmentId: null,
         memo: memo || null,
         linkedAssetId: linkedAssetId || null,
-      });
+      }, btcKrw);
 
       // 2. 할부인 경우, 부채 탭에 할부 기록 자동 생성
       if (isInstallment && selectedCardId) {
