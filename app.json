@@ -17,7 +17,7 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.syba.finance",
       "infoPlist": {
-        "NSFaceIDUsageDescription": "생체 인증으로 앱에 로그인합니다"
+        "NSFaceIDUsageDescription": "\uc0dd\uccb4 \uc778\uc99d\uc73c\ub85c \uc571\uc5d0 \ub85c\uadf8\uc778\ud569\ub2c8\ub2e4"
       }
     },
     "android": {
@@ -44,7 +44,7 @@
       [
         "expo-local-authentication",
         {
-          "faceIDPermission": "생체 인증으로 앱에 로그인합니다"
+          "faceIDPermission": "\uc0dd\uccb4 \uc778\uc99d\uc73c\ub85c \uc571\uc5d0 \ub85c\uadf8\uc778\ud569\ub2c8\ub2e4"
         }
       ],
       "expo-localization"
