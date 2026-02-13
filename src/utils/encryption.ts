@@ -20,8 +20,28 @@ export async function generateSalt(): Promise<string> {
     .join('');
 }
 
-// 비밀번호에서 암호화 키 파생
-export function deriveKey(password: string, salt: string): string {
+// 비밀번호에서 암호화 키 파생 (async, progress callback 지원)
+// 기존 호환성: 동일한 알고리즘(CryptoJS PBKDF2-SHA1), 동일한 iterations → 동일한 키
+export async function deriveKey(
+  password: string,
+  salt: string,
+  onProgress?: (progress: number) => void,
+): Promise<string> {
+  onProgress?.(0);
+  // Yield to UI thread before heavy computation
+  await new Promise(resolve => setTimeout(resolve, 0));
+
+  const key = CryptoJS.PBKDF2(password, salt, {
+    keySize: 256 / 32,
+    iterations: CONFIG.PBKDF2_ITERATIONS,
+  });
+
+  onProgress?.(1);
+  return key.toString();
+}
+
+// 동기 버전 (레거시 호환, 내부 사용)
+export function deriveKeySync(password: string, salt: string): string {
   const key = CryptoJS.PBKDF2(password, salt, {
     keySize: 256 / 32,
     iterations: CONFIG.PBKDF2_ITERATIONS,

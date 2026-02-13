@@ -161,7 +161,13 @@
     "enableBiometric": "생체인증 사용",
     "later": "나중에 하기",
     "biometricPrompt": "생체 인증으로 로그인",
-    "biometricFallback": "비밀번호 사용"
+    "biometricFallback": "비밀번호 사용",
+    "forgotPassword": "비밀번호를 잊으셨나요?",
+    "forgotPasswordWarning": "비밀번호를 분실하면 암호화된 데이터를 복구할 수 없습니다.\n\n앱을 초기화하면 모든 데이터(가계부, 자산, 카드 등)가 영구 삭제됩니다.\n\n계속하시겠습니까?",
+    "forgotPasswordContinue": "초기화 진행",
+    "forgotPasswordFinalTitle": "⚠️ 최종 확인",
+    "forgotPasswordFinalWarning": "정말로 모든 데이터를 삭제하고 앱을 초기화하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.",
+    "forgotPasswordConfirmDelete": "모든 데이터 삭제"
   },
   "errors": {
     "authRequired": "인증 필요",

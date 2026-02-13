@@ -122,6 +122,7 @@ export default function AddIncomeScreen() {
     try {
       // - KRW 모드: amount는 원화, currency는 'KRW'
       // - SATS 모드: amount는 sats, currency는 'SATS'
+      // Pass current btcKrw so saved btcKrwAtTime matches the preview value
       await addIncome({
         date: formatDateString(selectedDate),
         amount: amountNumber,
@@ -130,7 +131,7 @@ export default function AddIncomeScreen() {
         source: source || null,
         memo: memo || null,
         linkedAssetId: linkedAssetId || null,
-      });
+      }, btcKrw);
 
       router.back();
     } catch (error) {
@@ -250,8 +251,8 @@ export default function AddIncomeScreen() {
             {amountNumber > 0 && btcKrw && (
               <Text style={{ fontSize: 12, color: theme.primary, marginTop: 4 }}>
                 {currencyMode === 'KRW'
-                  ? `= ${formatSats(satsAmount)} (${t('common.currentRate')})`
-                  : `= ${formatKrw(krwAmount)} (${t('common.currentRate')})`
+                  ? `≈ ${formatSats(satsAmount)} (${t('common.currentRate')})`
+                  : `≈ ${formatKrw(krwAmount)} (${t('common.currentRate')})`
                 }
               </Text>
             )}

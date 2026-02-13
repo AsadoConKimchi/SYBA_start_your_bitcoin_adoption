@@ -161,7 +161,13 @@
     "enableBiometric": "生体認証を有効にする",
     "later": "後で",
     "biometricPrompt": "生体認証でログイン",
-    "biometricFallback": "パスワードを使用"
+    "biometricFallback": "パスワードを使用",
+    "forgotPassword": "パスワードをお忘れですか？",
+    "forgotPasswordWarning": "パスワードを紛失した場合、暗号化されたデータは復元できません。\n\nアプリを初期化すると、すべてのデータ（家計簿、資産、カードなど）が完全に削除されます。\n\n続行しますか？",
+    "forgotPasswordContinue": "初期化を続行",
+    "forgotPasswordFinalTitle": "⚠️ 最終確認",
+    "forgotPasswordFinalWarning": "本当にすべてのデータを削除してアプリを初期化しますか？\n\nこの操作は元に戻せません。",
+    "forgotPasswordConfirmDelete": "すべてのデータを削除"
   },
   "errors": {
     "authRequired": "認証が必要です",
