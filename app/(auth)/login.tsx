@@ -11,6 +11,7 @@ import {
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '../../src/hooks/useTheme';
 import { useAuthStore } from '../../src/stores/authStore';
 import { deleteSecure, SECURE_KEYS } from '../../src/utils/encryption';
 import { clearAllData } from '../../src/utils/storage';
@@ -19,6 +20,7 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { t } = useTranslation();
+  const { theme } = useTheme();
 
   const {
     verifyPassword,
@@ -111,15 +113,15 @@ export default function LoginScreen() {
 
   if (isLocked) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+      <View style={{ flex: 1, backgroundColor: theme.background, justifyContent: 'center', alignItems: 'center', padding: 24 }}>
         <Text style={{ fontSize: 48, marginBottom: 24 }}>🔒</Text>
-        <Text style={{ fontSize: 18, fontWeight: '600', color: '#1A1A1A', marginBottom: 8 }}>
+        <Text style={{ fontSize: 18, fontWeight: '600', color: theme.text, marginBottom: 8 }}>
           {t('auth.locked')}
         </Text>
-        <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#F7931A' }}>
+        <Text style={{ fontSize: 24, fontWeight: 'bold', color: theme.primary }}>
           {formatTime(remainingTime)}
         </Text>
-        <Text style={{ fontSize: 14, color: '#666666', marginTop: 8 }}>
+        <Text style={{ fontSize: 14, color: theme.textSecondary, marginTop: 8 }}>
           {t('auth.retryAfter')}
         </Text>
       </View>
@@ -129,35 +131,36 @@ export default function LoginScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={{ flex: 1, backgroundColor: '#FFFFFF' }}
+      style={{ flex: 1, backgroundColor: theme.background }}
     >
       <View style={{ flex: 1, padding: 24, justifyContent: 'center' }}>
         <View style={{ alignItems: 'center', marginBottom: 48 }}>
           <Text style={{ fontSize: 48, marginBottom: 16 }}>🔐</Text>
-          <Text style={{ fontSize: 28, fontWeight: 'bold', color: '#1A1A1A' }}>
+          <Text style={{ fontSize: 28, fontWeight: 'bold', color: theme.text }}>
             SYBA
           </Text>
-          <Text style={{ fontSize: 12, color: '#9CA3AF', marginTop: 4 }}>
+          <Text style={{ fontSize: 12, color: theme.textMuted, marginTop: 4 }}>
             Start Your Bitcoin Adoption
           </Text>
         </View>
 
         <View style={{ marginBottom: 24 }}>
-          <Text style={{ fontSize: 16, color: '#1A1A1A', marginBottom: 8 }}>
+          <Text style={{ fontSize: 16, color: theme.text, marginBottom: 8 }}>
             {t('auth.enterPassword')}
           </Text>
 
           <TextInput
             style={{
               borderWidth: 1,
-              borderColor: '#E5E7EB',
+              borderColor: theme.inputBorder,
               borderRadius: 8,
               padding: 16,
               fontSize: 16,
-              color: '#1A1A1A',
+              color: theme.inputText,
+              backgroundColor: theme.inputBackground,
             }}
             placeholder={t('auth.password')}
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={theme.placeholder}
             secureTextEntry
             value={password}
             onChangeText={setPassword}
@@ -166,7 +169,7 @@ export default function LoginScreen() {
           />
 
           {failedAttempts > 0 && (
-            <Text style={{ color: '#EF4444', fontSize: 12, marginTop: 8 }}>
+            <Text style={{ color: theme.error, fontSize: 12, marginTop: 8 }}>
               {t('auth.failCount', { count: failedAttempts })}
             </Text>
           )}
@@ -174,7 +177,7 @@ export default function LoginScreen() {
 
         <TouchableOpacity
           style={{
-            backgroundColor: '#F7931A',
+            backgroundColor: theme.primary,
             padding: 16,
             borderRadius: 8,
             alignItems: 'center',
@@ -191,13 +194,13 @@ export default function LoginScreen() {
         {biometricEnabled && biometricAvailable && (
           <>
             <View style={{ alignItems: 'center', marginVertical: 16 }}>
-              <Text style={{ color: '#666666' }}>{t('common.or')}</Text>
+              <Text style={{ color: theme.textSecondary }}>{t('common.or')}</Text>
             </View>
 
             <TouchableOpacity
               style={{
                 borderWidth: 1,
-                borderColor: '#E5E7EB',
+                borderColor: theme.border,
                 padding: 16,
                 borderRadius: 8,
                 alignItems: 'center',
@@ -206,8 +209,8 @@ export default function LoginScreen() {
               }}
               onPress={handleBiometric}
             >
-              <Ionicons name="finger-print" size={24} color="#F7931A" />
-              <Text style={{ marginLeft: 8, fontSize: 16, color: '#1A1A1A' }}>
+              <Ionicons name="finger-print" size={24} color={theme.primary} />
+              <Text style={{ marginLeft: 8, fontSize: 16, color: theme.text }}>
                 {t('auth.useBiometric')}
               </Text>
             </TouchableOpacity>
@@ -219,7 +222,7 @@ export default function LoginScreen() {
             style={{ marginTop: 32, alignItems: 'center' }}
             onPress={handleReset}
           >
-            <Text style={{ color: '#EF4444', fontSize: 12 }}>
+            <Text style={{ color: theme.error, fontSize: 12 }}>
               {t('auth.resetData')}
             </Text>
           </TouchableOpacity>

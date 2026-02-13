@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '../../src/hooks/useTheme';
 import { useAssetStore } from '../../src/stores/assetStore';
 import { useAuthStore } from '../../src/stores/authStore';
 import { usePriceStore } from '../../src/stores/priceStore';
@@ -23,6 +24,7 @@ type WalletType = 'onchain' | 'lightning';
 
 export default function AddAssetScreen() {
   const { t } = useTranslation();
+  const { theme } = useTheme();
   const [assetType, setAssetType] = useState<AssetType>('fiat');
   const [name, setName] = useState('');
   const [balance, setBalance] = useState('');
@@ -140,7 +142,7 @@ export default function AddAssetScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
@@ -153,19 +155,19 @@ export default function AddAssetScreen() {
             alignItems: 'center',
             padding: 20,
             borderBottomWidth: 1,
-            borderBottomColor: '#E5E7EB',
+            borderBottomColor: theme.border,
           }}
         >
           <TouchableOpacity onPress={() => router.back()}>
-            <Text style={{ fontSize: 16, color: '#666666' }}>{t('common.cancel')}</Text>
+            <Text style={{ fontSize: 16, color: theme.textSecondary }}>{t('common.cancel')}</Text>
           </TouchableOpacity>
-          <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1A1A1A' }}>{t('asset.addTitle')}</Text>
+          <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>{t('asset.addTitle')}</Text>
           <TouchableOpacity onPress={handleSave} disabled={isSubmitting}>
             <Text
               style={{
                 fontSize: 16,
                 fontWeight: '600',
-                color: isSubmitting ? '#9CA3AF' : '#22C55E',
+                color: isSubmitting ? theme.textMuted : theme.success,
               }}
             >
               {t('common.save')}
@@ -177,14 +179,14 @@ export default function AddAssetScreen() {
           <View style={{ padding: 20 }}>
             {/* 자산 유형 선택 */}
             <View style={{ marginBottom: 24 }}>
-              <Text style={{ fontSize: 14, color: '#666666', marginBottom: 12 }}>{t('asset.assetType')}</Text>
+              <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 12 }}>{t('asset.assetType')}</Text>
               <View style={{ flexDirection: 'row', gap: 12 }}>
                 <TouchableOpacity
                   style={{
                     flex: 1,
                     padding: 16,
                     borderRadius: 12,
-                    backgroundColor: assetType === 'fiat' ? '#22C55E' : '#F3F4F6',
+                    backgroundColor: assetType === 'fiat' ? '#22C55E' : theme.backgroundTertiary,
                     alignItems: 'center',
                   }}
                   onPress={() => setAssetType('fiat')}
@@ -194,7 +196,7 @@ export default function AddAssetScreen() {
                     style={{
                       fontSize: 14,
                       fontWeight: '600',
-                      color: assetType === 'fiat' ? '#FFFFFF' : '#666666',
+                      color: assetType === 'fiat' ? '#FFFFFF' : theme.textSecondary,
                     }}
                   >
                     {t('asset.fiat')}
@@ -202,7 +204,7 @@ export default function AddAssetScreen() {
                   <Text
                     style={{
                       fontSize: 11,
-                      color: assetType === 'fiat' ? 'rgba(255,255,255,0.8)' : '#9CA3AF',
+                      color: assetType === 'fiat' ? 'rgba(255,255,255,0.8)' : theme.textMuted,
                     }}
                   >
                     {t('asset.fiatSub')}
@@ -214,7 +216,7 @@ export default function AddAssetScreen() {
                     flex: 1,
                     padding: 16,
                     borderRadius: 12,
-                    backgroundColor: assetType === 'bitcoin' ? '#F7931A' : '#F3F4F6',
+                    backgroundColor: assetType === 'bitcoin' ? theme.primary : theme.backgroundTertiary,
                     alignItems: 'center',
                   }}
                   onPress={() => setAssetType('bitcoin')}
@@ -224,7 +226,7 @@ export default function AddAssetScreen() {
                     style={{
                       fontSize: 14,
                       fontWeight: '600',
-                      color: assetType === 'bitcoin' ? '#FFFFFF' : '#666666',
+                      color: assetType === 'bitcoin' ? '#FFFFFF' : theme.textSecondary,
                     }}
                   >
                     {t('asset.bitcoin')}
@@ -232,7 +234,7 @@ export default function AddAssetScreen() {
                   <Text
                     style={{
                       fontSize: 11,
-                      color: assetType === 'bitcoin' ? 'rgba(255,255,255,0.8)' : '#9CA3AF',
+                      color: assetType === 'bitcoin' ? 'rgba(255,255,255,0.8)' : theme.textMuted,
                     }}
                   >
                     {t('asset.bitcoinSub')}
@@ -243,16 +245,16 @@ export default function AddAssetScreen() {
 
             {/* 자산명 */}
             <View style={{ marginBottom: 24 }}>
-              <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>
+              <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>
                 {assetType === 'fiat' ? t('asset.accountName') : t('asset.walletName')} *
               </Text>
               <TextInput
                 style={{
-                  backgroundColor: '#F9FAFB',
+                  backgroundColor: theme.backgroundSecondary,
                   borderRadius: 8,
                   padding: 16,
                   fontSize: 16,
-                  color: '#1A1A1A',
+                  color: theme.inputText,
                 }}
                 placeholder={assetType === 'fiat' ? t('asset.accountPlaceholder') : t('asset.walletPlaceholder')}
                 value={name}
@@ -268,7 +270,7 @@ export default function AddAssetScreen() {
                     flexDirection: 'row',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    backgroundColor: isOverdraft ? '#FEF3C7' : '#F9FAFB',
+                    backgroundColor: isOverdraft ? theme.warningBanner : theme.backgroundSecondary,
                     borderRadius: 12,
                     padding: 16,
                   }}
@@ -287,10 +289,10 @@ export default function AddAssetScreen() {
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <Text style={{ fontSize: 20, marginRight: 12 }}>💳</Text>
                     <View>
-                      <Text style={{ fontSize: 16, fontWeight: '600', color: '#1A1A1A' }}>
+                      <Text style={{ fontSize: 16, fontWeight: '600', color: theme.text }}>
                         {t('asset.overdraft')}
                       </Text>
-                      <Text style={{ fontSize: 12, color: '#9CA3AF' }}>
+                      <Text style={{ fontSize: 12, color: theme.textMuted }}>
                         {t('asset.overdraftHint')}
                       </Text>
                     </View>
@@ -300,7 +302,7 @@ export default function AddAssetScreen() {
                       width: 24,
                       height: 24,
                       borderRadius: 12,
-                      backgroundColor: isOverdraft ? '#F7931A' : '#E5E7EB',
+                      backgroundColor: isOverdraft ? theme.primary : theme.border,
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}
@@ -316,26 +318,26 @@ export default function AddAssetScreen() {
               <>
                 {/* 한도 */}
                 <View style={{ marginBottom: 24 }}>
-                  <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>
+                  <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>
                     {t('asset.creditLimit')} *
                   </Text>
                   <View
                     style={{
                       flexDirection: 'row',
                       alignItems: 'center',
-                      backgroundColor: '#F9FAFB',
+                      backgroundColor: theme.backgroundSecondary,
                       borderRadius: 8,
                       paddingHorizontal: 16,
                     }}
                   >
-                    <Text style={{ fontSize: 18, color: '#EF4444', marginRight: 4 }}>₩</Text>
+                    <Text style={{ fontSize: 18, color: theme.error, marginRight: 4 }}>₩</Text>
                     <TextInput
                       style={{
                         flex: 1,
                         fontSize: 20,
                         fontWeight: 'bold',
                         paddingVertical: 16,
-                        color: '#1A1A1A',
+                        color: theme.inputText,
                       }}
                       placeholder={t('asset.creditLimitPlaceholder')}
                       keyboardType="number-pad"
@@ -343,21 +345,21 @@ export default function AddAssetScreen() {
                       onChangeText={handleCreditLimitChange}
                     />
                   </View>
-                  <Text style={{ fontSize: 12, color: '#9CA3AF', marginTop: 4 }}>
+                  <Text style={{ fontSize: 12, color: theme.textMuted, marginTop: 4 }}>
                     {t('asset.creditLimitHint')}
                   </Text>
                 </View>
 
                 {/* 연이자율 */}
                 <View style={{ marginBottom: 24 }}>
-                  <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>
+                  <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>
                     {t('asset.annualRate')} *
                   </Text>
                   <View
                     style={{
                       flexDirection: 'row',
                       alignItems: 'center',
-                      backgroundColor: '#F9FAFB',
+                      backgroundColor: theme.backgroundSecondary,
                       borderRadius: 8,
                       paddingHorizontal: 16,
                     }}
@@ -368,16 +370,16 @@ export default function AddAssetScreen() {
                         fontSize: 20,
                         fontWeight: 'bold',
                         paddingVertical: 16,
-                        color: '#1A1A1A',
+                        color: theme.inputText,
                       }}
                       placeholder={t('asset.annualRatePlaceholder')}
                       keyboardType="decimal-pad"
                       value={interestRate}
                       onChangeText={handleInterestRateChange}
                     />
-                    <Text style={{ fontSize: 18, color: '#EF4444' }}>%</Text>
+                    <Text style={{ fontSize: 18, color: theme.error }}>%</Text>
                   </View>
-                  <Text style={{ fontSize: 12, color: '#9CA3AF', marginTop: 4 }}>
+                  <Text style={{ fontSize: 12, color: theme.textMuted, marginTop: 4 }}>
                     {t('asset.annualRateHint')}
                   </Text>
                 </View>
@@ -387,14 +389,14 @@ export default function AddAssetScreen() {
             {/* 비트코인 지갑 유형 */}
             {assetType === 'bitcoin' && (
               <View style={{ marginBottom: 24 }}>
-                <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('asset.walletType')}</Text>
+                <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('asset.walletType')}</Text>
                 <View style={{ flexDirection: 'row', gap: 12 }}>
                   <TouchableOpacity
                     style={{
                       flex: 1,
                       padding: 12,
                       borderRadius: 8,
-                      backgroundColor: walletType === 'onchain' ? '#F7931A' : '#F3F4F6',
+                      backgroundColor: walletType === 'onchain' ? theme.primary : theme.backgroundTertiary,
                       alignItems: 'center',
                     }}
                     onPress={() => setWalletType('onchain')}
@@ -403,7 +405,7 @@ export default function AddAssetScreen() {
                       style={{
                         fontSize: 14,
                         fontWeight: '600',
-                        color: walletType === 'onchain' ? '#FFFFFF' : '#666666',
+                        color: walletType === 'onchain' ? '#FFFFFF' : theme.textSecondary,
                       }}
                     >
                       Onchain
@@ -415,7 +417,7 @@ export default function AddAssetScreen() {
                       flex: 1,
                       padding: 12,
                       borderRadius: 8,
-                      backgroundColor: walletType === 'lightning' ? '#F7931A' : '#F3F4F6',
+                      backgroundColor: walletType === 'lightning' ? theme.primary : theme.backgroundTertiary,
                       alignItems: 'center',
                     }}
                     onPress={() => setWalletType('lightning')}
@@ -424,7 +426,7 @@ export default function AddAssetScreen() {
                       style={{
                         fontSize: 14,
                         fontWeight: '600',
-                        color: walletType === 'lightning' ? '#FFFFFF' : '#666666',
+                        color: walletType === 'lightning' ? '#FFFFFF' : theme.textSecondary,
                       }}
                     >
                       Lightning
@@ -437,7 +439,7 @@ export default function AddAssetScreen() {
             {/* 잔액 */}
             <View style={{ marginBottom: 24 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                <Text style={{ fontSize: 14, color: '#666666' }}>
+                <Text style={{ fontSize: 14, color: theme.textSecondary }}>
                   {assetType === 'bitcoin' ? t('asset.balanceSats') : t('asset.balanceFiat')}
                 </Text>
                 {/* 마이너스 잔액 토글 (마이너스통장인 경우만) */}
@@ -446,14 +448,14 @@ export default function AddAssetScreen() {
                     style={{
                       flexDirection: 'row',
                       alignItems: 'center',
-                      backgroundColor: isNegativeBalance ? '#FEE2E2' : '#F3F4F6',
+                      backgroundColor: isNegativeBalance ? '#FEE2E2' : theme.backgroundTertiary,
                       paddingHorizontal: 12,
                       paddingVertical: 6,
                       borderRadius: 16,
                     }}
                     onPress={() => setIsNegativeBalance(!isNegativeBalance)}
                   >
-                    <Text style={{ fontSize: 12, color: isNegativeBalance ? '#EF4444' : '#666666', fontWeight: '600' }}>
+                    <Text style={{ fontSize: 12, color: isNegativeBalance ? theme.error : theme.textSecondary, fontWeight: '600' }}>
                       {isNegativeBalance ? t('asset.negative') : t('asset.positive')}
                     </Text>
                   </TouchableOpacity>
@@ -463,7 +465,7 @@ export default function AddAssetScreen() {
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
-                  backgroundColor: isNegativeBalance ? '#FEE2E2' : '#F9FAFB',
+                  backgroundColor: isNegativeBalance ? '#FEE2E2' : theme.backgroundSecondary,
                   borderRadius: 8,
                   paddingHorizontal: 16,
                 }}
@@ -471,7 +473,7 @@ export default function AddAssetScreen() {
                 <Text
                   style={{
                     fontSize: 18,
-                    color: isNegativeBalance ? '#EF4444' : assetType === 'fiat' ? '#22C55E' : '#F7931A',
+                    color: isNegativeBalance ? theme.error : assetType === 'fiat' ? theme.success : theme.primary,
                     marginRight: 4,
                   }}
                 >
@@ -483,7 +485,7 @@ export default function AddAssetScreen() {
                     fontSize: 24,
                     fontWeight: 'bold',
                     paddingVertical: 16,
-                    color: isNegativeBalance ? '#EF4444' : '#1A1A1A',
+                    color: isNegativeBalance ? theme.error : theme.inputText,
                   }}
                   placeholder="0"
                   keyboardType="number-pad"
@@ -491,20 +493,20 @@ export default function AddAssetScreen() {
                   onChangeText={handleBalanceChange}
                 />
                 {assetType === 'bitcoin' && (
-                  <Text style={{ fontSize: 14, color: '#F7931A' }}>sats</Text>
+                  <Text style={{ fontSize: 14, color: theme.primary }}>sats</Text>
                 )}
               </View>
 
               {/* 원화 환산 (비트코인인 경우) */}
               {assetType === 'bitcoin' && btcKrw && balanceNumber > 0 && (
-                <Text style={{ fontSize: 12, color: '#9CA3AF', marginTop: 8 }}>
+                <Text style={{ fontSize: 12, color: theme.textMuted, marginTop: 8 }}>
                   = {formatKrw(Math.round(btcKrwValue))} ({t('asset.currentRate')})
                 </Text>
               )}
 
               {/* 마이너스통장 가용 금액 표시 */}
               {assetType === 'fiat' && isOverdraft && creditLimitNumber > 0 && (
-                <Text style={{ fontSize: 12, color: isNegativeBalance ? '#EF4444' : '#22C55E', marginTop: 8 }}>
+                <Text style={{ fontSize: 12, color: isNegativeBalance ? theme.error : theme.success, marginTop: 8 }}>
                   {t('asset.availableLimit', { amount: formatKrw(creditLimitNumber - (isNegativeBalance ? balanceNumber : 0)) })}
                 </Text>
               )}

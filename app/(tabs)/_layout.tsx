@@ -4,6 +4,7 @@ import { Alert, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '../../src/hooks/useTheme';
 import { useAuthStore } from '../../src/stores/authStore';
 import { useLedgerStore } from '../../src/stores/ledgerStore';
 import { useCardStore } from '../../src/stores/cardStore';
@@ -31,6 +32,7 @@ export default function TabsLayout() {
   const { loadSnapshots, checkAndSaveMonthlySnapshot } = useSnapshotStore();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
+  const { theme } = useTheme();
 
   const autoDeductionProcessed = useRef(false);
   const snapshotChecked = useRef(false);
@@ -135,13 +137,14 @@ export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#F7931A',
-        tabBarInactiveTintColor: '#9CA3AF',
+        tabBarActiveTintColor: theme.tabBarActive,
+        tabBarInactiveTintColor: theme.tabBarInactive,
         headerShown: false,
         tabBarShowLabel: false,
         tabBarStyle: {
+          backgroundColor: theme.tabBarBackground,
           borderTopWidth: 1,
-          borderTopColor: '#E5E7EB',
+          borderTopColor: theme.tabBarBorder,
           height: 60 + (Platform.OS === 'android' ? insets.bottom : 0),
           paddingBottom: 8 + (Platform.OS === 'android' ? insets.bottom : 0),
           paddingTop: 8,

@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '../../src/hooks/useTheme';
 import { useAuthStore } from '../../src/stores/authStore';
 
 export default function SetupScreen() {
@@ -17,6 +18,7 @@ export default function SetupScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { t } = useTranslation();
+  const { theme } = useTheme();
 
   const { setupPassword, biometricAvailable } = useAuthStore();
 
@@ -50,36 +52,37 @@ export default function SetupScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={{ flex: 1, backgroundColor: '#FFFFFF' }}
+      style={{ flex: 1, backgroundColor: theme.background }}
     >
       <View style={{ flex: 1, padding: 24, justifyContent: 'center' }}>
         <View style={{ alignItems: 'center', marginBottom: 48 }}>
           <Text style={{ fontSize: 48, marginBottom: 16 }}>🔐</Text>
-          <Text style={{ fontSize: 28, fontWeight: 'bold', color: '#1A1A1A' }}>
+          <Text style={{ fontSize: 28, fontWeight: 'bold', color: theme.text }}>
             SYBA
           </Text>
-          <Text style={{ fontSize: 12, color: '#9CA3AF', marginTop: 4 }}>
+          <Text style={{ fontSize: 12, color: theme.textMuted, marginTop: 4 }}>
             Start Your Bitcoin Adoption
           </Text>
         </View>
 
         <View style={{ marginBottom: 24 }}>
-          <Text style={{ fontSize: 16, color: '#1A1A1A', marginBottom: 8 }}>
+          <Text style={{ fontSize: 16, color: theme.text, marginBottom: 8 }}>
             {t('auth.setupPassword')}
           </Text>
 
           <TextInput
             style={{
               borderWidth: 1,
-              borderColor: '#E5E7EB',
+              borderColor: theme.inputBorder,
               borderRadius: 8,
               padding: 16,
               fontSize: 16,
               marginBottom: 12,
-              color: '#1A1A1A',
+              color: theme.inputText,
+              backgroundColor: theme.inputBackground,
             }}
             placeholder={t('auth.passwordMin12')}
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={theme.placeholder}
             secureTextEntry
             value={password}
             onChangeText={setPassword}
@@ -89,14 +92,15 @@ export default function SetupScreen() {
           <TextInput
             style={{
               borderWidth: 1,
-              borderColor: '#E5E7EB',
+              borderColor: theme.inputBorder,
               borderRadius: 8,
               padding: 16,
               fontSize: 16,
-              color: '#1A1A1A',
+              color: theme.inputText,
+              backgroundColor: theme.inputBackground,
             }}
             placeholder={t('auth.passwordConfirm')}
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={theme.placeholder}
             secureTextEntry
             value={confirmPassword}
             onChangeText={setConfirmPassword}
@@ -106,7 +110,7 @@ export default function SetupScreen() {
 
         <TouchableOpacity
           style={{
-            backgroundColor: '#F7931A',
+            backgroundColor: theme.primary,
             padding: 16,
             borderRadius: 8,
             alignItems: 'center',
@@ -120,8 +124,8 @@ export default function SetupScreen() {
           </Text>
         </TouchableOpacity>
 
-        <View style={{ marginTop: 24, padding: 16, backgroundColor: '#FEF3C7', borderRadius: 8 }}>
-          <Text style={{ fontSize: 14, color: '#92400E', textAlign: 'center' }}>
+        <View style={{ marginTop: 24, padding: 16, backgroundColor: theme.warningBanner, borderRadius: 8 }}>
+          <Text style={{ fontSize: 14, color: theme.warningBannerText, textAlign: 'center' }}>
             {t('auth.passwordWarning')}
           </Text>
         </View>

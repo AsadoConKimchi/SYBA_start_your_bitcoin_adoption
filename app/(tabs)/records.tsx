@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '../../src/hooks/useTheme';
 import { useLedgerStore } from '../../src/stores/ledgerStore';
 import { useSettingsStore } from '../../src/stores/settingsStore';
 import { useSubscriptionStore } from '../../src/stores/subscriptionStore';
@@ -16,6 +17,7 @@ export default function RecordsScreen() {
   const { settings } = useSettingsStore();
   const { isSubscribed } = useSubscriptionStore();
   const { t } = useTranslation();
+  const { theme } = useTheme();
 
   const [selectedDate, setSelectedDate] = useState(new Date());
   const year = selectedDate.getFullYear();
@@ -63,7 +65,7 @@ export default function RecordsScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
       <View
         style={{
           flexDirection: 'row',
@@ -71,16 +73,16 @@ export default function RecordsScreen() {
           alignItems: 'center',
           padding: 20,
           borderBottomWidth: 1,
-          borderBottomColor: '#E5E7EB',
+          borderBottomColor: theme.border,
         }}
       >
-        <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#1A1A1A' }}>{t('records.title')}</Text>
+        <Text style={{ fontSize: 20, fontWeight: 'bold', color: theme.text }}>{t('records.title')}</Text>
         <View style={{ flexDirection: 'row', gap: 12 }}>
           <TouchableOpacity onPress={() => router.push('/(modals)/add-income')}>
-            <Ionicons name="add-circle" size={28} color="#22C55E" />
+            <Ionicons name="add-circle" size={28} color={theme.success} />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => router.push('/(modals)/add-expense')}>
-            <Ionicons name="remove-circle" size={28} color="#EF4444" />
+            <Ionicons name="remove-circle" size={28} color={theme.error} />
           </TouchableOpacity>
         </View>
       </View>
@@ -95,13 +97,13 @@ export default function RecordsScreen() {
         }}
       >
         <TouchableOpacity onPress={goToPrevMonth}>
-          <Ionicons name="chevron-back" size={24} color="#666666" />
+          <Ionicons name="chevron-back" size={24} color={theme.textSecondary} />
         </TouchableOpacity>
-        <Text style={{ fontSize: 18, fontWeight: '600', color: '#1A1A1A' }}>
+        <Text style={{ fontSize: 18, fontWeight: '600', color: theme.text }}>
           {t('records.yearMonth', { year, month })}
         </Text>
         <TouchableOpacity onPress={goToNextMonth}>
-          <Ionicons name="chevron-forward" size={24} color="#666666" />
+          <Ionicons name="chevron-forward" size={24} color={theme.textSecondary} />
         </TouchableOpacity>
       </View>
 
@@ -125,38 +127,38 @@ export default function RecordsScreen() {
         {sortedDates.length === 0 ? (
           <View style={{ alignItems: 'center', paddingVertical: 48 }}>
             <Text style={{ fontSize: 48, marginBottom: 16 }}>📝</Text>
-            <Text style={{ fontSize: 16, color: '#9CA3AF', textAlign: 'center' }}>
+            <Text style={{ fontSize: 16, color: theme.textMuted, textAlign: 'center' }}>
               {t('records.noRecords')}
             </Text>
             <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
               <TouchableOpacity
                 style={{
-                  backgroundColor: '#22C55E',
+                  backgroundColor: theme.success,
                   paddingHorizontal: 24,
                   paddingVertical: 12,
                   borderRadius: 8,
                 }}
                 onPress={() => router.push('/(modals)/add-income')}
               >
-                <Text style={{ color: '#FFFFFF', fontWeight: '600' }}>{t('records.addIncome')}</Text>
+                <Text style={{ color: theme.textInverse, fontWeight: '600' }}>{t('records.addIncome')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={{
-                  backgroundColor: '#EF4444',
+                  backgroundColor: theme.error,
                   paddingHorizontal: 24,
                   paddingVertical: 12,
                   borderRadius: 8,
                 }}
                 onPress={() => router.push('/(modals)/add-expense')}
               >
-                <Text style={{ color: '#FFFFFF', fontWeight: '600' }}>{t('records.subtractExpense')}</Text>
+                <Text style={{ color: theme.textInverse, fontWeight: '600' }}>{t('records.subtractExpense')}</Text>
               </TouchableOpacity>
             </View>
           </View>
         ) : (
           sortedDates.map(date => (
             <View key={date} style={{ marginBottom: 24 }}>
-              <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>
+              <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>
                 {new Date(date).toLocaleDateString('ko-KR', {
                   month: 'long',
                   day: 'numeric',
@@ -168,7 +170,7 @@ export default function RecordsScreen() {
                 <TouchableOpacity
                   key={record.id}
                   style={{
-                    backgroundColor: '#F9FAFB',
+                    backgroundColor: theme.backgroundSecondary,
                     borderRadius: 8,
                     padding: 12,
                     marginBottom: 8,
@@ -178,11 +180,11 @@ export default function RecordsScreen() {
                   onPress={() => router.push({ pathname: '/(modals)/edit-record', params: { id: record.id } })}
                 >
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 14, fontWeight: '500', color: '#1A1A1A' }}>
+                    <Text style={{ fontSize: 14, fontWeight: '500', color: theme.text }}>
                       {record.category}
                     </Text>
                     {record.memo && (
-                      <Text style={{ fontSize: 12, color: '#9CA3AF', marginTop: 2 }}>
+                      <Text style={{ fontSize: 12, color: theme.textMuted, marginTop: 2 }}>
                         {record.memo}
                       </Text>
                     )}
@@ -194,13 +196,13 @@ export default function RecordsScreen() {
                           style={{
                             fontSize: 14,
                             fontWeight: '600',
-                            color: record.type === 'income' ? '#22C55E' : '#EF4444',
+                            color: record.type === 'income' ? theme.success : theme.error,
                           }}
                         >
                           {record.type === 'income' ? '+' : '-'}
                           {record.satsEquivalent ? formatSats(record.satsEquivalent) : '-'}
                         </Text>
-                        <Text style={{ fontSize: 11, color: '#9CA3AF' }}>
+                        <Text style={{ fontSize: 11, color: theme.textMuted }}>
                           {formatKrw(record.amount)}
                         </Text>
                       </>
@@ -210,14 +212,14 @@ export default function RecordsScreen() {
                           style={{
                             fontSize: 14,
                             fontWeight: '600',
-                            color: record.type === 'income' ? '#22C55E' : '#EF4444',
+                            color: record.type === 'income' ? theme.success : theme.error,
                           }}
                         >
                           {record.type === 'income' ? '+' : '-'}
                           {formatKrw(record.amount)}
                         </Text>
                         {record.satsEquivalent && (
-                          <Text style={{ fontSize: 11, color: '#9CA3AF' }}>
+                          <Text style={{ fontSize: 11, color: theme.textMuted }}>
                             {formatSats(record.satsEquivalent)}
                           </Text>
                         )}

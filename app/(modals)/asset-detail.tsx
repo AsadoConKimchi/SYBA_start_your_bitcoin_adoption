@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '../../src/hooks/useTheme';
 import { useAssetStore } from '../../src/stores/assetStore';
 import { useAuthStore } from '../../src/stores/authStore';
 import { usePriceStore } from '../../src/stores/priceStore';
@@ -24,6 +25,7 @@ type WalletType = 'onchain' | 'lightning';
 
 export default function AssetDetailScreen() {
   const { t } = useTranslation();
+  const { theme } = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { encryptionKey } = useAuthStore();
   const { assets, updateAsset, deleteAsset } = useAssetStore();
@@ -56,10 +58,10 @@ export default function AssetDetailScreen() {
 
   if (!asset) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center' }}>
-        <Text style={{ color: '#9CA3AF' }}>{t('common.notFound')}</Text>
+      <SafeAreaView style={{ flex: 1, backgroundColor: theme.background, justifyContent: 'center', alignItems: 'center' }}>
+        <Text style={{ color: theme.textMuted }}>{t('common.notFound')}</Text>
         <TouchableOpacity
-          style={{ marginTop: 16, padding: 12, backgroundColor: '#22C55E', borderRadius: 8 }}
+          style={{ marginTop: 16, padding: 12, backgroundColor: theme.success, borderRadius: 8 }}
           onPress={() => router.back()}
         >
           <Text style={{ color: '#FFFFFF' }}>{t('common.back')}</Text>
@@ -164,7 +166,7 @@ export default function AssetDetailScreen() {
   // 보기 모드
   if (!isEditing) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
         {/* 헤더 */}
         <View
           style={{
@@ -173,15 +175,15 @@ export default function AssetDetailScreen() {
             alignItems: 'center',
             padding: 20,
             borderBottomWidth: 1,
-            borderBottomColor: '#E5E7EB',
+            borderBottomColor: theme.border,
           }}
         >
           <TouchableOpacity onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={24} color="#666666" />
+            <Ionicons name="arrow-back" size={24} color={theme.textSecondary} />
           </TouchableOpacity>
-          <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1A1A1A' }}>{t('asset.detailTitle')}</Text>
+          <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>{t('asset.detailTitle')}</Text>
           <TouchableOpacity onPress={() => setIsEditing(true)}>
-            <Text style={{ fontSize: 16, fontWeight: '600', color: '#22C55E' }}>{t('common.edit')}</Text>
+            <Text style={{ fontSize: 16, fontWeight: '600', color: theme.success }}>{t('common.edit')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -189,7 +191,7 @@ export default function AssetDetailScreen() {
           {/* 자산 정보 카드 */}
           <View
             style={{
-              backgroundColor: isOverdraft && asset.balance < 0 ? '#FEE2E2' : isFiat ? '#F0FDF4' : '#FEF3C7',
+              backgroundColor: isOverdraft && asset.balance < 0 ? '#FEE2E2' : isFiat ? theme.incomeButtonBg : theme.warningBanner,
               borderRadius: 16,
               padding: 24,
               marginBottom: 20,
@@ -199,10 +201,10 @@ export default function AssetDetailScreen() {
             <Text style={{ fontSize: 40, marginBottom: 12 }}>
               {isOverdraft ? '💳' : isFiat ? '🏦' : '₿'}
             </Text>
-            <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#1A1A1A', marginBottom: 4 }}>
+            <Text style={{ fontSize: 20, fontWeight: 'bold', color: theme.text, marginBottom: 4 }}>
               {asset.name}
             </Text>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 16 }}>
+            <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 16 }}>
               {isOverdraft ? t('asset.overdraft') : isFiat ? t('asset.fiat') : isBitcoinAsset(asset) ? (asset.walletType === 'onchain' ? 'Onchain' : 'Lightning') : ''}
             </Text>
 
@@ -211,7 +213,7 @@ export default function AssetDetailScreen() {
               style={{
                 fontSize: 32,
                 fontWeight: 'bold',
-                color: asset.balance < 0 ? '#EF4444' : isFiat ? '#22C55E' : '#F7931A',
+                color: asset.balance < 0 ? theme.error : isFiat ? theme.success : theme.primary,
               }}
             >
               {isFiat ? formatKrw(asset.balance) : formatSats(asset.balance)}
@@ -221,15 +223,15 @@ export default function AssetDetailScreen() {
             {isOverdraft && (
               <View style={{ flexDirection: 'row', gap: 16, marginTop: 12 }}>
                 <View style={{ alignItems: 'center' }}>
-                  <Text style={{ fontSize: 12, color: '#666666' }}>{t('assets.limit')}</Text>
-                  <Text style={{ fontSize: 14, fontWeight: '600', color: '#1A1A1A' }}>
+                  <Text style={{ fontSize: 12, color: theme.textSecondary }}>{t('assets.limit')}</Text>
+                  <Text style={{ fontSize: 14, fontWeight: '600', color: theme.text }}>
                     {formatKrw(creditLimit)}
                   </Text>
                 </View>
                 <Text style={{ color: '#D1D5DB' }}>|</Text>
                 <View style={{ alignItems: 'center' }}>
-                  <Text style={{ fontSize: 12, color: '#666666' }}>{t('assets.available')}</Text>
-                  <Text style={{ fontSize: 14, fontWeight: '600', color: availableAmount > 0 ? '#22C55E' : '#EF4444' }}>
+                  <Text style={{ fontSize: 12, color: theme.textSecondary }}>{t('assets.available')}</Text>
+                  <Text style={{ fontSize: 14, fontWeight: '600', color: availableAmount > 0 ? theme.success : theme.error }}>
                     {formatKrw(availableAmount)}
                   </Text>
                 </View>
@@ -238,7 +240,7 @@ export default function AssetDetailScreen() {
 
             {/* 원화 환산 (비트코인) */}
             {isBtc && btcKrw && (
-              <Text style={{ fontSize: 14, color: '#666666', marginTop: 8 }}>
+              <Text style={{ fontSize: 14, color: theme.textSecondary, marginTop: 8 }}>
                 = {formatKrw(Math.round(btcKrwValue))}
               </Text>
             )}
@@ -248,7 +250,7 @@ export default function AssetDetailScreen() {
           {isOverdraft && asset.balance < 0 && (
             <View
               style={{
-                backgroundColor: '#FEF3C7',
+                backgroundColor: theme.warningBanner,
                 borderRadius: 12,
                 padding: 16,
                 marginBottom: 20,
@@ -256,17 +258,17 @@ export default function AssetDetailScreen() {
             >
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 <View>
-                  <Text style={{ fontSize: 12, color: '#92400E' }}>{t('asset.estimatedInterestLabel')}</Text>
+                  <Text style={{ fontSize: 12, color: theme.warningBannerText }}>{t('asset.estimatedInterestLabel')}</Text>
                   <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#F59E0B' }}>
                     {formatKrw(estimatedInterest)}
                   </Text>
-                  <Text style={{ fontSize: 11, color: '#9CA3AF', marginTop: 2 }}>
+                  <Text style={{ fontSize: 11, color: theme.textMuted, marginTop: 2 }}>
                     {t('asset.rateBasedOn', { rate: interestRate })}
                   </Text>
                 </View>
                 <TouchableOpacity
                   style={{
-                    backgroundColor: '#FFFFFF',
+                    backgroundColor: theme.modalBackground,
                     borderRadius: 8,
                     padding: 10,
                   }}
@@ -284,27 +286,27 @@ export default function AssetDetailScreen() {
           {/* 상세 정보 */}
           <View
             style={{
-              backgroundColor: '#F9FAFB',
+              backgroundColor: theme.backgroundSecondary,
               borderRadius: 12,
               padding: 20,
               marginBottom: 20,
             }}
           >
-            <Text style={{ fontSize: 14, fontWeight: '600', color: '#1A1A1A', marginBottom: 16 }}>
+            <Text style={{ fontSize: 14, fontWeight: '600', color: theme.text, marginBottom: 16 }}>
               {t('asset.detailInfo')}
             </Text>
 
             <View style={{ marginBottom: 12 }}>
-              <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>{t('asset.assetType')}</Text>
-              <Text style={{ fontSize: 14, color: '#1A1A1A' }}>
+              <Text style={{ fontSize: 12, color: theme.textMuted, marginBottom: 4 }}>{t('asset.assetType')}</Text>
+              <Text style={{ fontSize: 14, color: theme.text }}>
                 {isFiat ? `${t('asset.fiat')} (KRW)` : `${t('asset.bitcoin')} (sats)`}
               </Text>
             </View>
 
             {isBitcoinAsset(asset) && (
               <View style={{ marginBottom: 12 }}>
-                <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>{t('asset.walletType')}</Text>
-                <Text style={{ fontSize: 14, color: '#1A1A1A' }}>
+                <Text style={{ fontSize: 12, color: theme.textMuted, marginBottom: 4 }}>{t('asset.walletType')}</Text>
+                <Text style={{ fontSize: 14, color: theme.text }}>
                   {asset.walletType === 'onchain' ? 'Onchain (L1)' : 'Lightning (L2)'}
                 </Text>
               </View>
@@ -313,14 +315,14 @@ export default function AssetDetailScreen() {
             {isOverdraft && (
               <>
                 <View style={{ marginBottom: 12 }}>
-                  <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>{t('asset.creditLimit')}</Text>
-                  <Text style={{ fontSize: 14, color: '#1A1A1A' }}>
+                  <Text style={{ fontSize: 12, color: theme.textMuted, marginBottom: 4 }}>{t('asset.creditLimit')}</Text>
+                  <Text style={{ fontSize: 14, color: theme.text }}>
                     {formatKrw(creditLimit)}
                   </Text>
                 </View>
                 <View style={{ marginBottom: 12 }}>
-                  <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>{t('asset.annualRate')}</Text>
-                  <Text style={{ fontSize: 14, color: '#1A1A1A' }}>
+                  <Text style={{ fontSize: 12, color: theme.textMuted, marginBottom: 4 }}>{t('asset.annualRate')}</Text>
+                  <Text style={{ fontSize: 14, color: theme.text }}>
                     {interestRate}%
                   </Text>
                 </View>
@@ -328,15 +330,15 @@ export default function AssetDetailScreen() {
             )}
 
             <View style={{ marginBottom: 12 }}>
-              <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>{t('asset.registrationDate')}</Text>
-              <Text style={{ fontSize: 14, color: '#1A1A1A' }}>
+              <Text style={{ fontSize: 12, color: theme.textMuted, marginBottom: 4 }}>{t('asset.registrationDate')}</Text>
+              <Text style={{ fontSize: 14, color: theme.text }}>
                 {new Date(asset.createdAt).toLocaleDateString('ko-KR')}
               </Text>
             </View>
 
             <View>
-              <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>{t('asset.lastUpdate')}</Text>
-              <Text style={{ fontSize: 14, color: '#1A1A1A' }}>
+              <Text style={{ fontSize: 12, color: theme.textMuted, marginBottom: 4 }}>{t('asset.lastUpdate')}</Text>
+              <Text style={{ fontSize: 14, color: theme.text }}>
                 {formatTimeAgo(asset.updatedAt)}
               </Text>
             </View>
@@ -353,7 +355,7 @@ export default function AssetDetailScreen() {
             }}
             onPress={handleDelete}
           >
-            <Text style={{ fontSize: 16, fontWeight: '600', color: '#DC2626' }}>{t('asset.deleteConfirm')}</Text>
+            <Text style={{ fontSize: 16, fontWeight: '600', color: theme.error }}>{t('asset.deleteConfirm')}</Text>
           </TouchableOpacity>
         </ScrollView>
       </SafeAreaView>
@@ -362,7 +364,7 @@ export default function AssetDetailScreen() {
 
   // 수정 모드
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
@@ -375,19 +377,19 @@ export default function AssetDetailScreen() {
             alignItems: 'center',
             padding: 20,
             borderBottomWidth: 1,
-            borderBottomColor: '#E5E7EB',
+            borderBottomColor: theme.border,
           }}
         >
           <TouchableOpacity onPress={() => setIsEditing(false)}>
-            <Text style={{ fontSize: 16, color: '#666666' }}>{t('common.cancel')}</Text>
+            <Text style={{ fontSize: 16, color: theme.textSecondary }}>{t('common.cancel')}</Text>
           </TouchableOpacity>
-          <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1A1A1A' }}>{t('asset.editTitle')}</Text>
+          <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>{t('asset.editTitle')}</Text>
           <TouchableOpacity onPress={handleSave} disabled={isSubmitting}>
             <Text
               style={{
                 fontSize: 16,
                 fontWeight: '600',
-                color: isSubmitting ? '#9CA3AF' : '#22C55E',
+                color: isSubmitting ? theme.textMuted : theme.success,
               }}
             >
               {t('common.save')}
@@ -399,16 +401,16 @@ export default function AssetDetailScreen() {
           <View style={{ padding: 20 }}>
             {/* 자산명 */}
             <View style={{ marginBottom: 24 }}>
-              <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>
+              <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>
                 {isFiat ? t('asset.accountName') : t('asset.walletName')} *
               </Text>
               <TextInput
                 style={{
-                  backgroundColor: '#F9FAFB',
+                  backgroundColor: theme.backgroundSecondary,
                   borderRadius: 8,
                   padding: 16,
                   fontSize: 16,
-                  color: '#1A1A1A',
+                  color: theme.inputText,
                 }}
                 value={name}
                 onChangeText={setName}
@@ -418,14 +420,14 @@ export default function AssetDetailScreen() {
             {/* 비트코인 지갑 유형 */}
             {isBtc && (
               <View style={{ marginBottom: 24 }}>
-                <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('asset.walletType')}</Text>
+                <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('asset.walletType')}</Text>
                 <View style={{ flexDirection: 'row', gap: 12 }}>
                   <TouchableOpacity
                     style={{
                       flex: 1,
                       padding: 12,
                       borderRadius: 8,
-                      backgroundColor: walletType === 'onchain' ? '#F7931A' : '#F3F4F6',
+                      backgroundColor: walletType === 'onchain' ? theme.primary : theme.backgroundTertiary,
                       alignItems: 'center',
                     }}
                     onPress={() => setWalletType('onchain')}
@@ -434,7 +436,7 @@ export default function AssetDetailScreen() {
                       style={{
                         fontSize: 14,
                         fontWeight: '600',
-                        color: walletType === 'onchain' ? '#FFFFFF' : '#666666',
+                        color: walletType === 'onchain' ? '#FFFFFF' : theme.textSecondary,
                       }}
                     >
                       Onchain
@@ -446,7 +448,7 @@ export default function AssetDetailScreen() {
                       flex: 1,
                       padding: 12,
                       borderRadius: 8,
-                      backgroundColor: walletType === 'lightning' ? '#F7931A' : '#F3F4F6',
+                      backgroundColor: walletType === 'lightning' ? theme.primary : theme.backgroundTertiary,
                       alignItems: 'center',
                     }}
                     onPress={() => setWalletType('lightning')}
@@ -455,7 +457,7 @@ export default function AssetDetailScreen() {
                       style={{
                         fontSize: 14,
                         fontWeight: '600',
-                        color: walletType === 'lightning' ? '#FFFFFF' : '#666666',
+                        color: walletType === 'lightning' ? '#FFFFFF' : theme.textSecondary,
                       }}
                     >
                       Lightning
@@ -468,7 +470,7 @@ export default function AssetDetailScreen() {
             {/* 잔액 */}
             <View style={{ marginBottom: 24 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                <Text style={{ fontSize: 14, color: '#666666' }}>
+                <Text style={{ fontSize: 14, color: theme.textSecondary }}>
                   {isBtc ? t('asset.balanceSats') : t('asset.balanceFiat')}
                 </Text>
                 {/* 마이너스 잔액 토글 (마이너스통장인 경우만) */}
@@ -477,14 +479,14 @@ export default function AssetDetailScreen() {
                     style={{
                       flexDirection: 'row',
                       alignItems: 'center',
-                      backgroundColor: isNegativeBalance ? '#FEE2E2' : '#F3F4F6',
+                      backgroundColor: isNegativeBalance ? '#FEE2E2' : theme.backgroundTertiary,
                       paddingHorizontal: 12,
                       paddingVertical: 6,
                       borderRadius: 16,
                     }}
                     onPress={() => setIsNegativeBalance(!isNegativeBalance)}
                   >
-                    <Text style={{ fontSize: 12, color: isNegativeBalance ? '#EF4444' : '#666666', fontWeight: '600' }}>
+                    <Text style={{ fontSize: 12, color: isNegativeBalance ? theme.error : theme.textSecondary, fontWeight: '600' }}>
                       {isNegativeBalance ? t('asset.negative') : t('asset.positive')}
                     </Text>
                   </TouchableOpacity>
@@ -494,7 +496,7 @@ export default function AssetDetailScreen() {
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
-                  backgroundColor: isNegativeBalance ? '#FEE2E2' : '#F9FAFB',
+                  backgroundColor: isNegativeBalance ? '#FEE2E2' : theme.backgroundSecondary,
                   borderRadius: 8,
                   paddingHorizontal: 16,
                 }}
@@ -502,7 +504,7 @@ export default function AssetDetailScreen() {
                 <Text
                   style={{
                     fontSize: 18,
-                    color: isNegativeBalance ? '#EF4444' : isFiat ? '#22C55E' : '#F7931A',
+                    color: isNegativeBalance ? theme.error : isFiat ? theme.success : theme.primary,
                     marginRight: 4,
                   }}
                 >
@@ -514,7 +516,7 @@ export default function AssetDetailScreen() {
                     fontSize: 24,
                     fontWeight: 'bold',
                     paddingVertical: 16,
-                    color: isNegativeBalance ? '#EF4444' : '#1A1A1A',
+                    color: isNegativeBalance ? theme.error : theme.inputText,
                   }}
                   placeholder="0"
                   keyboardType="number-pad"
@@ -522,20 +524,20 @@ export default function AssetDetailScreen() {
                   onChangeText={handleBalanceChange}
                 />
                 {isBtc && (
-                  <Text style={{ fontSize: 14, color: '#F7931A' }}>sats</Text>
+                  <Text style={{ fontSize: 14, color: theme.primary }}>sats</Text>
                 )}
               </View>
 
               {/* 원화 환산 (비트코인인 경우) */}
               {isBtc && btcKrw && balanceNumber > 0 && (
-                <Text style={{ fontSize: 12, color: '#9CA3AF', marginTop: 8 }}>
+                <Text style={{ fontSize: 12, color: theme.textMuted, marginTop: 8 }}>
                   = {formatKrw(Math.round(balanceNumber * (btcKrw / 100_000_000)))} ({t('asset.currentRate')})
                 </Text>
               )}
 
               {/* 마이너스통장 가용 한도 표시 */}
               {isOverdraft && creditLimit > 0 && (
-                <Text style={{ fontSize: 12, color: isNegativeBalance ? '#EF4444' : '#22C55E', marginTop: 8 }}>
+                <Text style={{ fontSize: 12, color: isNegativeBalance ? theme.error : theme.success, marginTop: 8 }}>
                   {t('asset.availableLimit', { amount: formatKrw(creditLimit - (isNegativeBalance ? balanceNumber : 0)) })}
                 </Text>
               )}
@@ -546,19 +548,19 @@ export default function AssetDetailScreen() {
 
       {/* 예상 이자 수정 모달 */}
       <Modal visible={showInterestModal} transparent animationType="fade">
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.modalOverlay }}>
           <View
             style={{
-              backgroundColor: '#FFFFFF',
+              backgroundColor: theme.modalBackground,
               borderRadius: 16,
               padding: 24,
               width: '85%',
             }}
           >
-            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1A1A1A', marginBottom: 8 }}>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text, marginBottom: 8 }}>
               {t('asset.editEstimatedInterest')}
             </Text>
-            <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 16 }}>
+            <Text style={{ fontSize: 12, color: theme.textMuted, marginBottom: 16 }}>
               {t('asset.editEstimatedInterestHint')}
             </Text>
 
@@ -566,7 +568,7 @@ export default function AssetDetailScreen() {
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
-                backgroundColor: '#F9FAFB',
+                backgroundColor: theme.backgroundSecondary,
                 borderRadius: 8,
                 paddingHorizontal: 16,
                 marginBottom: 8,
@@ -579,7 +581,7 @@ export default function AssetDetailScreen() {
                   fontSize: 20,
                   fontWeight: 'bold',
                   paddingVertical: 12,
-                  color: '#1A1A1A',
+                  color: theme.inputText,
                 }}
                 placeholder="0"
                 keyboardType="number-pad"
@@ -592,7 +594,7 @@ export default function AssetDetailScreen() {
               />
             </View>
 
-            <Text style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 20 }}>
+            <Text style={{ fontSize: 11, color: theme.textMuted, marginBottom: 20 }}>
               {t('asset.autoCalcLabel', { amount: formatKrw(calculateEstimatedInterest()), rate: interestRate })}
             </Text>
 
@@ -601,13 +603,13 @@ export default function AssetDetailScreen() {
                 style={{
                   flex: 1,
                   padding: 14,
-                  backgroundColor: '#F3F4F6',
+                  backgroundColor: theme.backgroundTertiary,
                   borderRadius: 8,
                   alignItems: 'center',
                 }}
                 onPress={() => setShowInterestModal(false)}
               >
-                <Text style={{ fontSize: 16, color: '#666666' }}>{t('common.cancel')}</Text>
+                <Text style={{ fontSize: 16, color: theme.textSecondary }}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={{
@@ -657,7 +659,7 @@ export default function AssetDetailScreen() {
                 }
               }}
             >
-              <Text style={{ fontSize: 14, color: '#9CA3AF' }}>{t('asset.revertToAutoCalc')}</Text>
+              <Text style={{ fontSize: 14, color: theme.textMuted }}>{t('asset.revertToAutoCalc')}</Text>
             </TouchableOpacity>
           </View>
         </View>

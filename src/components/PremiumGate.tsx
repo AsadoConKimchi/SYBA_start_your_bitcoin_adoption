@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { useSubscriptionStore } from '../stores/subscriptionStore';
 import { getSubscriptionPriceSats } from '../services/appConfigService';
 import { CONFIG } from '../constants/config';
+import { useTheme } from '../hooks/useTheme';
 
 interface PremiumGateProps {
   children: React.ReactNode;
@@ -15,6 +16,7 @@ interface PremiumGateProps {
 export function PremiumGate({ children, feature }: PremiumGateProps) {
   const { isSubscribed } = useSubscriptionStore();
   const { t } = useTranslation();
+  const { theme, isDark } = useTheme();
   const [subscriptionPrice, setSubscriptionPrice] = useState(CONFIG.SUBSCRIPTION_PRICE_SATS);
 
   const displayFeature = feature || t('premium.feature');
@@ -31,7 +33,7 @@ export function PremiumGate({ children, feature }: PremiumGateProps) {
     <View
       style={{
         flex: 1,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: theme.background,
         alignItems: 'center',
         justifyContent: 'center',
         padding: 24,
@@ -39,7 +41,7 @@ export function PremiumGate({ children, feature }: PremiumGateProps) {
     >
       <View
         style={{
-          backgroundColor: '#FEF3C7',
+          backgroundColor: theme.warningBanner,
           borderRadius: 80,
           width: 160,
           height: 160,
@@ -55,7 +57,7 @@ export function PremiumGate({ children, feature }: PremiumGateProps) {
         style={{
           fontSize: 24,
           fontWeight: 'bold',
-          color: '#1A1A1A',
+          color: theme.text,
           marginBottom: 12,
           textAlign: 'center',
         }}
@@ -66,7 +68,7 @@ export function PremiumGate({ children, feature }: PremiumGateProps) {
       <Text
         style={{
           fontSize: 16,
-          color: '#666666',
+          color: theme.textSecondary,
           textAlign: 'center',
           marginBottom: 32,
           lineHeight: 24,
@@ -77,14 +79,14 @@ export function PremiumGate({ children, feature }: PremiumGateProps) {
 
       <View
         style={{
-          backgroundColor: '#F9FAFB',
+          backgroundColor: theme.backgroundSecondary,
           borderRadius: 12,
           padding: 16,
           marginBottom: 32,
           width: '100%',
         }}
       >
-        <Text style={{ fontSize: 14, fontWeight: '600', color: '#1A1A1A', marginBottom: 12 }}>
+        <Text style={{ fontSize: 14, fontWeight: '600', color: theme.text, marginBottom: 12 }}>
           {t('premium.benefits')}
         </Text>
         <View style={{ gap: 8 }}>
@@ -99,7 +101,7 @@ export function PremiumGate({ children, feature }: PremiumGateProps) {
 
       <TouchableOpacity
         style={{
-          backgroundColor: '#F7931A',
+          backgroundColor: theme.primary,
           paddingHorizontal: 32,
           paddingVertical: 16,
           borderRadius: 12,
@@ -109,13 +111,13 @@ export function PremiumGate({ children, feature }: PremiumGateProps) {
         }}
         onPress={() => router.push('/(modals)/subscription')}
       >
-        <Ionicons name="diamond" size={20} color="#FFFFFF" />
-        <Text style={{ fontSize: 16, fontWeight: '600', color: '#FFFFFF' }}>
+        <Ionicons name="diamond" size={20} color={theme.textInverse} />
+        <Text style={{ fontSize: 16, fontWeight: '600', color: theme.textInverse }}>
           {t('premium.subscribe')}
         </Text>
       </TouchableOpacity>
 
-      <Text style={{ fontSize: 14, color: '#F7931A', marginTop: 12, fontWeight: '600' }}>
+      <Text style={{ fontSize: 14, color: theme.primary, marginTop: 12, fontWeight: '600' }}>
         {t('premium.monthlyPrice', { price: subscriptionPrice.toLocaleString() })}
       </Text>
     </View>
@@ -123,10 +125,11 @@ export function PremiumGate({ children, feature }: PremiumGateProps) {
 }
 
 function FeatureItem({ text }: { text: string }) {
+  const { theme } = useTheme();
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-      <Ionicons name="checkmark-circle" size={18} color="#22C55E" />
-      <Text style={{ fontSize: 14, color: '#666666' }}>{text}</Text>
+      <Ionicons name="checkmark-circle" size={18} color={theme.success} />
+      <Text style={{ fontSize: 14, color: theme.textSecondary }}>{text}</Text>
     </View>
   );
 }
@@ -134,6 +137,7 @@ function FeatureItem({ text }: { text: string }) {
 export function PremiumBanner({ feature }: { feature?: string }) {
   const { isSubscribed } = useSubscriptionStore();
   const { t } = useTranslation();
+  const { theme } = useTheme();
 
   const displayFeature = feature || t('premium.feature');
 
@@ -144,7 +148,7 @@ export function PremiumBanner({ feature }: { feature?: string }) {
   return (
     <TouchableOpacity
       style={{
-        backgroundColor: '#FEF3C7',
+        backgroundColor: theme.warningBanner,
         borderRadius: 12,
         padding: 16,
         flexDirection: 'row',
@@ -155,7 +159,7 @@ export function PremiumBanner({ feature }: { feature?: string }) {
     >
       <View
         style={{
-          backgroundColor: '#F7931A',
+          backgroundColor: theme.primary,
           borderRadius: 20,
           width: 40,
           height: 40,
@@ -166,14 +170,14 @@ export function PremiumBanner({ feature }: { feature?: string }) {
         <Text style={{ fontSize: 20 }}>👑</Text>
       </View>
       <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 14, fontWeight: '600', color: '#92400E' }}>
+        <Text style={{ fontSize: 14, fontWeight: '600', color: theme.warningBannerText }}>
           {t('premium.bannerFeature', { feature: displayFeature })}
         </Text>
-        <Text style={{ fontSize: 12, color: '#B45309' }}>
+        <Text style={{ fontSize: 12, color: theme.warningBannerSubtext }}>
           {t('premium.bannerHint')}
         </Text>
       </View>
-      <Ionicons name="chevron-forward" size={20} color="#92400E" />
+      <Ionicons name="chevron-forward" size={20} color={theme.warningBannerText} />
     </TouchableOpacity>
   );
 }

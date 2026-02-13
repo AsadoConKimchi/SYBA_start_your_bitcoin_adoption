@@ -8,6 +8,7 @@ import { usePriceStore } from '../../stores/priceStore';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { formatKrw, formatSats } from '../../utils/formatters';
 import { ChartEmptyState } from './ChartEmptyState';
+import { useTheme } from '../../hooks/useTheme';
 
 interface CategoryPieChartProps {
   year: number;
@@ -16,15 +17,6 @@ interface CategoryPieChartProps {
 
 const screenWidth = Dimensions.get('window').width;
 
-const chartConfig = {
-  backgroundColor: '#FFFFFF',
-  backgroundGradientFrom: '#FFFFFF',
-  backgroundGradientTo: '#FFFFFF',
-  decimalPlaces: 0,
-  color: (opacity = 1) => `rgba(59, 130, 246, ${opacity})`,
-  labelColor: () => '#666666',
-};
-
 type DisplayMode = 'KRW' | 'BTC';
 
 export function CategoryPieChart({ year, month }: CategoryPieChartProps) {
@@ -32,9 +24,19 @@ export function CategoryPieChart({ year, month }: CategoryPieChartProps) {
   const { getRecordsByMonth } = useLedgerStore();
   const { btcKrw } = usePriceStore();
   const { settings } = useSettingsStore();
+  const { theme, isDark } = useTheme();
 
   const [isExpanded, setIsExpanded] = useState(true);
   const [displayMode, setDisplayMode] = useState<DisplayMode>(settings.displayUnit);
+
+  const chartConfig = {
+    backgroundColor: theme.chartBackground,
+    backgroundGradientFrom: theme.chartBackground,
+    backgroundGradientTo: theme.chartBackground,
+    decimalPlaces: 0,
+    color: (opacity = 1) => isDark ? `rgba(96, 165, 250, ${opacity})` : `rgba(59, 130, 246, ${opacity})`,
+    labelColor: () => theme.chartLabelColor,
+  };
 
   // Category spending calculation (KRW + sats)
   const breakdown = useMemo(() => {
@@ -107,38 +109,38 @@ export function CategoryPieChart({ year, month }: CategoryPieChartProps) {
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: 16,
-        backgroundColor: '#F9FAFB',
+        backgroundColor: theme.backgroundSecondary,
         borderRadius: isExpanded ? 0 : 12,
         borderTopLeftRadius: 12,
         borderTopRightRadius: 12,
       }}
       onPress={() => setIsExpanded(!isExpanded)}
     >
-      <Text style={{ fontSize: 14, fontWeight: '600', color: '#1A1A1A' }}>
+      <Text style={{ fontSize: 14, fontWeight: '600', color: theme.text }}>
         {t('charts.categorySpending')}
       </Text>
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         {breakdown.items.length > 0 && (
-          <Text style={{ fontSize: 12, color: '#EF4444', marginRight: 8 }}>
+          <Text style={{ fontSize: 12, color: theme.error, marginRight: 8 }}>
             {displayMode === 'KRW' ? formatKrw(breakdown.totalKrw) : formatSats(breakdown.totalSats)}
           </Text>
         )}
         <Ionicons
           name={isExpanded ? 'chevron-up' : 'chevron-down'}
           size={20}
-          color="#666666"
+          color={theme.textSecondary}
         />
       </View>
     </TouchableOpacity>
   );
 
   if (!isExpanded) {
-    return <View style={{ backgroundColor: '#F9FAFB', borderRadius: 12 }}>{header}</View>;
+    return <View style={{ backgroundColor: theme.backgroundSecondary, borderRadius: 12 }}>{header}</View>;
   }
 
   if (breakdown.items.length === 0) {
     return (
-      <View style={{ backgroundColor: '#F9FAFB', borderRadius: 12 }}>
+      <View style={{ backgroundColor: theme.backgroundSecondary, borderRadius: 12 }}>
         {header}
         <View style={{ padding: 16, paddingTop: 0 }}>
           <ChartEmptyState
@@ -154,28 +156,28 @@ export function CategoryPieChart({ year, month }: CategoryPieChartProps) {
     name: item.category,
     population: displayMode === 'KRW' ? item.krw : item.sats,
     color: item.color,
-    legendFontColor: '#666666',
+    legendFontColor: theme.textSecondary,
     legendFontSize: 12,
   }));
 
   return (
-    <View style={{ backgroundColor: '#F9FAFB', borderRadius: 12 }}>
+    <View style={{ backgroundColor: theme.backgroundSecondary, borderRadius: 12 }}>
       {header}
 
       <View style={{ padding: 16, paddingTop: 0 }}>
         {/* BTC/KRW toggle */}
         <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 8 }}>
-          <View style={{ flexDirection: 'row', backgroundColor: '#E5E7EB', borderRadius: 8, padding: 2 }}>
+          <View style={{ flexDirection: 'row', backgroundColor: theme.toggleTrack, borderRadius: 8, padding: 2 }}>
             <TouchableOpacity
               style={{
                 paddingHorizontal: 12,
                 paddingVertical: 4,
                 borderRadius: 6,
-                backgroundColor: displayMode === 'BTC' ? '#F7931A' : 'transparent',
+                backgroundColor: displayMode === 'BTC' ? theme.primary : 'transparent',
               }}
               onPress={() => setDisplayMode('BTC')}
             >
-              <Text style={{ fontSize: 12, fontWeight: '500', color: displayMode === 'BTC' ? '#FFFFFF' : '#9CA3AF' }}>
+              <Text style={{ fontSize: 12, fontWeight: '500', color: displayMode === 'BTC' ? theme.textInverse : theme.textMuted }}>
                 BTC
               </Text>
             </TouchableOpacity>
@@ -184,11 +186,11 @@ export function CategoryPieChart({ year, month }: CategoryPieChartProps) {
                 paddingHorizontal: 12,
                 paddingVertical: 4,
                 borderRadius: 6,
-                backgroundColor: displayMode === 'KRW' ? '#FFFFFF' : 'transparent',
+                backgroundColor: displayMode === 'KRW' ? theme.toggleActiveKrw : 'transparent',
               }}
               onPress={() => setDisplayMode('KRW')}
             >
-              <Text style={{ fontSize: 12, fontWeight: '500', color: displayMode === 'KRW' ? '#1A1A1A' : '#9CA3AF' }}>
+              <Text style={{ fontSize: 12, fontWeight: '500', color: displayMode === 'KRW' ? theme.text : theme.textMuted }}>
                 KRW
               </Text>
             </TouchableOpacity>
@@ -217,7 +219,7 @@ export function CategoryPieChart({ year, month }: CategoryPieChartProps) {
                 justifyContent: 'space-between',
                 paddingVertical: 6,
                 borderBottomWidth: 1,
-                borderBottomColor: '#E5E7EB',
+                borderBottomColor: theme.border,
               }}
             >
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -230,13 +232,13 @@ export function CategoryPieChart({ year, month }: CategoryPieChartProps) {
                     marginRight: 8,
                   }}
                 />
-                <Text style={{ fontSize: 13, color: '#1A1A1A' }}>{item.category}</Text>
+                <Text style={{ fontSize: 13, color: theme.text }}>{item.category}</Text>
               </View>
               <View style={{ alignItems: 'flex-end' }}>
-                <Text style={{ fontSize: 13, fontWeight: '500', color: '#1A1A1A' }}>
+                <Text style={{ fontSize: 13, fontWeight: '500', color: theme.text }}>
                   {displayMode === 'KRW' ? formatKrw(item.krw) : formatSats(item.sats)}
                 </Text>
-                <Text style={{ fontSize: 11, color: '#9CA3AF' }}>
+                <Text style={{ fontSize: 11, color: theme.textMuted }}>
                   {item.percentage}%
                 </Text>
               </View>
@@ -252,13 +254,13 @@ export function CategoryPieChart({ year, month }: CategoryPieChartProps) {
             marginTop: 12,
             paddingTop: 12,
             borderTopWidth: 1,
-            borderTopColor: '#D1D5DB',
+            borderTopColor: isDark ? '#444444' : '#D1D5DB',
           }}
         >
-          <Text style={{ fontSize: 14, fontWeight: '600', color: '#1A1A1A' }}>
+          <Text style={{ fontSize: 14, fontWeight: '600', color: theme.text }}>
             {t('charts.totalSpending')}
           </Text>
-          <Text style={{ fontSize: 14, fontWeight: '600', color: '#EF4444' }}>
+          <Text style={{ fontSize: 14, fontWeight: '600', color: theme.error }}>
             {displayMode === 'KRW' ? formatKrw(breakdown.totalKrw) : formatSats(breakdown.totalSats)}
           </Text>
         </View>

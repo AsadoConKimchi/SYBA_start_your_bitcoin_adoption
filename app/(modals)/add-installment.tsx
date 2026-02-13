@@ -9,12 +9,14 @@ import {
   Modal,
   Switch,
   Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '../../src/hooks/useTheme';
 import { useDebtStore } from '../../src/stores/debtStore';
 import { useCardStore } from '../../src/stores/cardStore';
 import { useAuthStore } from '../../src/stores/authStore';
@@ -25,6 +27,7 @@ const INSTALLMENT_MONTHS = [2, 3, 6, 12, 18, 24, 36];
 
 export default function AddInstallmentScreen() {
   const { t } = useTranslation();
+  const { theme } = useTheme();
   const { encryptionKey } = useAuthStore();
   const { addInstallment } = useDebtStore();
   const { cards } = useCardStore();
@@ -119,7 +122,11 @@ export default function AddInstallmentScreen() {
   const selectedCard = cards.find((c) => c.id === selectedCardId);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+      >
       {/* 헤더 */}
       <View
         style={{
@@ -128,13 +135,13 @@ export default function AddInstallmentScreen() {
           alignItems: 'center',
           padding: 20,
           borderBottomWidth: 1,
-          borderBottomColor: '#E5E7EB',
+          borderBottomColor: theme.border,
         }}
       >
         <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="close" size={24} color="#666666" />
+          <Ionicons name="close" size={24} color={theme.textSecondary} />
         </TouchableOpacity>
-        <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1A1A1A' }}>
+        <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>
           {t('installment.addTitle')}
         </Text>
         <TouchableOpacity onPress={handleSubmit} disabled={isSubmitting}>
@@ -142,7 +149,7 @@ export default function AddInstallmentScreen() {
             style={{
               fontSize: 16,
               fontWeight: '600',
-              color: isSubmitting ? '#9CA3AF' : '#F7931A',
+              color: isSubmitting ? theme.textMuted : theme.primary,
             }}
           >
             {t('common.save')}
@@ -154,17 +161,17 @@ export default function AddInstallmentScreen() {
         <View style={{ padding: 20 }}>
           {/* 상점명 */}
           <View style={{ marginBottom: 20 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('installment.storeName')} *</Text>
+            <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('installment.storeName')} *</Text>
             <TextInput
               style={{
-                backgroundColor: '#F9FAFB',
+                backgroundColor: theme.backgroundSecondary,
                 borderRadius: 8,
                 padding: 16,
                 fontSize: 16,
-                color: '#1A1A1A',
+                color: theme.inputText,
               }}
               placeholder={t('installment.storeNamePlaceholder')}
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={theme.placeholder}
               value={storeName}
               onChangeText={setStoreName}
             />
@@ -172,19 +179,19 @@ export default function AddInstallmentScreen() {
 
           {/* 결제 금액 */}
           <View style={{ marginBottom: 20 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('installment.totalAmount')} *</Text>
+            <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('installment.totalAmount')} *</Text>
             <TextInput
               style={{
-                backgroundColor: '#F9FAFB',
+                backgroundColor: theme.backgroundSecondary,
                 borderRadius: 8,
                 padding: 16,
                 fontSize: 24,
                 fontWeight: 'bold',
-                color: '#EF4444',
+                color: theme.error,
                 textAlign: 'right',
               }}
               placeholder="0"
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={theme.placeholder}
               keyboardType="number-pad"
               value={totalAmount}
               onChangeText={(text) => {
@@ -196,17 +203,17 @@ export default function AddInstallmentScreen() {
                 }
               }}
             />
-            <Text style={{ fontSize: 12, color: '#9CA3AF', textAlign: 'right', marginTop: 4 }}>
+            <Text style={{ fontSize: 12, color: theme.textMuted, textAlign: 'right', marginTop: 4 }}>
               {t('common.won')}
             </Text>
           </View>
 
           {/* 카드 선택 */}
           <View style={{ marginBottom: 20 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('installment.selectCard')} *</Text>
+            <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('installment.selectCard')} *</Text>
             <TouchableOpacity
               style={{
-                backgroundColor: '#F9FAFB',
+                backgroundColor: theme.backgroundSecondary,
                 borderRadius: 8,
                 padding: 16,
                 flexDirection: 'row',
@@ -227,20 +234,20 @@ export default function AddInstallmentScreen() {
                     }}
                   />
                 )}
-                <Text style={{ fontSize: 16, color: selectedCard ? '#1A1A1A' : '#9CA3AF' }}>
+                <Text style={{ fontSize: 16, color: selectedCard ? theme.text : theme.textMuted }}>
                   {selectedCard?.name || t('installment.selectCard')}
                 </Text>
               </View>
-              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+              <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
             </TouchableOpacity>
           </View>
 
           {/* 할부 개월 */}
           <View style={{ marginBottom: 20 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('installment.months')} *</Text>
+            <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('installment.months')} *</Text>
             <TouchableOpacity
               style={{
-                backgroundColor: '#F9FAFB',
+                backgroundColor: theme.backgroundSecondary,
                 borderRadius: 8,
                 padding: 16,
                 flexDirection: 'row',
@@ -249,37 +256,37 @@ export default function AddInstallmentScreen() {
               }}
               onPress={() => setShowMonthPicker(true)}
             >
-              <Text style={{ fontSize: 16, color: '#1A1A1A' }}>
+              <Text style={{ fontSize: 16, color: theme.text }}>
                 {t('installment.monthsFormat', { count: Number(customMonths) || months })}
               </Text>
-              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+              <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
             </TouchableOpacity>
           </View>
 
           {/* 무이자/유이자 */}
           <View style={{ marginBottom: 20 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text style={{ fontSize: 14, color: '#666666' }}>{t('installment.interestFree')}</Text>
+              <Text style={{ fontSize: 14, color: theme.textSecondary }}>{t('installment.interestFree')}</Text>
               <Switch
                 value={isInterestFree}
                 onValueChange={setIsInterestFree}
-                trackColor={{ true: '#F7931A' }}
+                trackColor={{ false: theme.toggleTrack, true: theme.switchTrackOn }}
               />
             </View>
 
             {!isInterestFree && (
               <View style={{ marginTop: 12 }}>
-                <Text style={{ fontSize: 12, color: '#666666', marginBottom: 8 }}>{t('installment.annualRate')}</Text>
+                <Text style={{ fontSize: 12, color: theme.textSecondary, marginBottom: 8 }}>{t('installment.annualRate')}</Text>
                 <TextInput
                   style={{
-                    backgroundColor: '#F9FAFB',
+                    backgroundColor: theme.backgroundSecondary,
                     borderRadius: 8,
                     padding: 16,
                     fontSize: 16,
-                    color: '#1A1A1A',
+                    color: theme.inputText,
                   }}
                   placeholder={t('installment.annualRatePlaceholder')}
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={theme.placeholder}
                   keyboardType="decimal-pad"
                   value={interestRate}
                   onChangeText={setInterestRate}
@@ -290,10 +297,10 @@ export default function AddInstallmentScreen() {
 
           {/* 시작일 */}
           <View style={{ marginBottom: 20 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('installment.startDate')}</Text>
+            <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('installment.startDate')}</Text>
             <TouchableOpacity
               style={{
-                backgroundColor: '#F9FAFB',
+                backgroundColor: theme.backgroundSecondary,
                 borderRadius: 8,
                 padding: 16,
                 flexDirection: 'row',
@@ -302,28 +309,28 @@ export default function AddInstallmentScreen() {
               }}
               onPress={() => setShowDatePicker(true)}
             >
-              <Text style={{ fontSize: 16, color: '#1A1A1A' }}>
+              <Text style={{ fontSize: 16, color: theme.text }}>
                 {startDate.toLocaleDateString('ko-KR')}
               </Text>
-              <Ionicons name="calendar-outline" size={20} color="#9CA3AF" />
+              <Ionicons name="calendar-outline" size={20} color={theme.textMuted} />
             </TouchableOpacity>
           </View>
 
           {/* 이미 납부한 개월 */}
           <View style={{ marginBottom: 20 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>
+            <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>
               {t('installment.paidMonths')}
             </Text>
             <TextInput
               style={{
-                backgroundColor: '#F9FAFB',
+                backgroundColor: theme.backgroundSecondary,
                 borderRadius: 8,
                 padding: 16,
                 fontSize: 16,
-                color: '#1A1A1A',
+                color: theme.inputText,
               }}
               placeholder="0"
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={theme.placeholder}
               keyboardType="number-pad"
               value={paidMonths}
               onChangeText={(text) => {
@@ -332,7 +339,7 @@ export default function AddInstallmentScreen() {
               }}
             />
             {!paidMonthsEdited && parseInt(paidMonths) > 0 && (
-              <Text style={{ fontSize: 11, color: '#9CA3AF', marginTop: 4 }}>
+              <Text style={{ fontSize: 11, color: theme.textMuted, marginTop: 4 }}>
                 {t('installment.autoCalculated')}
               </Text>
             )}
@@ -340,18 +347,18 @@ export default function AddInstallmentScreen() {
 
           {/* 메모 */}
           <View style={{ marginBottom: 20 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('common.memo')}</Text>
+            <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('common.memo')}</Text>
             <TextInput
               style={{
-                backgroundColor: '#F9FAFB',
+                backgroundColor: theme.backgroundSecondary,
                 borderRadius: 8,
                 padding: 16,
                 fontSize: 16,
-                color: '#1A1A1A',
+                color: theme.inputText,
                 minHeight: 80,
               }}
               placeholder={t('common.memoPlaceholder')}
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={theme.placeholder}
               multiline
               value={memo}
               onChangeText={setMemo}
@@ -362,25 +369,25 @@ export default function AddInstallmentScreen() {
           {amount > 0 && (
             <View
               style={{
-                backgroundColor: '#FEF3C7',
+                backgroundColor: theme.warningBanner,
                 borderRadius: 12,
                 padding: 16,
                 marginBottom: 20,
               }}
             >
-              <Text style={{ fontSize: 14, fontWeight: '600', color: '#92400E', marginBottom: 12 }}>
+              <Text style={{ fontSize: 14, fontWeight: '600', color: theme.warningBannerText, marginBottom: 12 }}>
                 {t('installment.calculationResult')}
               </Text>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-                <Text style={{ color: '#92400E' }}>{t('installment.monthlyPayment')}</Text>
-                <Text style={{ fontWeight: 'bold', color: '#B45309' }}>
+                <Text style={{ color: theme.warningBannerText }}>{t('installment.monthlyPayment')}</Text>
+                <Text style={{ fontWeight: 'bold', color: theme.warningBannerText }}>
                   {formatKrw(monthlyPayment)}
                 </Text>
               </View>
               {!isInterestFree && totalInterest > 0 && (
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                  <Text style={{ color: '#92400E' }}>{t('installment.totalInterest')}</Text>
-                  <Text style={{ color: '#B45309' }}>{formatKrw(totalInterest)}</Text>
+                  <Text style={{ color: theme.warningBannerText }}>{t('installment.totalInterest')}</Text>
+                  <Text style={{ color: theme.warningBannerText }}>{formatKrw(totalInterest)}</Text>
                 </View>
               )}
             </View>
@@ -390,10 +397,10 @@ export default function AddInstallmentScreen() {
 
       {/* 카드 선택 모달 */}
       <Modal visible={showCardPicker} transparent animationType="slide">
-        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: theme.modalOverlay }}>
           <View
             style={{
-              backgroundColor: '#FFFFFF',
+              backgroundColor: theme.modalBackground,
               borderTopLeftRadius: 20,
               borderTopRightRadius: 20,
               padding: 20,
@@ -401,9 +408,9 @@ export default function AddInstallmentScreen() {
             }}
           >
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
-              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{t('installment.selectCardTitle')}</Text>
+              <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>{t('installment.selectCardTitle')}</Text>
               <TouchableOpacity onPress={() => setShowCardPicker(false)}>
-                <Ionicons name="close" size={24} color="#666666" />
+                <Ionicons name="close" size={24} color={theme.textSecondary} />
               </TouchableOpacity>
             </View>
 
@@ -415,7 +422,7 @@ export default function AddInstallmentScreen() {
                     flexDirection: 'row',
                     alignItems: 'center',
                     padding: 16,
-                    backgroundColor: selectedCardId === card.id ? '#FEF3C7' : '#F9FAFB',
+                    backgroundColor: selectedCardId === card.id ? theme.warningBanner : theme.backgroundSecondary,
                     borderRadius: 8,
                     marginBottom: 8,
                   }}
@@ -433,9 +440,9 @@ export default function AddInstallmentScreen() {
                       marginRight: 12,
                     }}
                   />
-                  <Text style={{ flex: 1, fontSize: 16, color: '#1A1A1A' }}>{card.name}</Text>
+                  <Text style={{ flex: 1, fontSize: 16, color: theme.text }}>{card.name}</Text>
                   {selectedCardId === card.id && (
-                    <Ionicons name="checkmark" size={20} color="#F7931A" />
+                    <Ionicons name="checkmark" size={20} color={theme.primary} />
                   )}
                 </TouchableOpacity>
               ))}
@@ -446,19 +453,19 @@ export default function AddInstallmentScreen() {
 
       {/* 개월 선택 모달 */}
       <Modal visible={showMonthPicker} transparent animationType="slide">
-        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: theme.modalOverlay }}>
           <View
             style={{
-              backgroundColor: '#FFFFFF',
+              backgroundColor: theme.modalBackground,
               borderTopLeftRadius: 20,
               borderTopRightRadius: 20,
               padding: 20,
             }}
           >
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
-              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{t('installment.selectMonths')}</Text>
+              <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>{t('installment.selectMonths')}</Text>
               <TouchableOpacity onPress={() => setShowMonthPicker(false)}>
-                <Ionicons name="close" size={24} color="#666666" />
+                <Ionicons name="close" size={24} color={theme.textSecondary} />
               </TouchableOpacity>
             </View>
 
@@ -469,7 +476,7 @@ export default function AddInstallmentScreen() {
                   style={{
                     width: '30%',
                     padding: 12,
-                    backgroundColor: months === m && !customMonths ? '#F7931A' : '#F3F4F6',
+                    backgroundColor: months === m && !customMonths ? theme.primary : theme.backgroundTertiary,
                     borderRadius: 8,
                     margin: '1.5%',
                     alignItems: 'center',
@@ -483,7 +490,7 @@ export default function AddInstallmentScreen() {
                   <Text
                     style={{
                       fontSize: 16,
-                      color: months === m && !customMonths ? '#FFFFFF' : '#1A1A1A',
+                      color: months === m && !customMonths ? '#FFFFFF' : theme.text,
                     }}
                   >
                     {t('installment.monthsFormat', { count: m })}
@@ -492,17 +499,17 @@ export default function AddInstallmentScreen() {
               ))}
             </View>
 
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('installment.customInput')}</Text>
+            <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('installment.customInput')}</Text>
             <TextInput
               style={{
-                backgroundColor: '#F9FAFB',
+                backgroundColor: theme.backgroundSecondary,
                 borderRadius: 8,
                 padding: 16,
                 fontSize: 16,
-                color: '#1A1A1A',
+                color: theme.inputText,
               }}
               placeholder={t('installment.customMonthsPlaceholder')}
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={theme.placeholder}
               keyboardType="number-pad"
               value={customMonths}
               onChangeText={setCustomMonths}
@@ -510,7 +517,7 @@ export default function AddInstallmentScreen() {
 
             <TouchableOpacity
               style={{
-                backgroundColor: '#F7931A',
+                backgroundColor: theme.primary,
                 padding: 16,
                 borderRadius: 8,
                 alignItems: 'center',
@@ -527,19 +534,19 @@ export default function AddInstallmentScreen() {
       {/* 날짜 선택 (캘린더) */}
       {showDatePicker && (
         <Modal visible={showDatePicker} transparent animationType="fade">
-          <View style={{ flex: 1, justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <View style={{ flex: 1, justifyContent: 'center', backgroundColor: theme.modalOverlay }}>
             <View
               style={{
-                backgroundColor: '#FFFFFF',
+                backgroundColor: theme.modalBackground,
                 margin: 20,
                 borderRadius: 16,
                 padding: 20,
               }}
             >
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
-                <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{t('common.selectDate')}</Text>
+                <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>{t('common.selectDate')}</Text>
                 <TouchableOpacity onPress={() => setShowDatePicker(false)}>
-                  <Ionicons name="close" size={24} color="#666666" />
+                  <Ionicons name="close" size={24} color={theme.textSecondary} />
                 </TouchableOpacity>
               </View>
               <DateTimePicker
@@ -560,7 +567,7 @@ export default function AddInstallmentScreen() {
               {Platform.OS === 'ios' && (
                 <TouchableOpacity
                   style={{
-                    backgroundColor: '#F7931A',
+                    backgroundColor: theme.primary,
                     padding: 16,
                     borderRadius: 8,
                     alignItems: 'center',
@@ -575,6 +582,7 @@ export default function AddInstallmentScreen() {
           </View>
         </Modal>
       )}
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

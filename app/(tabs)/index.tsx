@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '../../src/hooks/useTheme';
 import { useLedgerStore } from '../../src/stores/ledgerStore';
 import { usePriceStore } from '../../src/stores/priceStore';
 import { useSettingsStore } from '../../src/stores/settingsStore';
@@ -19,6 +20,7 @@ import { PremiumBanner } from '../../src/components/PremiumGate';
 export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const { t } = useTranslation();
+  const { theme } = useTheme();
 
   const { records, getMonthlyTotal, getTodayTotal, loadRecords } = useLedgerStore();
   const { btcKrw, fetchPrices, lastUpdated, isOffline, kimchiPremium } = usePriceStore();
@@ -58,7 +60,7 @@ export default function HomeScreen() {
     .slice(0, 5);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
       <ScrollView
         style={{ flex: 1 }}
         refreshControl={
@@ -67,59 +69,59 @@ export default function HomeScreen() {
       >
         {/* Header */}
         <View style={{ padding: 20 }}>
-          <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#1A1A1A' }}>
+          <Text style={{ fontSize: 24, fontWeight: 'bold', color: theme.text }}>
             {settings.userName
               ? t('home.greetingWithName', { name: settings.userName })
               : t('home.greeting')} 👋
           </Text>
-          <Text style={{ fontSize: 14, color: '#666666', marginTop: 4 }}>
+          <Text style={{ fontSize: 14, color: theme.textSecondary, marginTop: 4 }}>
             {formatDateWithDay(getTodayString())}
           </Text>
         </View>
 
         {/* Today summary */}
         <View style={{ paddingHorizontal: 20, marginBottom: 24 }}>
-          <Text style={{ fontSize: 14, color: '#666666', marginBottom: 12 }}>{t('home.today')}</Text>
+          <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 12 }}>{t('home.today')}</Text>
           <View style={{ flexDirection: 'row' }}>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 14, color: '#666666' }}>{t('home.income')}</Text>
+              <Text style={{ fontSize: 14, color: theme.textSecondary }}>{t('home.income')}</Text>
               {settings.displayUnit === 'BTC' ? (
                 <>
-                  <Text style={{ fontSize: 20, fontWeight: '600', color: '#22C55E' }}>
+                  <Text style={{ fontSize: 20, fontWeight: '600', color: theme.success }}>
                     {formatSats(todayIncomeSats)}
                   </Text>
-                  <Text style={{ fontSize: 12, color: '#9CA3AF' }}>
+                  <Text style={{ fontSize: 12, color: theme.textMuted }}>
                     {formatKrw(todayTotal.income)}
                   </Text>
                 </>
               ) : (
                 <>
-                  <Text style={{ fontSize: 20, fontWeight: '600', color: '#22C55E' }}>
+                  <Text style={{ fontSize: 20, fontWeight: '600', color: theme.success }}>
                     {formatKrw(todayTotal.income)}
                   </Text>
-                  <Text style={{ fontSize: 12, color: '#9CA3AF' }}>
+                  <Text style={{ fontSize: 12, color: theme.textMuted }}>
                     {formatSats(todayIncomeSats)}
                   </Text>
                 </>
               )}
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 14, color: '#666666' }}>{t('home.expense')}</Text>
+              <Text style={{ fontSize: 14, color: theme.textSecondary }}>{t('home.expense')}</Text>
               {settings.displayUnit === 'BTC' ? (
                 <>
-                  <Text style={{ fontSize: 20, fontWeight: '600', color: '#EF4444' }}>
+                  <Text style={{ fontSize: 20, fontWeight: '600', color: theme.error }}>
                     {formatSats(todayExpenseSats)}
                   </Text>
-                  <Text style={{ fontSize: 12, color: '#9CA3AF' }}>
+                  <Text style={{ fontSize: 12, color: theme.textMuted }}>
                     {formatKrw(todayTotal.expense)}
                   </Text>
                 </>
               ) : (
                 <>
-                  <Text style={{ fontSize: 20, fontWeight: '600', color: '#EF4444' }}>
+                  <Text style={{ fontSize: 20, fontWeight: '600', color: theme.error }}>
                     {formatKrw(todayTotal.expense)}
                   </Text>
-                  <Text style={{ fontSize: 12, color: '#9CA3AF' }}>
+                  <Text style={{ fontSize: 12, color: theme.textMuted }}>
                     {formatSats(todayExpenseSats)}
                   </Text>
                 </>
@@ -130,56 +132,56 @@ export default function HomeScreen() {
 
         {/* Monthly status */}
         <View style={{ paddingHorizontal: 20, marginBottom: 24 }}>
-          <Text style={{ fontSize: 14, color: '#666666', marginBottom: 12 }}>
+          <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 12 }}>
             {t('home.monthStatus', { month })}
           </Text>
           <View
             style={{
-              backgroundColor: '#F9FAFB',
+              backgroundColor: theme.backgroundSecondary,
               borderRadius: 12,
               padding: 16,
             }}
           >
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
               <View>
-                <Text style={{ fontSize: 12, color: '#666666' }}>{t('home.income')}</Text>
+                <Text style={{ fontSize: 12, color: theme.textSecondary }}>{t('home.income')}</Text>
                 {settings.displayUnit === 'BTC' ? (
                   <>
-                    <Text style={{ fontSize: 18, fontWeight: '600', color: '#22C55E' }}>
+                    <Text style={{ fontSize: 18, fontWeight: '600', color: theme.success }}>
                       {formatSats(monthlyTotal.incomeSats)}
                     </Text>
-                    <Text style={{ fontSize: 11, color: '#9CA3AF' }}>
+                    <Text style={{ fontSize: 11, color: theme.textMuted }}>
                       {formatKrw(monthlyTotal.income)}
                     </Text>
                   </>
                 ) : (
                   <>
-                    <Text style={{ fontSize: 18, fontWeight: '600', color: '#22C55E' }}>
+                    <Text style={{ fontSize: 18, fontWeight: '600', color: theme.success }}>
                       {formatKrw(monthlyTotal.income)}
                     </Text>
-                    <Text style={{ fontSize: 11, color: '#9CA3AF' }}>
+                    <Text style={{ fontSize: 11, color: theme.textMuted }}>
                       {formatSats(monthlyTotal.incomeSats)}
                     </Text>
                   </>
                 )}
               </View>
               <View style={{ alignItems: 'flex-end' }}>
-                <Text style={{ fontSize: 12, color: '#666666' }}>{t('home.expense')}</Text>
+                <Text style={{ fontSize: 12, color: theme.textSecondary }}>{t('home.expense')}</Text>
                 {settings.displayUnit === 'BTC' ? (
                   <>
-                    <Text style={{ fontSize: 18, fontWeight: '600', color: '#EF4444' }}>
+                    <Text style={{ fontSize: 18, fontWeight: '600', color: theme.error }}>
                       {formatSats(monthlyTotal.expenseSats)}
                     </Text>
-                    <Text style={{ fontSize: 11, color: '#9CA3AF' }}>
+                    <Text style={{ fontSize: 11, color: theme.textMuted }}>
                       {formatKrw(monthlyTotal.expense)}
                     </Text>
                   </>
                 ) : (
                   <>
-                    <Text style={{ fontSize: 18, fontWeight: '600', color: '#EF4444' }}>
+                    <Text style={{ fontSize: 18, fontWeight: '600', color: theme.error }}>
                       {formatKrw(monthlyTotal.expense)}
                     </Text>
-                    <Text style={{ fontSize: 11, color: '#9CA3AF' }}>
+                    <Text style={{ fontSize: 11, color: theme.textMuted }}>
                       {formatSats(monthlyTotal.expenseSats)}
                     </Text>
                   </>
@@ -190,23 +192,23 @@ export default function HomeScreen() {
             <View
               style={{
                 borderTopWidth: 1,
-                borderTopColor: '#E5E7EB',
+                borderTopColor: theme.border,
                 paddingTop: 16,
               }}
             >
-              <Text style={{ fontSize: 12, color: '#666666' }}>{t('home.netSaving')}</Text>
+              <Text style={{ fontSize: 12, color: theme.textSecondary }}>{t('home.netSaving')}</Text>
               {settings.displayUnit === 'BTC' ? (
                 <>
                   <Text
                     style={{
                       fontSize: 24,
                       fontWeight: 'bold',
-                      color: netSavingSats >= 0 ? '#22C55E' : '#EF4444',
+                      color: netSavingSats >= 0 ? theme.success : theme.error,
                     }}
                   >
                     {formatSats(Math.abs(netSavingSats))} {netSavingSats >= 0 ? '✨' : ''}
                   </Text>
-                  <Text style={{ fontSize: 12, color: '#9CA3AF' }}>
+                  <Text style={{ fontSize: 12, color: theme.textMuted }}>
                     {formatKrw(netSaving)}
                   </Text>
                 </>
@@ -216,12 +218,12 @@ export default function HomeScreen() {
                     style={{
                       fontSize: 24,
                       fontWeight: 'bold',
-                      color: netSaving >= 0 ? '#22C55E' : '#EF4444',
+                      color: netSaving >= 0 ? theme.success : theme.error,
                     }}
                   >
                     {formatKrw(netSaving)}
                   </Text>
-                  <Text style={{ fontSize: 12, color: '#9CA3AF' }}>
+                  <Text style={{ fontSize: 12, color: theme.textMuted }}>
                     {formatSats(Math.abs(netSavingSats))} {netSavingSats >= 0 ? '✨' : ''}
                   </Text>
                 </>
@@ -242,12 +244,12 @@ export default function HomeScreen() {
         {/* Card payment schedule */}
         {cardPayments.length > 0 && (
           <View style={{ paddingHorizontal: 20, marginBottom: 24 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 12 }}>{t('home.cardPaymentSchedule')}</Text>
+            <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 12 }}>{t('home.cardPaymentSchedule')}</Text>
             {cardPayments.map((payment) => (
               <View
                 key={payment.cardId}
                 style={{
-                  backgroundColor: '#F9FAFB',
+                  backgroundColor: theme.backgroundSecondary,
                   borderRadius: 12,
                   padding: 16,
                   marginBottom: 8,
@@ -257,33 +259,33 @@ export default function HomeScreen() {
               >
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 14, fontWeight: '600', color: '#1A1A1A' }}>
+                    <Text style={{ fontSize: 14, fontWeight: '600', color: theme.text }}>
                       {payment.cardName}
                     </Text>
-                    <Text style={{ fontSize: 11, color: '#9CA3AF', marginTop: 2 }}>
+                    <Text style={{ fontSize: 11, color: theme.textMuted, marginTop: 2 }}>
                       {t('home.paymentDay', { day: payment.paymentDay })}
                       {payment.daysUntilPayment !== null && payment.daysUntilPayment <= 7 && (
-                        <Text style={{ color: '#F7931A' }}> (D-{payment.daysUntilPayment})</Text>
+                        <Text style={{ color: theme.primary }}> (D-{payment.daysUntilPayment})</Text>
                       )}
                     </Text>
                   </View>
                   <View style={{ alignItems: 'flex-end' }}>
                     {settings.displayUnit === 'BTC' ? (
                       <>
-                        <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#EF4444' }}>
+                        <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.error }}>
                           {formatSats(payment.totalPaymentSats)}
                         </Text>
-                        <Text style={{ fontSize: 11, color: '#9CA3AF' }}>
+                        <Text style={{ fontSize: 11, color: theme.textMuted }}>
                           {formatKrw(payment.totalPayment)}
                         </Text>
                       </>
                     ) : (
                       <>
-                        <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#EF4444' }}>
+                        <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.error }}>
                           {formatKrw(payment.totalPayment)}
                         </Text>
                         {payment.totalPaymentSats > 0 && (
-                          <Text style={{ fontSize: 11, color: '#9CA3AF' }}>
+                          <Text style={{ fontSize: 11, color: theme.textMuted }}>
                             {formatSats(payment.totalPaymentSats)}
                           </Text>
                         )}
@@ -291,15 +293,15 @@ export default function HomeScreen() {
                     )}
                   </View>
                 </View>
-                <View style={{ flexDirection: 'row', marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#E5E7EB' }}>
+                <View style={{ flexDirection: 'row', marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: theme.border }}>
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 11, color: '#666666' }}>{t('home.lumpSum')}</Text>
-                    <Text style={{ fontSize: 13, color: '#1A1A1A' }}>{formatKrw(payment.periodExpenses)}</Text>
+                    <Text style={{ fontSize: 11, color: theme.textSecondary }}>{t('home.lumpSum')}</Text>
+                    <Text style={{ fontSize: 13, color: theme.text }}>{formatKrw(payment.periodExpenses)}</Text>
                   </View>
                   {payment.installmentCount > 0 && (
                     <View style={{ flex: 1, alignItems: 'flex-end' }}>
-                      <Text style={{ fontSize: 11, color: '#666666' }}>{t('home.installment', { count: payment.installmentCount })}</Text>
-                      <Text style={{ fontSize: 13, color: '#1A1A1A' }}>{formatKrw(payment.installmentPayments)}</Text>
+                      <Text style={{ fontSize: 11, color: theme.textSecondary }}>{t('home.installment', { count: payment.installmentCount })}</Text>
+                      <Text style={{ fontSize: 13, color: theme.text }}>{formatKrw(payment.installmentPayments)}</Text>
                     </View>
                   )}
                 </View>
@@ -310,12 +312,12 @@ export default function HomeScreen() {
 
         {/* Quick input */}
         <View style={{ paddingHorizontal: 20, marginBottom: 24 }}>
-          <Text style={{ fontSize: 14, color: '#666666', marginBottom: 12 }}>{t('home.quickInput')}</Text>
+          <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 12 }}>{t('home.quickInput')}</Text>
           <View style={{ flexDirection: 'row', gap: 12 }}>
             <TouchableOpacity
               style={{
                 flex: 1,
-                backgroundColor: '#FEF2F2',
+                backgroundColor: theme.expenseButtonBg,
                 padding: 16,
                 borderRadius: 12,
                 alignItems: 'center',
@@ -323,13 +325,13 @@ export default function HomeScreen() {
               onPress={() => router.push('/(modals)/add-expense')}
             >
               <Text style={{ fontSize: 24, marginBottom: 4 }}>📤</Text>
-              <Text style={{ fontSize: 14, fontWeight: '500', color: '#EF4444' }}>{t('home.addExpense')}</Text>
+              <Text style={{ fontSize: 14, fontWeight: '500', color: theme.error }}>{t('home.addExpense')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={{
                 flex: 1,
-                backgroundColor: '#F0FDF4',
+                backgroundColor: theme.incomeButtonBg,
                 padding: 16,
                 borderRadius: 12,
                 alignItems: 'center',
@@ -337,7 +339,7 @@ export default function HomeScreen() {
               onPress={() => router.push('/(modals)/add-income')}
             >
               <Text style={{ fontSize: 24, marginBottom: 4 }}>📥</Text>
-              <Text style={{ fontSize: 14, fontWeight: '500', color: '#22C55E' }}>{t('home.addIncome')}</Text>
+              <Text style={{ fontSize: 14, fontWeight: '500', color: theme.success }}>{t('home.addIncome')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -345,22 +347,22 @@ export default function HomeScreen() {
         {/* Recent records */}
         <View style={{ paddingHorizontal: 20, marginBottom: 32 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <Text style={{ fontSize: 14, color: '#666666' }}>{t('home.recentRecords')}</Text>
+            <Text style={{ fontSize: 14, color: theme.textSecondary }}>{t('home.recentRecords')}</Text>
             <TouchableOpacity onPress={() => router.push('/(tabs)/records')}>
-              <Text style={{ fontSize: 12, color: '#F7931A' }}>{t('home.viewMore')}</Text>
+              <Text style={{ fontSize: 12, color: theme.primary }}>{t('home.viewMore')}</Text>
             </TouchableOpacity>
           </View>
 
           {todayRecords.length === 0 ? (
             <View
               style={{
-                backgroundColor: '#F9FAFB',
+                backgroundColor: theme.backgroundSecondary,
                 borderRadius: 12,
                 padding: 32,
                 alignItems: 'center',
               }}
             >
-              <Text style={{ fontSize: 14, color: '#9CA3AF' }}>
+              <Text style={{ fontSize: 14, color: theme.textMuted }}>
                 {t('home.noRecordsToday')}
               </Text>
             </View>
@@ -369,7 +371,7 @@ export default function HomeScreen() {
               <View
                 key={record.id}
                 style={{
-                  backgroundColor: '#F9FAFB',
+                  backgroundColor: theme.backgroundSecondary,
                   borderRadius: 8,
                   padding: 12,
                   marginBottom: 8,
@@ -379,10 +381,10 @@ export default function HomeScreen() {
                 }}
               >
                 <View>
-                  <Text style={{ fontSize: 14, fontWeight: '500', color: '#1A1A1A' }}>
+                  <Text style={{ fontSize: 14, fontWeight: '500', color: theme.text }}>
                     {record.category}
                   </Text>
-                  <Text style={{ fontSize: 12, color: '#9CA3AF' }}>
+                  <Text style={{ fontSize: 12, color: theme.textMuted }}>
                     {record.type === 'expense' && 'paymentMethod' in record
                       ? record.paymentMethod === 'card'
                         ? t('home.card')
@@ -401,13 +403,13 @@ export default function HomeScreen() {
                         style={{
                           fontSize: 14,
                           fontWeight: '600',
-                          color: record.type === 'income' ? '#22C55E' : '#EF4444',
+                          color: record.type === 'income' ? theme.success : theme.error,
                         }}
                       >
                         {record.type === 'income' ? '+' : '-'}
                         {formatSats(record.satsEquivalent || 0)}
                       </Text>
-                      <Text style={{ fontSize: 11, color: '#9CA3AF' }}>
+                      <Text style={{ fontSize: 11, color: theme.textMuted }}>
                         {formatKrw(record.amount)}
                       </Text>
                     </>
@@ -417,14 +419,14 @@ export default function HomeScreen() {
                         style={{
                           fontSize: 14,
                           fontWeight: '600',
-                          color: record.type === 'income' ? '#22C55E' : '#EF4444',
+                          color: record.type === 'income' ? theme.success : theme.error,
                         }}
                       >
                         {record.type === 'income' ? '+' : '-'}
                         {formatKrw(record.amount)}
                       </Text>
                       {record.satsEquivalent && (
-                        <Text style={{ fontSize: 11, color: '#9CA3AF' }}>
+                        <Text style={{ fontSize: 11, color: theme.textMuted }}>
                           {formatSats(record.satsEquivalent)}
                         </Text>
                       )}
@@ -441,7 +443,7 @@ export default function HomeScreen() {
           <View style={{ paddingHorizontal: 20, marginBottom: 32 }}>
             <View
               style={{
-                backgroundColor: isOffline ? '#FEE2E2' : '#FEF3C7',
+                backgroundColor: isOffline ? theme.offlineBannerBg : theme.priceBannerBg,
                 borderRadius: 12,
                 padding: 16,
                 flexDirection: 'row',
@@ -451,27 +453,27 @@ export default function HomeScreen() {
             >
               <View>
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Text style={{ fontSize: 12, color: isOffline ? '#991B1B' : '#92400E' }}>
+                  <Text style={{ fontSize: 12, color: isOffline ? theme.offlineBannerText : theme.priceBannerText }}>
                     BTC/KRW
                   </Text>
                   {isOffline && (
                     <View
                       style={{
-                        backgroundColor: '#EF4444',
+                        backgroundColor: theme.error,
                         borderRadius: 4,
                         paddingHorizontal: 6,
                         paddingVertical: 2,
                         marginLeft: 8,
                       }}
                     >
-                      <Text style={{ fontSize: 10, color: '#FFFFFF', fontWeight: '600' }}>
+                      <Text style={{ fontSize: 10, color: theme.textInverse, fontWeight: '600' }}>
                         {t('common.offline')}
                       </Text>
                     </View>
                   )}
                 </View>
                 <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
-                  <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#F7931A' }}>
+                  <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.primary }}>
                     {formatKrw(btcKrw)}
                   </Text>
                   {kimchiPremium !== null && (
@@ -479,7 +481,7 @@ export default function HomeScreen() {
                       style={{
                         fontSize: 13,
                         fontWeight: '600',
-                        color: kimchiPremium >= 0 ? '#22C55E' : '#EF4444',
+                        color: kimchiPremium >= 0 ? theme.success : theme.error,
                         marginLeft: 8,
                       }}
                     >
@@ -488,7 +490,7 @@ export default function HomeScreen() {
                   )}
                 </View>
                 {lastUpdated && (
-                  <Text style={{ fontSize: 11, color: isOffline ? '#991B1B' : '#92400E', marginTop: 2 }}>
+                  <Text style={{ fontSize: 11, color: isOffline ? theme.offlineBannerText : theme.priceBannerText, marginTop: 2 }}>
                     {new Date(lastUpdated).toLocaleString('ko-KR', {
                       month: 'short',
                       day: 'numeric',
@@ -498,7 +500,7 @@ export default function HomeScreen() {
                   </Text>
                 )}
               </View>
-              <Ionicons name="logo-bitcoin" size={32} color="#F7931A" />
+              <Ionicons name="logo-bitcoin" size={32} color={theme.primary} />
             </View>
           </View>
         )}

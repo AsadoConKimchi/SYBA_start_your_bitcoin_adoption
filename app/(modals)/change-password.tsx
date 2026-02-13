@@ -12,10 +12,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '../../src/hooks/useTheme';
 import { useAuthStore } from '../../src/stores/authStore';
 
 export default function ChangePasswordScreen() {
   const { t } = useTranslation();
+  const { theme } = useTheme();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -70,7 +72,7 @@ export default function ChangePasswordScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
@@ -83,21 +85,21 @@ export default function ChangePasswordScreen() {
             alignItems: 'center',
             padding: 20,
             borderBottomWidth: 1,
-            borderBottomColor: '#E5E7EB',
+            borderBottomColor: theme.border,
           }}
         >
-          <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1A1A1A' }}>
+          <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>
             {t('changePassword.title')}
           </Text>
           <TouchableOpacity onPress={() => router.back()}>
-            <Ionicons name="close" size={24} color="#666666" />
+            <Ionicons name="close" size={24} color={theme.textSecondary} />
           </TouchableOpacity>
         </View>
 
         <View style={{ flex: 1, padding: 20 }}>
           {/* 현재 비밀번호 */}
           <View style={{ marginBottom: 24 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>
+            <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>
               {t('changePassword.currentPassword')}
             </Text>
             <View
@@ -105,15 +107,15 @@ export default function ChangePasswordScreen() {
                 flexDirection: 'row',
                 alignItems: 'center',
                 borderWidth: 1,
-                borderColor: '#E5E7EB',
+                borderColor: theme.inputBorder,
                 borderRadius: 8,
                 paddingHorizontal: 16,
               }}
             >
               <TextInput
-                style={{ flex: 1, fontSize: 16, paddingVertical: 14, color: '#1A1A1A' }}
+                style={{ flex: 1, fontSize: 16, paddingVertical: 14, color: theme.inputText }}
                 placeholder={t('changePassword.currentPasswordPlaceholder')}
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={theme.placeholder}
                 secureTextEntry={!showCurrentPassword}
                 value={currentPassword}
                 onChangeText={setCurrentPassword}
@@ -122,7 +124,7 @@ export default function ChangePasswordScreen() {
                 <Ionicons
                   name={showCurrentPassword ? 'eye-off' : 'eye'}
                   size={20}
-                  color="#9CA3AF"
+                  color={theme.textMuted}
                 />
               </TouchableOpacity>
             </View>
@@ -130,7 +132,7 @@ export default function ChangePasswordScreen() {
 
           {/* 새 비밀번호 */}
           <View style={{ marginBottom: 24 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>
+            <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>
               {t('changePassword.newPassword')}
             </Text>
             <View
@@ -138,15 +140,15 @@ export default function ChangePasswordScreen() {
                 flexDirection: 'row',
                 alignItems: 'center',
                 borderWidth: 1,
-                borderColor: '#E5E7EB',
+                borderColor: theme.inputBorder,
                 borderRadius: 8,
                 paddingHorizontal: 16,
               }}
             >
               <TextInput
-                style={{ flex: 1, fontSize: 16, paddingVertical: 14, color: '#1A1A1A' }}
+                style={{ flex: 1, fontSize: 16, paddingVertical: 14, color: theme.inputText }}
                 placeholder={t('changePassword.newPasswordPlaceholder')}
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={theme.placeholder}
                 secureTextEntry={!showNewPassword}
                 value={newPassword}
                 onChangeText={setNewPassword}
@@ -155,7 +157,7 @@ export default function ChangePasswordScreen() {
                 <Ionicons
                   name={showNewPassword ? 'eye-off' : 'eye'}
                   size={20}
-                  color="#9CA3AF"
+                  color={theme.textMuted}
                 />
               </TouchableOpacity>
             </View>
@@ -163,7 +165,7 @@ export default function ChangePasswordScreen() {
 
           {/* 새 비밀번호 확인 */}
           <View style={{ marginBottom: 24 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>
+            <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>
               {t('changePassword.confirmNewPassword')}
             </Text>
             <View
@@ -171,22 +173,22 @@ export default function ChangePasswordScreen() {
                 flexDirection: 'row',
                 alignItems: 'center',
                 borderWidth: 1,
-                borderColor: '#E5E7EB',
+                borderColor: theme.inputBorder,
                 borderRadius: 8,
                 paddingHorizontal: 16,
               }}
             >
               <TextInput
-                style={{ flex: 1, fontSize: 16, paddingVertical: 14, color: '#1A1A1A' }}
+                style={{ flex: 1, fontSize: 16, paddingVertical: 14, color: theme.inputText }}
                 placeholder={t('changePassword.confirmPasswordPlaceholder')}
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={theme.placeholder}
                 secureTextEntry={!showNewPassword}
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
               />
             </View>
             {confirmPassword && newPassword !== confirmPassword && (
-              <Text style={{ fontSize: 12, color: '#EF4444', marginTop: 4 }}>
+              <Text style={{ fontSize: 12, color: theme.error, marginTop: 4 }}>
                 {t('changePassword.passwordMismatch')}
               </Text>
             )}
@@ -194,10 +196,10 @@ export default function ChangePasswordScreen() {
         </View>
 
         {/* 변경 버튼 */}
-        <View style={{ padding: 20, borderTopWidth: 1, borderTopColor: '#E5E7EB' }}>
+        <View style={{ padding: 20, borderTopWidth: 1, borderTopColor: theme.border }}>
           <TouchableOpacity
             style={{
-              backgroundColor: '#F7931A',
+              backgroundColor: theme.primary,
               padding: 16,
               borderRadius: 8,
               alignItems: 'center',

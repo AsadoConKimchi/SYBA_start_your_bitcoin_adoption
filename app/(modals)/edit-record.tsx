@@ -15,6 +15,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '../../src/hooks/useTheme';
 import { useLedgerStore } from '../../src/stores/ledgerStore';
 import { useCardStore } from '../../src/stores/cardStore';
 import { usePriceStore } from '../../src/stores/priceStore';
@@ -43,6 +44,7 @@ const INSTALLMENT_OPTIONS = [
 
 export default function EditRecordScreen() {
   const { t } = useTranslation();
+  const { theme } = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { records, updateRecord, deleteRecord } = useLedgerStore();
   const { cards } = useCardStore();
@@ -127,8 +129,8 @@ export default function EditRecordScreen() {
 
   if (!record) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center' }}>
-        <Text>{t('editRecord.notFound')}</Text>
+      <SafeAreaView style={{ flex: 1, backgroundColor: theme.background, justifyContent: 'center', alignItems: 'center' }}>
+        <Text style={{ color: theme.text }}>{t('editRecord.notFound')}</Text>
       </SafeAreaView>
     );
   }
@@ -253,7 +255,7 @@ export default function EditRecordScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         {/* 헤더 */}
         <View
@@ -263,39 +265,40 @@ export default function EditRecordScreen() {
             alignItems: 'center',
             padding: 20,
             borderBottomWidth: 1,
-            borderBottomColor: '#E5E7EB',
+            borderBottomColor: theme.border,
           }}
         >
-          <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1A1A1A' }}>
+          <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>
             {t('editRecord.title')}
           </Text>
           <View style={{ flexDirection: 'row', gap: 16 }}>
             <TouchableOpacity onPress={handleDelete}>
-              <Ionicons name="trash-outline" size={24} color="#EF4444" />
+              <Ionicons name="trash-outline" size={24} color={theme.error} />
             </TouchableOpacity>
             <TouchableOpacity onPress={() => router.back()}>
-              <Ionicons name="close" size={24} color="#666666" />
+              <Ionicons name="close" size={24} color={theme.textSecondary} />
             </TouchableOpacity>
           </View>
         </View>
 
-        <ScrollView style={{ flex: 1, padding: 20 }}>
+        <ScrollView style={{ flex: 1, padding: 20 }} keyboardShouldPersistTaps="handled">
           {/* 날짜 선택 */}
           <View style={{ marginBottom: 24 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('common.date')}</Text>
+            <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('common.date')}</Text>
             <TouchableOpacity
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 borderWidth: 1,
-                borderColor: '#E5E7EB',
+                borderColor: theme.border,
                 borderRadius: 8,
                 padding: 12,
+                backgroundColor: theme.backgroundSecondary,
               }}
               onPress={() => setShowDatePicker(true)}
             >
-              <Text style={{ fontSize: 16, color: '#1A1A1A' }}>
+              <Text style={{ fontSize: 16, color: theme.text }}>
                 {selectedDate.toLocaleDateString('ko-KR', {
                   year: 'numeric',
                   month: 'long',
@@ -303,7 +306,7 @@ export default function EditRecordScreen() {
                   weekday: 'short',
                 })}
               </Text>
-              <Ionicons name="calendar-outline" size={20} color="#666666" />
+              <Ionicons name="calendar-outline" size={20} color={theme.textSecondary} />
             </TouchableOpacity>
             {showDatePicker && (
               <DateTimePicker
@@ -320,22 +323,22 @@ export default function EditRecordScreen() {
           {/* 금액 */}
           <View style={{ marginBottom: 24 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <Text style={{ fontSize: 14, color: '#666666' }}>{t('common.amount')}</Text>
+              <Text style={{ fontSize: 14, color: theme.textSecondary }}>{t('common.amount')}</Text>
               <TouchableOpacity
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
-                  backgroundColor: currencyMode === 'KRW' ? '#F3F4F6' : '#FEF3C7',
+                  backgroundColor: currencyMode === 'KRW' ? theme.backgroundTertiary : theme.warningBanner,
                   paddingHorizontal: 12,
                   paddingVertical: 6,
                   borderRadius: 16,
                 }}
                 onPress={toggleCurrencyMode}
               >
-                <Text style={{ fontSize: 12, color: currencyMode === 'KRW' ? '#666666' : '#F7931A', fontWeight: '600' }}>
+                <Text style={{ fontSize: 12, color: currencyMode === 'KRW' ? theme.textSecondary : theme.primary, fontWeight: '600' }}>
                   {currencyMode === 'KRW' ? t('common.krwAmount') : t('common.sats')}
                 </Text>
-                <Ionicons name="swap-horizontal" size={14} color={currencyMode === 'KRW' ? '#666666' : '#F7931A'} style={{ marginLeft: 4 }} />
+                <Ionicons name="swap-horizontal" size={14} color={currencyMode === 'KRW' ? theme.textSecondary : theme.primary} style={{ marginLeft: 4 }} />
               </TouchableOpacity>
             </View>
             <View
@@ -343,26 +346,27 @@ export default function EditRecordScreen() {
                 flexDirection: 'row',
                 alignItems: 'center',
                 borderWidth: 1,
-                borderColor: '#E5E7EB',
+                borderColor: theme.border,
                 borderRadius: 8,
                 paddingHorizontal: 16,
+                backgroundColor: theme.backgroundSecondary,
               }}
             >
-              <Text style={{ fontSize: 18, color: currencyMode === 'KRW' ? '#666666' : '#F7931A', marginRight: 4 }}>
+              <Text style={{ fontSize: 18, color: currencyMode === 'KRW' ? theme.textSecondary : theme.primary, marginRight: 4 }}>
                 {currencyMode === 'KRW' ? '₩' : '₿'}
               </Text>
               <TextInput
-                style={{ flex: 1, fontSize: 24, fontWeight: 'bold', paddingVertical: 16, color: '#1A1A1A' }}
+                style={{ flex: 1, fontSize: 24, fontWeight: 'bold', paddingVertical: 16, color: theme.text }}
                 placeholder="0"
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={theme.placeholder}
                 keyboardType="numeric"
                 value={amount}
                 onChangeText={handleAmountChange}
               />
-              {currencyMode === 'SATS' && <Text style={{ fontSize: 14, color: '#F7931A' }}>{t('common.sats')}</Text>}
+              {currencyMode === 'SATS' && <Text style={{ fontSize: 14, color: theme.primary }}>{t('common.sats')}</Text>}
             </View>
             {amountNumber > 0 && btcKrw && (
-              <Text style={{ fontSize: 12, color: '#F7931A', marginTop: 4 }}>
+              <Text style={{ fontSize: 12, color: theme.primary, marginTop: 4 }}>
                 {currencyMode === 'KRW' ? `= ${formatSats(satsAmount)} (${t('common.currentRate')})` : `= ${formatKrw(krwAmount)} (${t('common.currentRate')})`}
               </Text>
             )}
@@ -370,7 +374,7 @@ export default function EditRecordScreen() {
 
           {/* 카테고리 */}
           <View style={{ marginBottom: 24 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('expense.category')}</Text>
+            <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('expense.category')}</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {categories.map(cat => (
                 <TouchableOpacity
@@ -379,11 +383,11 @@ export default function EditRecordScreen() {
                     paddingHorizontal: 16,
                     paddingVertical: 10,
                     borderRadius: 20,
-                    backgroundColor: category === cat.name && !showCustomCategory ? cat.color : '#F3F4F6',
+                    backgroundColor: category === cat.name && !showCustomCategory ? cat.color : theme.backgroundTertiary,
                   }}
                   onPress={() => handleCategorySelect(cat.name)}
                 >
-                  <Text style={{ fontSize: 14, color: category === cat.name && !showCustomCategory ? '#FFFFFF' : '#666666' }}>
+                  <Text style={{ fontSize: 14, color: category === cat.name && !showCustomCategory ? '#FFFFFF' : theme.textSecondary }}>
                     {cat.icon} {t('categories.' + cat.id)}
                   </Text>
                 </TouchableOpacity>
@@ -393,11 +397,11 @@ export default function EditRecordScreen() {
                   paddingHorizontal: 16,
                   paddingVertical: 10,
                   borderRadius: 20,
-                  backgroundColor: showCustomCategory ? '#6B7280' : '#F3F4F6',
+                  backgroundColor: showCustomCategory ? '#6B7280' : theme.backgroundTertiary,
                 }}
                 onPress={() => handleCategorySelect('', true)}
               >
-                <Text style={{ fontSize: 14, color: showCustomCategory ? '#FFFFFF' : '#666666' }}>{t('expense.customCategory')}</Text>
+                <Text style={{ fontSize: 14, color: showCustomCategory ? '#FFFFFF' : theme.textSecondary }}>{t('expense.customCategory')}</Text>
               </TouchableOpacity>
             </View>
             {showCustomCategory && (
@@ -405,14 +409,15 @@ export default function EditRecordScreen() {
                 style={{
                   marginTop: 12,
                   borderWidth: 1,
-                  borderColor: '#E5E7EB',
+                  borderColor: theme.border,
                   borderRadius: 8,
                   padding: 12,
                   fontSize: 16,
-                  color: '#1A1A1A',
+                  color: theme.inputText,
+                  backgroundColor: theme.backgroundSecondary,
                 }}
                 placeholder={t('expense.customCategoryPlaceholder')}
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={theme.placeholder}
                 value={customCategory}
                 onChangeText={setCustomCategory}
               />
@@ -423,7 +428,7 @@ export default function EditRecordScreen() {
           {isExpenseRecord && (
             <>
               <View style={{ marginBottom: 24 }}>
-                <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('expense.paymentMethod')}</Text>
+                <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('expense.paymentMethod')}</Text>
                 <View style={{ flexDirection: 'row', gap: 8 }}>
                   {[
                     { id: 'cash', label: t('expense.cash') },
@@ -438,7 +443,7 @@ export default function EditRecordScreen() {
                         paddingVertical: 12,
                         paddingHorizontal: 16,
                         borderRadius: 8,
-                        backgroundColor: paymentMethod === method.id ? '#F7931A' : '#F3F4F6',
+                        backgroundColor: paymentMethod === method.id ? theme.primary : theme.backgroundTertiary,
                         alignItems: 'center',
                       }}
                       onPress={() => {
@@ -446,7 +451,7 @@ export default function EditRecordScreen() {
                         setLinkedAssetId(null);
                       }}
                     >
-                      <Text style={{ fontSize: 14, color: paymentMethod === method.id ? '#FFFFFF' : '#666666' }}>
+                      <Text style={{ fontSize: 14, color: paymentMethod === method.id ? '#FFFFFF' : theme.textSecondary }}>
                         {method.label}
                       </Text>
                     </TouchableOpacity>
@@ -457,7 +462,7 @@ export default function EditRecordScreen() {
               {/* 자산 선택 (계좌이체/Lightning/Onchain) */}
               {(paymentMethod === 'bank' || paymentMethod === 'lightning' || paymentMethod === 'onchain') && (
                 <View style={{ marginBottom: 24 }}>
-                  <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>
+                  <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>
                     {paymentMethod === 'bank' ? t('expense.selectAccount') : paymentMethod === 'lightning' ? t('expense.selectLightningWallet') : t('expense.selectOnchainWallet')}
                   </Text>
                   {availableAssets.length === 0 ? (
@@ -466,13 +471,13 @@ export default function EditRecordScreen() {
                         padding: 16,
                         borderRadius: 8,
                         borderWidth: 1,
-                        borderColor: '#E5E7EB',
+                        borderColor: theme.border,
                         borderStyle: 'dashed',
                         alignItems: 'center',
                       }}
                       onPress={() => router.push('/(modals)/add-asset')}
                     >
-                      <Text style={{ color: '#9CA3AF' }}>
+                      <Text style={{ color: theme.textMuted }}>
                         {paymentMethod === 'bank' ? t('expense.addAccount') : t('expense.addWallet')}
                       </Text>
                     </TouchableOpacity>
@@ -480,24 +485,25 @@ export default function EditRecordScreen() {
                     <TouchableOpacity
                       style={{
                         borderWidth: 1,
-                        borderColor: '#E5E7EB',
+                        borderColor: theme.border,
                         borderRadius: 8,
                         padding: 12,
                         flexDirection: 'row',
                         justifyContent: 'space-between',
                         alignItems: 'center',
+                        backgroundColor: theme.backgroundSecondary,
                       }}
                       onPress={() => setShowAssetPicker(true)}
                     >
-                      <Text style={{ fontSize: 16, color: linkedAssetId ? '#1A1A1A' : '#9CA3AF' }}>
+                      <Text style={{ fontSize: 16, color: linkedAssetId ? theme.text : theme.textMuted }}>
                         {linkedAssetId
                           ? availableAssets.find(a => a.id === linkedAssetId)?.name ?? t('common.search')
                           : paymentMethod === 'bank' ? t('expense.accountSelectHint') : t('expense.walletSelectHint')}
                       </Text>
-                      <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+                      <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
                     </TouchableOpacity>
                   )}
-                  <Text style={{ fontSize: 12, color: '#9CA3AF', marginTop: 8 }}>
+                  <Text style={{ fontSize: 12, color: theme.textMuted, marginTop: 8 }}>
                     {t('expense.autoDeductHint')}
                   </Text>
                 </View>
@@ -506,20 +512,20 @@ export default function EditRecordScreen() {
               {/* 카드 선택 */}
               {paymentMethod === 'card' && (
                 <View style={{ marginBottom: 24 }}>
-                  <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('expense.selectCard')}</Text>
+                  <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('expense.selectCard')}</Text>
                   {cards.length === 0 ? (
                     <TouchableOpacity
                       style={{
                         padding: 16,
                         borderRadius: 8,
                         borderWidth: 1,
-                        borderColor: '#E5E7EB',
+                        borderColor: theme.border,
                         borderStyle: 'dashed',
                         alignItems: 'center',
                       }}
                       onPress={() => router.push('/(modals)/add-card')}
                     >
-                      <Text style={{ color: '#9CA3AF' }}>{t('expense.addCard')}</Text>
+                      <Text style={{ color: theme.textMuted }}>{t('expense.addCard')}</Text>
                     </TouchableOpacity>
                   ) : (
                     <View style={{ gap: 8 }}>
@@ -529,7 +535,7 @@ export default function EditRecordScreen() {
                           style={{
                             padding: 12,
                             borderRadius: 8,
-                            backgroundColor: selectedCardId === card.id ? card.color : '#F3F4F6',
+                            backgroundColor: selectedCardId === card.id ? card.color : theme.backgroundTertiary,
                             flexDirection: 'row',
                             alignItems: 'center',
                           }}
@@ -544,7 +550,7 @@ export default function EditRecordScreen() {
                               marginRight: 8,
                             }}
                           />
-                          <Text style={{ color: selectedCardId === card.id ? '#FFFFFF' : '#1A1A1A' }}>{card.name}</Text>
+                          <Text style={{ color: selectedCardId === card.id ? '#FFFFFF' : theme.text }}>{card.name}</Text>
                         </TouchableOpacity>
                       ))}
                     </View>
@@ -555,21 +561,22 @@ export default function EditRecordScreen() {
               {/* 할부 */}
               {paymentMethod === 'card' && selectedCardId && (
                 <View style={{ marginBottom: 24 }}>
-                  <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('expense.installment')}</Text>
+                  <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('expense.installment')}</Text>
                   {showCustomInstallmentInput ? (
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                       <TextInput
                         style={{
                           flex: 1,
                           borderWidth: 1,
-                          borderColor: '#E5E7EB',
+                          borderColor: theme.border,
                           borderRadius: 8,
                           padding: 12,
                           fontSize: 16,
-                          color: '#1A1A1A',
+                          color: theme.inputText,
+                          backgroundColor: theme.backgroundSecondary,
                         }}
                         placeholder={t('expense.monthsInput')}
-                        placeholderTextColor="#9CA3AF"
+                        placeholderTextColor={theme.placeholder}
                         keyboardType="numeric"
                         value={customInstallment}
                         onChangeText={(text) => {
@@ -578,7 +585,7 @@ export default function EditRecordScreen() {
                           if (num) setInstallmentMonths(parseInt(num));
                         }}
                       />
-                      <Text style={{ fontSize: 16, color: '#666666' }}>{t('common.months')}</Text>
+                      <Text style={{ fontSize: 16, color: theme.textSecondary }}>{t('common.months')}</Text>
                       <TouchableOpacity
                         onPress={() => {
                           setShowCustomInstallmentInput(false);
@@ -586,7 +593,7 @@ export default function EditRecordScreen() {
                           setInstallmentMonths(1);
                         }}
                       >
-                        <Ionicons name="close-circle" size={24} color="#9CA3AF" />
+                        <Ionicons name="close-circle" size={24} color={theme.textMuted} />
                       </TouchableOpacity>
                     </View>
                   ) : (
@@ -596,16 +603,17 @@ export default function EditRecordScreen() {
                         alignItems: 'center',
                         justifyContent: 'space-between',
                         borderWidth: 1,
-                        borderColor: '#E5E7EB',
+                        borderColor: theme.border,
                         borderRadius: 8,
                         padding: 12,
+                        backgroundColor: theme.backgroundSecondary,
                       }}
                       onPress={() => setShowInstallmentPicker(true)}
                     >
-                      <Text style={{ fontSize: 16, color: '#1A1A1A' }}>
+                      <Text style={{ fontSize: 16, color: theme.text }}>
                         {installmentMonths === 1 ? t('home.lumpSum') : `${installmentMonths}${t('common.months')}`}
                       </Text>
-                      <Ionicons name="chevron-down" size={20} color="#666666" />
+                      <Ionicons name="chevron-down" size={20} color={theme.textSecondary} />
                     </TouchableOpacity>
                   )}
 
@@ -617,12 +625,12 @@ export default function EditRecordScreen() {
                           flex: 1,
                           paddingVertical: 10,
                           borderRadius: 8,
-                          backgroundColor: isInterestFree ? '#22C55E' : '#F3F4F6',
+                          backgroundColor: isInterestFree ? theme.success : theme.backgroundTertiary,
                           alignItems: 'center',
                         }}
                         onPress={() => setIsInterestFree(true)}
                       >
-                        <Text style={{ fontSize: 14, color: isInterestFree ? '#FFFFFF' : '#666666', fontWeight: '600' }}>
+                        <Text style={{ fontSize: 14, color: isInterestFree ? '#FFFFFF' : theme.textSecondary, fontWeight: '600' }}>
                           {t('common.noInterest')}
                         </Text>
                       </TouchableOpacity>
@@ -631,12 +639,12 @@ export default function EditRecordScreen() {
                           flex: 1,
                           paddingVertical: 10,
                           borderRadius: 8,
-                          backgroundColor: !isInterestFree ? '#EF4444' : '#F3F4F6',
+                          backgroundColor: !isInterestFree ? theme.error : theme.backgroundTertiary,
                           alignItems: 'center',
                         }}
                         onPress={() => setIsInterestFree(false)}
                       >
-                        <Text style={{ fontSize: 14, color: !isInterestFree ? '#FFFFFF' : '#666666', fontWeight: '600' }}>
+                        <Text style={{ fontSize: 14, color: !isInterestFree ? '#FFFFFF' : theme.textSecondary, fontWeight: '600' }}>
                           {t('common.withInterest')}
                         </Text>
                       </TouchableOpacity>
@@ -644,7 +652,7 @@ export default function EditRecordScreen() {
                   )}
 
                   {installmentMonths > 1 && krwAmount > 0 && (
-                    <Text style={{ fontSize: 12, color: '#666666', marginTop: 8 }}>
+                    <Text style={{ fontSize: 12, color: theme.textSecondary, marginTop: 8 }}>
                       {t('expense.installmentSummary', {
                         amount: formatKrw(Math.ceil(krwAmount / installmentMonths)),
                         months: installmentMonths,
@@ -660,18 +668,19 @@ export default function EditRecordScreen() {
           {/* 수입: 수입원 */}
           {!isExpenseRecord && (
             <View style={{ marginBottom: 24 }}>
-              <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('income.source')}</Text>
+              <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('income.source')}</Text>
               <TextInput
                 style={{
                   borderWidth: 1,
-                  borderColor: '#E5E7EB',
+                  borderColor: theme.border,
                   borderRadius: 8,
                   padding: 12,
                   fontSize: 16,
-                  color: '#1A1A1A',
+                  color: theme.inputText,
+                  backgroundColor: theme.backgroundSecondary,
                 }}
                 placeholder={t('income.sourcePlaceholder')}
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={theme.placeholder}
                 value={source}
                 onChangeText={setSource}
               />
@@ -680,35 +689,36 @@ export default function EditRecordScreen() {
 
           {/* 메모 */}
           <View style={{ marginBottom: 24 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('common.memo')}</Text>
+            <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('common.memo')}</Text>
             <TextInput
               style={{
                 borderWidth: 1,
-                borderColor: '#E5E7EB',
+                borderColor: theme.border,
                 borderRadius: 8,
                 padding: 12,
                 fontSize: 16,
-                color: '#1A1A1A',
+                color: theme.inputText,
+                backgroundColor: theme.backgroundSecondary,
               }}
               placeholder={t('common.memoPlaceholder')}
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={theme.placeholder}
               value={memo}
               onChangeText={setMemo}
             />
           </View>
 
           {/* 기록 정보 */}
-          <View style={{ marginBottom: 24, padding: 12, backgroundColor: '#F9FAFB', borderRadius: 8 }}>
-            <Text style={{ fontSize: 12, color: '#9CA3AF' }}>
+          <View style={{ marginBottom: 24, padding: 12, backgroundColor: theme.backgroundSecondary, borderRadius: 8 }}>
+            <Text style={{ fontSize: 12, color: theme.textMuted }}>
               {t('editRecord.created')}: {new Date(record.createdAt).toLocaleString()}
             </Text>
             {record.updatedAt !== record.createdAt && (
-              <Text style={{ fontSize: 12, color: '#9CA3AF', marginTop: 4 }}>
+              <Text style={{ fontSize: 12, color: theme.textMuted, marginTop: 4 }}>
                 {t('editRecord.modified')}: {new Date(record.updatedAt).toLocaleString()}
               </Text>
             )}
             {record.satsEquivalent && (
-              <Text style={{ fontSize: 12, color: '#F7931A', marginTop: 4 }}>
+              <Text style={{ fontSize: 12, color: theme.primary, marginTop: 4 }}>
                 {t('editRecord.recordedRate')}: {formatSats(record.satsEquivalent)}
               </Text>
             )}
@@ -716,10 +726,10 @@ export default function EditRecordScreen() {
         </ScrollView>
 
         {/* 저장 버튼 */}
-        <View style={{ padding: 20, borderTopWidth: 1, borderTopColor: '#E5E7EB' }}>
+        <View style={{ padding: 20, borderTopWidth: 1, borderTopColor: theme.border }}>
           <TouchableOpacity
             style={{
-              backgroundColor: isExpenseRecord ? '#EF4444' : '#22C55E',
+              backgroundColor: isExpenseRecord ? theme.error : theme.success,
               padding: 16,
               borderRadius: 8,
               alignItems: 'center',
@@ -736,12 +746,12 @@ export default function EditRecordScreen() {
 
         {/* 할부 선택 모달 */}
         <Modal visible={showInstallmentPicker} transparent animationType="slide">
-          <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
-            <View style={{ backgroundColor: '#FFFFFF', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20 }}>
+          <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: theme.modalOverlay }}>
+            <View style={{ backgroundColor: theme.modalBackground, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{t('expense.selectInstallment')}</Text>
+                <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>{t('expense.selectInstallment')}</Text>
                 <TouchableOpacity onPress={() => setShowInstallmentPicker(false)}>
-                  <Ionicons name="close" size={24} color="#666666" />
+                  <Ionicons name="close" size={24} color={theme.textSecondary} />
                 </TouchableOpacity>
               </View>
               <ScrollView style={{ maxHeight: 300 }}>
@@ -751,7 +761,7 @@ export default function EditRecordScreen() {
                     style={{
                       padding: 16,
                       borderRadius: 8,
-                      backgroundColor: installmentMonths === option.value && !showCustomInstallmentInput ? '#F7931A' : '#F3F4F6',
+                      backgroundColor: installmentMonths === option.value && !showCustomInstallmentInput ? theme.primary : theme.backgroundTertiary,
                       marginBottom: 8,
                     }}
                     onPress={() => {
@@ -770,7 +780,7 @@ export default function EditRecordScreen() {
                     <Text
                       style={{
                         fontSize: 16,
-                        color: installmentMonths === option.value && !showCustomInstallmentInput ? '#FFFFFF' : '#1A1A1A',
+                        color: installmentMonths === option.value && !showCustomInstallmentInput ? '#FFFFFF' : theme.text,
                         textAlign: 'center',
                       }}
                     >
@@ -784,10 +794,10 @@ export default function EditRecordScreen() {
         </Modal>
         {/* 자산 선택 모달 */}
         <Modal visible={showAssetPicker} transparent animationType="slide">
-          <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: theme.modalOverlay }}>
             <View
               style={{
-                backgroundColor: '#FFFFFF',
+                backgroundColor: theme.modalBackground,
                 borderTopLeftRadius: 20,
                 borderTopRightRadius: 20,
                 padding: 20,
@@ -795,11 +805,11 @@ export default function EditRecordScreen() {
               }}
             >
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
-                <Text style={{ fontSize: 18, fontWeight: 'bold' }}>
+                <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>
                   {paymentMethod === 'bank' ? t('expense.selectAccount') : paymentMethod === 'lightning' ? t('expense.selectLightningWallet') : t('expense.selectOnchainWallet')}
                 </Text>
                 <TouchableOpacity onPress={() => setShowAssetPicker(false)}>
-                  <Ionicons name="close" size={24} color="#666666" />
+                  <Ionicons name="close" size={24} color={theme.textSecondary} />
                 </TouchableOpacity>
               </View>
 
@@ -811,7 +821,7 @@ export default function EditRecordScreen() {
                       flexDirection: 'row',
                       alignItems: 'center',
                       padding: 16,
-                      backgroundColor: linkedAssetId === asset.id ? '#FEF3C7' : '#F9FAFB',
+                      backgroundColor: linkedAssetId === asset.id ? theme.warningBanner : theme.backgroundSecondary,
                       borderRadius: 8,
                       marginBottom: 8,
                     }}
@@ -825,7 +835,7 @@ export default function EditRecordScreen() {
                         width: 40,
                         height: 40,
                         borderRadius: 20,
-                        backgroundColor: paymentMethod === 'bank' ? '#D1FAE5' : '#FDE68A',
+                        backgroundColor: paymentMethod === 'bank' ? theme.incomeButtonBg : theme.warningBanner,
                         alignItems: 'center',
                         justifyContent: 'center',
                         marginRight: 12,
@@ -835,9 +845,9 @@ export default function EditRecordScreen() {
                         {paymentMethod === 'bank' ? '🏦' : paymentMethod === 'lightning' ? '⚡' : '₿'}
                       </Text>
                     </View>
-                    <Text style={{ flex: 1, fontSize: 16, color: '#1A1A1A' }}>{asset.name}</Text>
+                    <Text style={{ flex: 1, fontSize: 16, color: theme.text }}>{asset.name}</Text>
                     {linkedAssetId === asset.id && (
-                      <Ionicons name="checkmark-circle" size={24} color="#F7931A" />
+                      <Ionicons name="checkmark-circle" size={24} color={theme.primary} />
                     )}
                   </TouchableOpacity>
                 ))}
@@ -846,7 +856,7 @@ export default function EditRecordScreen() {
               <TouchableOpacity
                 style={{
                   padding: 16,
-                  backgroundColor: '#F3F4F6',
+                  backgroundColor: theme.backgroundTertiary,
                   borderRadius: 8,
                   alignItems: 'center',
                   marginTop: 8,
@@ -856,7 +866,7 @@ export default function EditRecordScreen() {
                   setShowAssetPicker(false);
                 }}
               >
-                <Text style={{ fontSize: 16, color: '#666666' }}>{t('income.noSelection')}</Text>
+                <Text style={{ fontSize: 16, color: theme.textSecondary }}>{t('income.noSelection')}</Text>
               </TouchableOpacity>
             </View>
           </View>

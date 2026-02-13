@@ -5,6 +5,7 @@ import { router } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '../../src/hooks/useTheme';
 import { useAssetStore } from '../../src/stores/assetStore';
 import { usePriceStore } from '../../src/stores/priceStore';
 import { useAuthStore } from '../../src/stores/authStore';
@@ -17,6 +18,7 @@ import { PremiumGate } from '../../src/components/PremiumGate';
 export default function AssetsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const { t } = useTranslation();
+  const { theme } = useTheme();
 
   const { encryptionKey } = useAuthStore();
   const { isSubscribed } = useSubscriptionStore();
@@ -71,14 +73,14 @@ export default function AssetsScreen() {
 
   if (!isSubscribed) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
         <PremiumGate feature={t('assets.management')} />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
       <View
         style={{
           flexDirection: 'row',
@@ -86,12 +88,12 @@ export default function AssetsScreen() {
           alignItems: 'center',
           padding: 20,
           borderBottomWidth: 1,
-          borderBottomColor: '#E5E7EB',
+          borderBottomColor: theme.border,
         }}
       >
-        <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#1A1A1A' }}>{t('assets.title')}</Text>
+        <Text style={{ fontSize: 20, fontWeight: 'bold', color: theme.text }}>{t('assets.title')}</Text>
         <TouchableOpacity onPress={() => router.push('/(modals)/add-asset')}>
-          <Ionicons name="add-circle" size={28} color="#22C55E" />
+          <Ionicons name="add-circle" size={28} color={theme.success} />
         </TouchableOpacity>
       </View>
 
@@ -104,53 +106,53 @@ export default function AssetsScreen() {
         <View style={{ padding: 20 }}>
           <View
             style={{
-              backgroundColor: '#F0FDF4',
+              backgroundColor: theme.incomeButtonBg,
               borderRadius: 16,
               padding: 24,
               marginBottom: 24,
             }}
           >
-            <Text style={{ fontSize: 14, color: '#166534', marginBottom: 8 }}>{t('assets.totalAssets')}</Text>
+            <Text style={{ fontSize: 14, color: theme.success, marginBottom: 8 }}>{t('assets.totalAssets')}</Text>
             {settings.displayUnit === 'BTC' ? (
               <>
-                <Text style={{ fontSize: 36, fontWeight: 'bold', color: '#F7931A', marginBottom: 4 }}>
+                <Text style={{ fontSize: 36, fontWeight: 'bold', color: theme.primary, marginBottom: 4 }}>
                   {formatSats(totalAssetSats)}
                 </Text>
-                <Text style={{ fontSize: 14, color: '#9CA3AF', marginBottom: 16 }}>
+                <Text style={{ fontSize: 14, color: theme.textMuted, marginBottom: 16 }}>
                   {formatKrw(Math.round(totalAssetKrw))}
                 </Text>
               </>
             ) : (
-              <Text style={{ fontSize: 36, fontWeight: 'bold', color: '#22C55E', marginBottom: 16 }}>
+              <Text style={{ fontSize: 36, fontWeight: 'bold', color: theme.success, marginBottom: 16 }}>
                 {formatKrw(Math.round(totalAssetKrw))}
               </Text>
             )}
 
             <View style={{ flexDirection: 'row', gap: 16 }}>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 12, color: '#666666' }}>{t('assets.fiatAssets')}</Text>
+                <Text style={{ fontSize: 12, color: theme.textSecondary }}>{t('assets.fiatAssets')}</Text>
                 {settings.displayUnit === 'BTC' ? (
                   <>
-                    <Text style={{ fontSize: 16, fontWeight: '600', color: '#1A1A1A' }}>
+                    <Text style={{ fontSize: 16, fontWeight: '600', color: theme.text }}>
                       {formatSats(totalFiatSats)}
                     </Text>
-                    <Text style={{ fontSize: 11, color: '#9CA3AF' }}>
+                    <Text style={{ fontSize: 11, color: theme.textMuted }}>
                       {formatKrw(totalFiat)}
                     </Text>
                   </>
                 ) : (
-                  <Text style={{ fontSize: 16, fontWeight: '600', color: '#1A1A1A' }}>
+                  <Text style={{ fontSize: 16, fontWeight: '600', color: theme.text }}>
                     {formatKrw(totalFiat)}
                   </Text>
                 )}
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 12, color: '#666666' }}>{t('assets.btcAssets')}</Text>
-                <Text style={{ fontSize: 16, fontWeight: '600', color: '#F7931A' }}>
+                <Text style={{ fontSize: 12, color: theme.textSecondary }}>{t('assets.btcAssets')}</Text>
+                <Text style={{ fontSize: 16, fontWeight: '600', color: theme.primary }}>
                   {formatSats(totalBtc)}
                 </Text>
                 {settings.displayUnit === 'KRW' && btcKrw && (
-                  <Text style={{ fontSize: 11, color: '#9CA3AF' }}>
+                  <Text style={{ fontSize: 11, color: theme.textMuted }}>
                     {formatKrw(Math.round(totalBtc * (btcKrw / 100_000_000)))}
                   </Text>
                 )}
@@ -160,15 +162,15 @@ export default function AssetsScreen() {
             {totalAssetKrw > 0 && (
               <View style={{ marginTop: 16 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <Text style={{ fontSize: 12, color: '#666666' }}>{t('assets.btcRatio')}</Text>
-                  <Text style={{ fontSize: 12, fontWeight: '600', color: '#F7931A' }}>
+                  <Text style={{ fontSize: 12, color: theme.textSecondary }}>{t('assets.btcRatio')}</Text>
+                  <Text style={{ fontSize: 12, fontWeight: '600', color: theme.primary }}>
                     {btcRatio.toFixed(1)}%
                   </Text>
                 </View>
                 <View
                   style={{
                     height: 8,
-                    backgroundColor: '#E5E7EB',
+                    backgroundColor: theme.border,
                     borderRadius: 4,
                     overflow: 'hidden',
                   }}
@@ -177,7 +179,7 @@ export default function AssetsScreen() {
                     style={{
                       height: '100%',
                       width: `${Math.min(btcRatio, 100)}%`,
-                      backgroundColor: '#F7931A',
+                      backgroundColor: theme.primary,
                       borderRadius: 4,
                     }}
                   />
@@ -189,20 +191,20 @@ export default function AssetsScreen() {
           {/* Fiat assets */}
           <View style={{ marginBottom: 24 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <Text style={{ fontSize: 16, fontWeight: '600', color: '#1A1A1A' }}>
+              <Text style={{ fontSize: 16, fontWeight: '600', color: theme.text }}>
                 {t('assets.fiatCount', { count: fiatAssets.length })}
               </Text>
               {settings.displayUnit === 'BTC' ? (
                 <View style={{ alignItems: 'flex-end' }}>
-                  <Text style={{ fontSize: 14, color: '#22C55E', fontWeight: '600' }}>
+                  <Text style={{ fontSize: 14, color: theme.success, fontWeight: '600' }}>
                     {formatSats(totalFiatSats)}
                   </Text>
-                  <Text style={{ fontSize: 11, color: '#9CA3AF' }}>
+                  <Text style={{ fontSize: 11, color: theme.textMuted }}>
                     {formatKrw(totalFiat)}
                   </Text>
                 </View>
               ) : (
-                <Text style={{ fontSize: 14, color: '#22C55E', fontWeight: '600' }}>
+                <Text style={{ fontSize: 14, color: theme.success, fontWeight: '600' }}>
                   {formatKrw(totalFiat)}
                 </Text>
               )}
@@ -211,18 +213,18 @@ export default function AssetsScreen() {
             {fiatAssets.length === 0 ? (
               <TouchableOpacity
                 style={{
-                  backgroundColor: '#F9FAFB',
+                  backgroundColor: theme.backgroundSecondary,
                   borderRadius: 12,
                   padding: 24,
                   alignItems: 'center',
                   borderWidth: 1,
-                  borderColor: '#E5E7EB',
+                  borderColor: theme.border,
                   borderStyle: 'dashed',
                 }}
                 onPress={() => router.push('/(modals)/add-asset')}
               >
-                <Ionicons name="add-circle-outline" size={32} color="#9CA3AF" />
-                <Text style={{ fontSize: 14, color: '#9CA3AF', marginTop: 8 }}>
+                <Ionicons name="add-circle-outline" size={32} color={theme.textMuted} />
+                <Text style={{ fontSize: 14, color: theme.textMuted, marginTop: 8 }}>
                   {t('assets.addAccount')}
                 </Text>
               </TouchableOpacity>
@@ -231,7 +233,7 @@ export default function AssetsScreen() {
                 <TouchableOpacity
                   key={asset.id}
                   style={{
-                    backgroundColor: '#F9FAFB',
+                    backgroundColor: theme.backgroundSecondary,
                     borderRadius: 12,
                     padding: 16,
                     marginBottom: 8,
@@ -247,7 +249,7 @@ export default function AssetsScreen() {
                         width: 40,
                         height: 40,
                         borderRadius: 20,
-                        backgroundColor: '#D1FAE5',
+                        backgroundColor: theme.incomeButtonBg,
                         alignItems: 'center',
                         justifyContent: 'center',
                         marginRight: 12,
@@ -256,25 +258,25 @@ export default function AssetsScreen() {
                       <Text style={{ fontSize: 18 }}>🏦</Text>
                     </View>
                     <View>
-                      <Text style={{ fontSize: 14, fontWeight: '600', color: '#1A1A1A' }}>
+                      <Text style={{ fontSize: 14, fontWeight: '600', color: theme.text }}>
                         {asset.name}
                       </Text>
-                      <Text style={{ fontSize: 11, color: '#9CA3AF' }}>
+                      <Text style={{ fontSize: 11, color: theme.textMuted }}>
                         {formatTimeAgo(asset.updatedAt)}
                       </Text>
                     </View>
                   </View>
                   {settings.displayUnit === 'BTC' && btcKrw ? (
                     <View style={{ alignItems: 'flex-end' }}>
-                      <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#22C55E' }}>
+                      <Text style={{ fontSize: 16, fontWeight: 'bold', color: theme.success }}>
                         {formatSats(Math.round(asset.balance / (btcKrw / 100_000_000)))}
                       </Text>
-                      <Text style={{ fontSize: 11, color: '#9CA3AF' }}>
+                      <Text style={{ fontSize: 11, color: theme.textMuted }}>
                         {formatKrw(asset.balance)}
                       </Text>
                     </View>
                   ) : (
-                    <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#22C55E' }}>
+                    <Text style={{ fontSize: 16, fontWeight: 'bold', color: theme.success }}>
                       {formatKrw(asset.balance)}
                     </Text>
                   )}
@@ -286,10 +288,10 @@ export default function AssetsScreen() {
           {/* Bitcoin assets */}
           <View style={{ marginBottom: 24 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <Text style={{ fontSize: 16, fontWeight: '600', color: '#1A1A1A' }}>
+              <Text style={{ fontSize: 16, fontWeight: '600', color: theme.text }}>
                 {t('assets.btcCount', { count: btcAssets.length })}
               </Text>
-              <Text style={{ fontSize: 14, color: '#F7931A', fontWeight: '600' }}>
+              <Text style={{ fontSize: 14, color: theme.primary, fontWeight: '600' }}>
                 {formatSats(totalBtc)}
               </Text>
             </View>
@@ -297,18 +299,18 @@ export default function AssetsScreen() {
             {btcAssets.length === 0 ? (
               <TouchableOpacity
                 style={{
-                  backgroundColor: '#FEF3C7',
+                  backgroundColor: theme.warningBanner,
                   borderRadius: 12,
                   padding: 24,
                   alignItems: 'center',
                   borderWidth: 1,
-                  borderColor: '#FCD34D',
+                  borderColor: theme.warning,
                   borderStyle: 'dashed',
                 }}
                 onPress={() => router.push('/(modals)/add-asset')}
               >
                 <Text style={{ fontSize: 32 }}>₿</Text>
-                <Text style={{ fontSize: 14, color: '#92400E', marginTop: 8 }}>
+                <Text style={{ fontSize: 14, color: theme.priceBannerText, marginTop: 8 }}>
                   {t('assets.addBtcWallet')}
                 </Text>
               </TouchableOpacity>
@@ -317,7 +319,7 @@ export default function AssetsScreen() {
                 <TouchableOpacity
                   key={asset.id}
                   style={{
-                    backgroundColor: '#FEF3C7',
+                    backgroundColor: theme.warningBanner,
                     borderRadius: 12,
                     padding: 16,
                     marginBottom: 8,
@@ -333,7 +335,7 @@ export default function AssetsScreen() {
                         width: 40,
                         height: 40,
                         borderRadius: 20,
-                        backgroundColor: '#FDE68A',
+                        backgroundColor: theme.warningBanner,
                         alignItems: 'center',
                         justifyContent: 'center',
                         marginRight: 12,
@@ -344,20 +346,20 @@ export default function AssetsScreen() {
                       </Text>
                     </View>
                     <View>
-                      <Text style={{ fontSize: 14, fontWeight: '600', color: '#1A1A1A' }}>
+                      <Text style={{ fontSize: 14, fontWeight: '600', color: theme.text }}>
                         {asset.name}
                       </Text>
-                      <Text style={{ fontSize: 11, color: '#92400E' }}>
+                      <Text style={{ fontSize: 11, color: theme.priceBannerText }}>
                         {asset.walletType === 'onchain' ? t('assets.onchain') : t('assets.lightning')}
                       </Text>
                     </View>
                   </View>
                   <View style={{ alignItems: 'flex-end' }}>
-                    <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#F7931A' }}>
+                    <Text style={{ fontSize: 16, fontWeight: 'bold', color: theme.primary }}>
                       {formatSats(asset.balance)}
                     </Text>
                     {btcKrw && (
-                      <Text style={{ fontSize: 11, color: '#92400E' }}>
+                      <Text style={{ fontSize: 11, color: theme.priceBannerText }}>
                         {formatKrw(Math.round(asset.balance * (btcKrw / 100_000_000)))}
                       </Text>
                     )}
@@ -372,7 +374,7 @@ export default function AssetsScreen() {
             <View style={{ marginBottom: 24 }}>
               <View
                 style={{
-                  backgroundColor: isOffline ? '#FEE2E2' : '#FEF3C7',
+                  backgroundColor: isOffline ? theme.offlineBannerBg : theme.priceBannerBg,
                   borderRadius: 12,
                   padding: 16,
                   flexDirection: 'row',
@@ -382,13 +384,13 @@ export default function AssetsScreen() {
               >
                 <View>
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <Text style={{ fontSize: 12, color: isOffline ? '#991B1B' : '#92400E' }}>
+                    <Text style={{ fontSize: 12, color: isOffline ? theme.offlineBannerText : theme.priceBannerText }}>
                       BTC/KRW
                     </Text>
                     {isWebSocketConnected && !isOffline && (
                       <View
                         style={{
-                          backgroundColor: '#22C55E',
+                          backgroundColor: theme.success,
                           borderRadius: 4,
                           paddingHorizontal: 6,
                           paddingVertical: 2,
@@ -402,11 +404,11 @@ export default function AssetsScreen() {
                             width: 6,
                             height: 6,
                             borderRadius: 3,
-                            backgroundColor: '#FFFFFF',
+                            backgroundColor: theme.textInverse,
                             marginRight: 4,
                           }}
                         />
-                        <Text style={{ fontSize: 10, color: '#FFFFFF', fontWeight: '600' }}>
+                        <Text style={{ fontSize: 10, color: theme.textInverse, fontWeight: '600' }}>
                           LIVE
                         </Text>
                       </View>
@@ -414,21 +416,21 @@ export default function AssetsScreen() {
                     {isOffline && (
                       <View
                         style={{
-                          backgroundColor: '#EF4444',
+                          backgroundColor: theme.error,
                           borderRadius: 4,
                           paddingHorizontal: 6,
                           paddingVertical: 2,
                           marginLeft: 8,
                         }}
                       >
-                        <Text style={{ fontSize: 10, color: '#FFFFFF', fontWeight: '600' }}>
+                        <Text style={{ fontSize: 10, color: theme.textInverse, fontWeight: '600' }}>
                           {t('common.offline')}
                         </Text>
                       </View>
                     )}
                   </View>
                   <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
-                    <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#F7931A' }}>
+                    <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.primary }}>
                       {formatKrw(btcKrw)}
                     </Text>
                     {kimchiPremium !== null && (
@@ -436,7 +438,7 @@ export default function AssetsScreen() {
                         style={{
                           fontSize: 13,
                           fontWeight: '600',
-                          color: kimchiPremium >= 0 ? '#22C55E' : '#EF4444',
+                          color: kimchiPremium >= 0 ? theme.success : theme.error,
                           marginLeft: 8,
                         }}
                       >
@@ -445,12 +447,12 @@ export default function AssetsScreen() {
                     )}
                   </View>
                   {lastUpdated && (
-                    <Text style={{ fontSize: 11, color: isOffline ? '#991B1B' : '#92400E', marginTop: 2 }}>
+                    <Text style={{ fontSize: 11, color: isOffline ? theme.offlineBannerText : theme.priceBannerText, marginTop: 2 }}>
                       {formatTimeAgo(lastUpdated)}
                     </Text>
                   )}
                 </View>
-                <Ionicons name="logo-bitcoin" size={32} color="#F7931A" />
+                <Ionicons name="logo-bitcoin" size={32} color={theme.primary} />
               </View>
             </View>
           )}

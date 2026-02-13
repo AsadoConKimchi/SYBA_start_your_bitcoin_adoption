@@ -12,12 +12,14 @@ import { usePriceStore } from '../src/stores/priceStore';
 import { loadSavedLanguage } from '../src/i18n';
 import { loadSavedRegion } from '../src/regions';
 import { ErrorBoundary } from '../src/components/ErrorBoundary';
+import { useTheme } from '../src/hooks/useTheme';
 
 export default function RootLayout() {
   const { isLoading: authLoading, initialize: initAuth } = useAuthStore();
   const { loadSettings } = useSettingsStore();
   const { loadCachedPrices, fetchPrices } = usePriceStore();
   const { t } = useTranslation();
+  const { theme, isDark } = useTheme();
 
   const LOADING_KEYS = [
     'loading.msg1', 'loading.msg2', 'loading.msg3', 'loading.msg4',
@@ -43,9 +45,9 @@ export default function RootLayout() {
 
   if (authLoading) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF' }}>
-        <ActivityIndicator size="large" color="#F7931A" />
-        <Text style={{ marginTop: 16, fontSize: 14, color: '#9CA3AF', textAlign: 'center', paddingHorizontal: 40 }}>
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.background }}>
+        <ActivityIndicator size="large" color={theme.primary} />
+        <Text style={{ marginTop: 16, fontSize: 14, color: theme.textMuted, textAlign: 'center', paddingHorizontal: 40 }}>
           {t(loadingKey)}
         </Text>
       </View>
@@ -54,7 +56,7 @@ export default function RootLayout() {
 
   return (
     <ErrorBoundary>
-      <StatusBar style="dark" />
+      <StatusBar style={isDark ? 'light' : 'dark'} />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
         <Stack.Screen name="(auth)" />

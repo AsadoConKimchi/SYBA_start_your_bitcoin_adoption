@@ -14,6 +14,7 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import QRCode from 'react-native-qrcode-svg';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '../../src/hooks/useTheme';
 import { useSubscriptionStore } from '../../src/stores/subscriptionStore';
 import { CONFIG } from '../../src/constants/config';
 import { getSubscriptionPriceSats } from '../../src/services/appConfigService';
@@ -24,6 +25,7 @@ import { lastLnurlError } from '../../src/services/lnurlAuth';
 
 export default function SubscriptionScreen() {
   const { t } = useTranslation();
+  const { theme } = useTheme();
   const {
     user,
     subscription,
@@ -227,14 +229,14 @@ export default function SubscriptionScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#F7931A" />
+      <SafeAreaView style={{ flex: 1, backgroundColor: theme.background, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color={theme.primary} />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
       {/* 헤더 */}
       <View
         style={{
@@ -243,14 +245,14 @@ export default function SubscriptionScreen() {
           alignItems: 'center',
           padding: 20,
           borderBottomWidth: 1,
-          borderBottomColor: '#E5E7EB',
+          borderBottomColor: theme.border,
         }}
       >
-        <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1A1A1A' }}>
+        <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>
           {t('subscription.title')}
         </Text>
         <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="close" size={24} color="#666666" />
+          <Ionicons name="close" size={24} color={theme.textSecondary} />
         </TouchableOpacity>
       </View>
 
@@ -259,7 +261,7 @@ export default function SubscriptionScreen() {
         <View style={{ padding: 20 }}>
           <View
             style={{
-              backgroundColor: '#FEF3C7',
+              backgroundColor: theme.warningBanner,
               borderRadius: 16,
               padding: 16,
               flexDirection: 'row',
@@ -272,7 +274,7 @@ export default function SubscriptionScreen() {
                 width: 48,
                 height: 48,
                 borderRadius: 24,
-                backgroundColor: '#F7931A',
+                backgroundColor: theme.primary,
                 alignItems: 'center',
                 justifyContent: 'center',
                 marginRight: 12,
@@ -281,24 +283,24 @@ export default function SubscriptionScreen() {
               <Ionicons name="diamond" size={24} color="#FFFFFF" />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1A1A1A' }}>
+              <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>
                 {t('subscription.sybaPremium')}
               </Text>
-              <Text style={{ fontSize: 12, color: '#666666' }}>
+              <Text style={{ fontSize: 12, color: theme.textSecondary }}>
                 {t('subscription.unlockAll')}
               </Text>
             </View>
             <View style={{ alignItems: 'flex-end' }}>
-              <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#F7931A' }}>
+              <Text style={{ fontSize: 20, fontWeight: 'bold', color: theme.primary }}>
                 {subscriptionPrice.toLocaleString()}
               </Text>
-              <Text style={{ fontSize: 11, color: '#666666' }}>{t('subscription.pricePerMonth')}</Text>
+              <Text style={{ fontSize: 11, color: theme.textSecondary }}>{t('subscription.pricePerMonth')}</Text>
             </View>
           </View>
 
           {/* 혜택 목록 */}
           <View style={{ marginBottom: 24 }}>
-            <Text style={{ fontSize: 16, fontWeight: '600', color: '#1A1A1A', marginBottom: 12 }}>
+            <Text style={{ fontSize: 16, fontWeight: '600', color: theme.text, marginBottom: 12 }}>
               {t('subscription.benefits')}
             </Text>
             {[
@@ -321,15 +323,15 @@ export default function SubscriptionScreen() {
                     width: 32,
                     height: 32,
                     borderRadius: 16,
-                    backgroundColor: '#E8F5E9',
+                    backgroundColor: theme.incomeButtonBg,
                     alignItems: 'center',
                     justifyContent: 'center',
                     marginRight: 12,
                   }}
                 >
-                  <Ionicons name={item.icon as any} size={16} color="#22C55E" />
+                  <Ionicons name={item.icon as any} size={16} color={theme.success} />
                 </View>
-                <Text style={{ fontSize: 14, color: '#1A1A1A' }}>{item.text}</Text>
+                <Text style={{ fontSize: 14, color: theme.text }}>{item.text}</Text>
               </View>
             ))}
           </View>
@@ -337,7 +339,7 @@ export default function SubscriptionScreen() {
           {/* LNURL-auth QR 코드 */}
           {authStatus === 'waiting' && authLnurl ? (
             <View style={{ marginBottom: 24 }}>
-              <Text style={{ fontSize: 14, color: '#666666', marginBottom: 12, textAlign: 'center' }}>
+              <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 12, textAlign: 'center' }}>
                 {t('subscription.scanQR')}
               </Text>
               <TouchableOpacity
@@ -362,35 +364,35 @@ export default function SubscriptionScreen() {
                   backgroundColor="#FFFFFF"
                   color="#000000"
                 />
-                <Text style={{ marginTop: 12, fontSize: 12, color: copied ? '#22C55E' : '#9CA3AF' }}>
+                <Text style={{ marginTop: 12, fontSize: 12, color: copied ? theme.success : theme.textMuted }}>
                   {copied ? t('common.copied') : t('subscription.tapToCopy')}
                 </Text>
               </TouchableOpacity>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
-                <ActivityIndicator size="small" color="#F7931A" style={{ marginRight: 8 }} />
-                <Text style={{ color: '#666666' }}>{t('subscription.waitingAuth')}</Text>
+                <ActivityIndicator size="small" color={theme.primary} style={{ marginRight: 8 }} />
+                <Text style={{ color: theme.textSecondary }}>{t('subscription.waitingAuth')}</Text>
               </View>
               <TouchableOpacity
                 style={{
                   padding: 12,
                   borderRadius: 8,
                   borderWidth: 1,
-                  borderColor: '#E5E7EB',
+                  borderColor: theme.border,
                   alignItems: 'center',
                 }}
                 onPress={handleCancelAuth}
               >
-                <Text style={{ color: '#666666' }}>{t('common.cancel')}</Text>
+                <Text style={{ color: theme.textSecondary }}>{t('common.cancel')}</Text>
               </TouchableOpacity>
             </View>
           ) : !user ? (
             <View style={{ marginBottom: 24 }}>
-              <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>
+              <Text style={{ fontSize: 12, color: theme.textMuted, marginBottom: 12 }}>
                 {t('subscription.loginRequired')}
               </Text>
               <TouchableOpacity
                 style={{
-                  backgroundColor: '#F7931A',
+                  backgroundColor: theme.primary,
                   flexDirection: 'row',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -418,7 +420,7 @@ export default function SubscriptionScreen() {
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
-                  backgroundColor: '#F9FAFB',
+                  backgroundColor: theme.backgroundSecondary,
                   borderRadius: 12,
                   padding: 16,
                   marginBottom: 12,
@@ -429,7 +431,7 @@ export default function SubscriptionScreen() {
                     width: 40,
                     height: 40,
                     borderRadius: 20,
-                    backgroundColor: '#F7931A',
+                    backgroundColor: theme.primary,
                     alignItems: 'center',
                     justifyContent: 'center',
                     marginRight: 12,
@@ -438,15 +440,15 @@ export default function SubscriptionScreen() {
                   <Ionicons name="flash" size={20} color="#FFFFFF" />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 16, fontWeight: '500', color: '#1A1A1A' }}>
+                  <Text style={{ fontSize: 16, fontWeight: '500', color: theme.text }}>
                     {t('subscription.lightningConnected')}
                   </Text>
-                  <Text style={{ fontSize: 10, color: '#9CA3AF' }} numberOfLines={1}>
+                  <Text style={{ fontSize: 10, color: theme.textMuted }} numberOfLines={1}>
                     {user.linking_key?.substring(0, 16)}...
                   </Text>
                 </View>
                 <TouchableOpacity onPress={handleLogout}>
-                  <Text style={{ fontSize: 14, color: '#EF4444' }}>{t('subscription.logout')}</Text>
+                  <Text style={{ fontSize: 14, color: theme.error }}>{t('subscription.logout')}</Text>
                 </TouchableOpacity>
               </View>
 
@@ -454,19 +456,19 @@ export default function SubscriptionScreen() {
               {isSubscribed && subscription ? (
                 <View
                   style={{
-                    backgroundColor: '#E8F5E9',
+                    backgroundColor: theme.incomeButtonBg,
                     borderRadius: 12,
                     padding: 16,
                   }}
                 >
                   <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-                    <Ionicons name="checkmark-circle" size={20} color="#22C55E" style={{ marginRight: 8 }} />
-                    <Text style={{ fontSize: 16, fontWeight: '600', color: '#22C55E' }}>
+                    <Ionicons name="checkmark-circle" size={20} color={theme.success} style={{ marginRight: 8 }} />
+                    <Text style={{ fontSize: 16, fontWeight: '600', color: theme.success }}>
                       {t('subscription.premiumActive')}
                     </Text>
                   </View>
                   {subscription.expires_at && (
-                    <Text style={{ fontSize: 14, color: '#666666' }}>
+                    <Text style={{ fontSize: 14, color: theme.textSecondary }}>
                       {t('subscription.expiresAt', { date: format(new Date(subscription.expires_at), 'PPP', { locale: ko }) })}
                     </Text>
                   )}
@@ -474,7 +476,7 @@ export default function SubscriptionScreen() {
               ) : (
                 <TouchableOpacity
                   style={{
-                    backgroundColor: '#F7931A',
+                    backgroundColor: theme.primary,
                     flexDirection: 'row',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -501,15 +503,15 @@ export default function SubscriptionScreen() {
           {/* 무료 기능 안내 */}
           <View
             style={{
-              backgroundColor: '#F3F4F6',
+              backgroundColor: theme.backgroundTertiary,
               borderRadius: 12,
               padding: 16,
             }}
           >
-            <Text style={{ fontSize: 14, fontWeight: '500', color: '#666666', marginBottom: 8 }}>
+            <Text style={{ fontSize: 14, fontWeight: '500', color: theme.textSecondary, marginBottom: 8 }}>
               {t('subscription.freeLimits')}
             </Text>
-            <Text style={{ fontSize: 12, color: '#9CA3AF' }}>
+            <Text style={{ fontSize: 12, color: theme.textMuted }}>
               {t('subscription.freeLimitsDetail', { max: CONFIG.FREE_MAX_CARDS })}
             </Text>
           </View>
@@ -523,10 +525,10 @@ export default function SubscriptionScreen() {
         animationType="slide"
         onRequestClose={handleClosePaymentModal}
       >
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }}>
+        <View style={{ flex: 1, backgroundColor: theme.modalOverlay, justifyContent: 'center', alignItems: 'center' }}>
           <View
             style={{
-              backgroundColor: '#FFFFFF',
+              backgroundColor: theme.modalBackground,
               borderRadius: 20,
               padding: 24,
               width: '90%',
@@ -536,18 +538,18 @@ export default function SubscriptionScreen() {
           >
             {/* 모달 헤더 */}
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: 16 }}>
-              <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1A1A1A' }}>
+              <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>
                 {t('subscription.lightningPayment')}
               </Text>
               <TouchableOpacity onPress={handleClosePaymentModal}>
-                <Ionicons name="close" size={24} color="#666666" />
+                <Ionicons name="close" size={24} color={theme.textSecondary} />
               </TouchableOpacity>
             </View>
 
             {/* 금액 */}
             <View style={{ marginBottom: 20, alignItems: 'center' }}>
-              <Text style={{ fontSize: 14, color: '#666666', marginBottom: 4 }}>{t('subscription.paymentAmount')}</Text>
-              <Text style={{ fontSize: 28, fontWeight: 'bold', color: '#F7931A' }}>
+              <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 4 }}>{t('subscription.paymentAmount')}</Text>
+              <Text style={{ fontSize: 28, fontWeight: 'bold', color: theme.primary }}>
                 {subscriptionPrice.toLocaleString()} sats
               </Text>
             </View>
@@ -576,7 +578,7 @@ export default function SubscriptionScreen() {
                   backgroundColor="#FFFFFF"
                   color="#000000"
                 />
-                <Text style={{ marginTop: 12, fontSize: 12, color: invoiceCopied ? '#22C55E' : '#9CA3AF' }}>
+                <Text style={{ marginTop: 12, fontSize: 12, color: invoiceCopied ? theme.success : theme.textMuted }}>
                   {invoiceCopied ? t('common.copied') : t('subscription.tapToCopyInvoice')}
                 </Text>
               </TouchableOpacity>
@@ -586,32 +588,32 @@ export default function SubscriptionScreen() {
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
               {paymentStatus === 'waiting' && (
                 <>
-                  <ActivityIndicator size="small" color="#F7931A" style={{ marginRight: 8 }} />
-                  <Text style={{ color: '#666666' }}>{t('subscription.waitingPayment')}</Text>
+                  <ActivityIndicator size="small" color={theme.primary} style={{ marginRight: 8 }} />
+                  <Text style={{ color: theme.textSecondary }}>{t('subscription.waitingPayment')}</Text>
                 </>
               )}
               {paymentStatus === 'checking' && (
                 <>
-                  <ActivityIndicator size="small" color="#F7931A" style={{ marginRight: 8 }} />
-                  <Text style={{ color: '#666666' }}>{t('subscription.activating')}</Text>
+                  <ActivityIndicator size="small" color={theme.primary} style={{ marginRight: 8 }} />
+                  <Text style={{ color: theme.textSecondary }}>{t('subscription.activating')}</Text>
                 </>
               )}
               {paymentStatus === 'success' && (
                 <>
-                  <Ionicons name="checkmark-circle" size={20} color="#22C55E" style={{ marginRight: 8 }} />
-                  <Text style={{ color: '#22C55E', fontWeight: '600' }}>{t('subscription.paymentComplete')}</Text>
+                  <Ionicons name="checkmark-circle" size={20} color={theme.success} style={{ marginRight: 8 }} />
+                  <Text style={{ color: theme.success, fontWeight: '600' }}>{t('subscription.paymentComplete')}</Text>
                 </>
               )}
               {paymentStatus === 'expired' && (
                 <>
-                  <Ionicons name="close-circle" size={20} color="#EF4444" style={{ marginRight: 8 }} />
-                  <Text style={{ color: '#EF4444' }}>{t('subscription.expired')}</Text>
+                  <Ionicons name="close-circle" size={20} color={theme.error} style={{ marginRight: 8 }} />
+                  <Text style={{ color: theme.error }}>{t('subscription.expired')}</Text>
                 </>
               )}
               {paymentStatus === 'error' && (
                 <>
                   <Ionicons name="warning" size={20} color="#F59E0B" style={{ marginRight: 8 }} />
-                  <Text style={{ color: '#F59E0B' }}>{t('subscription.processingError')}</Text>
+                  <Text style={{ color: theme.warning }}>{t('subscription.processingError')}</Text>
                 </>
               )}
             </View>
@@ -620,14 +622,14 @@ export default function SubscriptionScreen() {
             {lightningInvoice && (
               <View
                 style={{
-                  backgroundColor: '#F9FAFB',
+                  backgroundColor: theme.backgroundSecondary,
                   padding: 10,
                   borderRadius: 8,
                   width: '100%',
                 }}
               >
                 <Text
-                  style={{ fontSize: 9, color: '#9CA3AF', fontFamily: 'monospace' }}
+                  style={{ fontSize: 9, color: theme.textMuted, fontFamily: 'monospace' }}
                   numberOfLines={2}
                 >
                   {lightningInvoice}
@@ -636,7 +638,7 @@ export default function SubscriptionScreen() {
             )}
 
             {/* 안내 문구 */}
-            <Text style={{ marginTop: 16, fontSize: 11, color: '#9CA3AF', textAlign: 'center' }}>
+            <Text style={{ marginTop: 16, fontSize: 11, color: theme.textMuted, textAlign: 'center' }}>
               {t('subscription.paymentInstructions')}
             </Text>
           </View>

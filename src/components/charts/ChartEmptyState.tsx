@@ -1,5 +1,6 @@
 import { View, Text } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '../../hooks/useTheme';
 
 interface ChartEmptyStateProps {
   message?: string;
@@ -11,11 +12,12 @@ export function ChartEmptyState({
   icon = '📊'
 }: ChartEmptyStateProps) {
   const { t } = useTranslation();
+  const { theme } = useTheme();
 
   return (
     <View
       style={{
-        backgroundColor: '#F9FAFB',
+        backgroundColor: theme.backgroundSecondary,
         borderRadius: 12,
         padding: 32,
         alignItems: 'center',
@@ -24,7 +26,7 @@ export function ChartEmptyState({
       }}
     >
       <Text style={{ fontSize: 32, marginBottom: 12 }}>{icon}</Text>
-      <Text style={{ fontSize: 14, color: '#9CA3AF', textAlign: 'center' }}>
+      <Text style={{ fontSize: 14, color: theme.textMuted, textAlign: 'center' }}>
         {message ?? t('charts.noData')}
       </Text>
     </View>

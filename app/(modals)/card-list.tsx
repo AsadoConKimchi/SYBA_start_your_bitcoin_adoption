@@ -10,6 +10,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '../../src/hooks/useTheme';
 import { useCardStore } from '../../src/stores/cardStore';
 import { useSubscriptionStore } from '../../src/stores/subscriptionStore';
 import { Card } from '../../src/types/card';
@@ -18,6 +19,7 @@ const FREE_CARD_LIMIT = 3;
 
 export default function CardListScreen() {
   const { t } = useTranslation();
+  const { theme } = useTheme();
   const { cards, deleteCard, setDefaultCard } = useCardStore();
   const { isSubscribed } = useSubscriptionStore();
   const [editMode, setEditMode] = useState(false);
@@ -46,7 +48,7 @@ export default function CardListScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
       {/* 헤더 */}
       <View
         style={{
@@ -55,15 +57,15 @@ export default function CardListScreen() {
           alignItems: 'center',
           padding: 20,
           borderBottomWidth: 1,
-          borderBottomColor: '#E5E7EB',
+          borderBottomColor: theme.border,
         }}
       >
         <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#666666" />
+          <Ionicons name="arrow-back" size={24} color={theme.textSecondary} />
         </TouchableOpacity>
-        <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1A1A1A' }}>{t('card.management')}</Text>
+        <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>{t('card.management')}</Text>
         <TouchableOpacity onPress={() => setEditMode(!editMode)}>
-          <Text style={{ fontSize: 14, color: '#F7931A' }}>
+          <Text style={{ fontSize: 14, color: theme.primary }}>
             {editMode ? t('common.done') : t('common.edit')}
           </Text>
         </TouchableOpacity>
@@ -73,19 +75,19 @@ export default function CardListScreen() {
         {cards.length === 0 ? (
           <View
             style={{
-              backgroundColor: '#F9FAFB',
+              backgroundColor: theme.backgroundSecondary,
               borderRadius: 12,
               padding: 40,
               alignItems: 'center',
             }}
           >
             <Text style={{ fontSize: 48, marginBottom: 12 }}>💳</Text>
-            <Text style={{ fontSize: 16, color: '#666666', textAlign: 'center', marginBottom: 20 }}>
+            <Text style={{ fontSize: 16, color: theme.textSecondary, textAlign: 'center', marginBottom: 20 }}>
               {t('card.noCards')}
             </Text>
             <TouchableOpacity
               style={{
-                backgroundColor: '#F7931A',
+                backgroundColor: theme.primary,
                 paddingHorizontal: 24,
                 paddingVertical: 12,
                 borderRadius: 8,
@@ -176,11 +178,11 @@ export default function CardListScreen() {
 
       {/* 카드 추가 버튼 */}
       {cards.length > 0 && (
-        <View style={{ padding: 20, borderTopWidth: 1, borderTopColor: '#E5E7EB' }}>
+        <View style={{ padding: 20, borderTopWidth: 1, borderTopColor: theme.border }}>
           {/* 무료 사용자 카드 제한 안내 */}
           {!isSubscribed && (
             <View style={{ marginBottom: 12 }}>
-              <Text style={{ fontSize: 12, color: '#9CA3AF', textAlign: 'center' }}>
+              <Text style={{ fontSize: 12, color: theme.textMuted, textAlign: 'center' }}>
                 {t('card.cardCount', { count: cards.length, max: FREE_CARD_LIMIT })}
                 {!canAddMoreCards && ` ${t('card.premiumUnlimited')}`}
               </Text>
@@ -188,7 +190,7 @@ export default function CardListScreen() {
           )}
           <TouchableOpacity
             style={{
-              backgroundColor: canAddMoreCards ? '#F7931A' : '#9CA3AF',
+              backgroundColor: canAddMoreCards ? theme.primary : theme.textMuted,
               padding: 16,
               borderRadius: 8,
               alignItems: 'center',

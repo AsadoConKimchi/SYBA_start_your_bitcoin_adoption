@@ -44,6 +44,7 @@ import { useSnapshotStore } from '../../src/stores/snapshotStore';
 import { useAssetStore } from '../../src/stores/assetStore';
 import { SUPPORTED_LANGUAGES, SupportedLanguage, changeLanguage } from '../../src/i18n';
 import { SUPPORTED_REGIONS, getCurrentRegionId, setRegion, RegionId } from '../../src/regions';
+import { useTheme } from '../../src/hooks/useTheme';
 
 export default function SettingsScreen() {
   const { lock, biometricEnabled, biometricAvailable, enableBiometric, disableBiometric, encryptionKey } =
@@ -54,6 +55,7 @@ export default function SettingsScreen() {
   const { loadDebts } = useDebtStore();
   const { user, isSubscribed, subscription, initialize } = useSubscriptionStore();
   const { t, i18n } = useTranslation();
+  const { theme } = useTheme();
 
   const [showAutoLockPicker, setShowAutoLockPicker] = useState(false);
   const [showReminderTimePicker, setShowReminderTimePicker] = useState(false);
@@ -259,26 +261,26 @@ export default function SettingsScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
       {/* Header */}
       <View
         style={{
           padding: 20,
           borderBottomWidth: 1,
-          borderBottomColor: '#E5E7EB',
+          borderBottomColor: theme.border,
         }}
       >
-        <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#1A1A1A' }}>{t('settings.title')}</Text>
+        <Text style={{ fontSize: 20, fontWeight: 'bold', color: theme.text }}>{t('settings.title')}</Text>
       </View>
 
       <ScrollView style={{ flex: 1 }}>
         {/* Profile */}
         <View style={{ padding: 20 }}>
-          <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>{t('settings.profile')}</Text>
+          <Text style={{ fontSize: 12, color: theme.textMuted, marginBottom: 12 }}>{t('settings.profile')}</Text>
 
           <View
             style={{
-              backgroundColor: '#F9FAFB',
+              backgroundColor: theme.backgroundSecondary,
               borderRadius: 12,
               overflow: 'hidden',
             }}
@@ -289,7 +291,7 @@ export default function SettingsScreen() {
                 alignItems: 'center',
                 padding: 16,
                 borderBottomWidth: 1,
-                borderBottomColor: '#E5E7EB',
+                borderBottomColor: theme.border,
               }}
             >
               <View
@@ -297,7 +299,7 @@ export default function SettingsScreen() {
                   width: 40,
                   height: 40,
                   borderRadius: 20,
-                  backgroundColor: user ? '#F7931A' : '#9CA3AF',
+                  backgroundColor: user ? theme.primary : theme.textMuted,
                   alignItems: 'center',
                   justifyContent: 'center',
                   marginRight: 12,
@@ -306,17 +308,17 @@ export default function SettingsScreen() {
                 <Text style={{ fontSize: 18 }}>{user ? '₿' : '?'}</Text>
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 16, fontWeight: '500', color: '#1A1A1A' }}>
+                <Text style={{ fontSize: 16, fontWeight: '500', color: theme.text }}>
                   {user ? (settings.userName || t('settings.lightningUser')) : t('settings.loginRequired')}
                 </Text>
-                <Text style={{ fontSize: 12, color: user ? '#22C55E' : '#9CA3AF' }}>
+                <Text style={{ fontSize: 12, color: user ? theme.success : theme.textMuted }}>
                   {user ? t('settings.loggedIn') : t('settings.loginForPremium')}
                 </Text>
               </View>
               {isSubscribed && (
                 <View
                   style={{
-                    backgroundColor: '#F7931A',
+                    backgroundColor: theme.primary,
                     paddingHorizontal: 8,
                     paddingVertical: 4,
                     borderRadius: 12,
@@ -335,29 +337,29 @@ export default function SettingsScreen() {
               }}
               onPress={() => router.push('/(modals)/subscription')}
             >
-              <Ionicons name="diamond" size={24} color="#F7931A" style={{ marginRight: 12 }} />
+              <Ionicons name="diamond" size={24} color={theme.primary} style={{ marginRight: 12 }} />
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 16, fontWeight: '500', color: '#1A1A1A' }}>
+                <Text style={{ fontSize: 16, fontWeight: '500', color: theme.text }}>
                   {t('settings.premiumSubscription')}
                 </Text>
-                <Text style={{ fontSize: 12, color: '#9CA3AF' }}>
+                <Text style={{ fontSize: 12, color: theme.textMuted }}>
                   {isSubscribed
                     ? t('settings.subscribedUntil', { date: subscription?.expires_at ? new Date(subscription.expires_at).toLocaleDateString() : '' })
                     : t('settings.subscribeNow')}
                 </Text>
               </View>
-              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+              <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Display */}
         <View style={{ padding: 20 }}>
-          <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>{t('settings.display')}</Text>
+          <Text style={{ fontSize: 12, color: theme.textMuted, marginBottom: 12 }}>{t('settings.display')}</Text>
 
           <View
             style={{
-              backgroundColor: '#F9FAFB',
+              backgroundColor: theme.backgroundSecondary,
               borderRadius: 12,
               overflow: 'hidden',
             }}
@@ -368,27 +370,27 @@ export default function SettingsScreen() {
                 alignItems: 'center',
                 padding: 16,
                 borderBottomWidth: 1,
-                borderBottomColor: '#E5E7EB',
+                borderBottomColor: theme.border,
               }}
             >
-              <Ionicons name="calculator" size={24} color="#666666" style={{ marginRight: 12 }} />
+              <Ionicons name="calculator" size={24} color={theme.textSecondary} style={{ marginRight: 12 }} />
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 16, color: '#1A1A1A' }}>{t('settings.displayUnit')}</Text>
-                <Text style={{ fontSize: 12, color: '#9CA3AF' }}>
+                <Text style={{ fontSize: 16, color: theme.text }}>{t('settings.displayUnit')}</Text>
+                <Text style={{ fontSize: 12, color: theme.textMuted }}>
                   {settings.displayUnit === 'BTC' ? t('settings.satsMain') : t('settings.krwMain')}
                 </Text>
               </View>
-              <View style={{ flexDirection: 'row', backgroundColor: '#E5E7EB', borderRadius: 8, padding: 2 }}>
+              <View style={{ flexDirection: 'row', backgroundColor: theme.toggleTrack, borderRadius: 8, padding: 2 }}>
                 <TouchableOpacity
                   style={{
                     paddingHorizontal: 12,
                     paddingVertical: 6,
                     borderRadius: 6,
-                    backgroundColor: settings.displayUnit === 'BTC' ? '#F7931A' : 'transparent',
+                    backgroundColor: settings.displayUnit === 'BTC' ? theme.primary : 'transparent',
                   }}
                   onPress={() => updateSettings({ displayUnit: 'BTC' })}
                 >
-                  <Text style={{ fontSize: 12, fontWeight: '600', color: settings.displayUnit === 'BTC' ? '#FFFFFF' : '#9CA3AF' }}>
+                  <Text style={{ fontSize: 12, fontWeight: '600', color: settings.displayUnit === 'BTC' ? '#FFFFFF' : theme.textMuted }}>
                     BTC
                   </Text>
                 </TouchableOpacity>
@@ -397,14 +399,52 @@ export default function SettingsScreen() {
                     paddingHorizontal: 12,
                     paddingVertical: 6,
                     borderRadius: 6,
-                    backgroundColor: settings.displayUnit === 'KRW' ? '#FFFFFF' : 'transparent',
+                    backgroundColor: settings.displayUnit === 'KRW' ? theme.toggleActiveKrw : 'transparent',
                   }}
                   onPress={() => updateSettings({ displayUnit: 'KRW' })}
                 >
-                  <Text style={{ fontSize: 12, fontWeight: '600', color: settings.displayUnit === 'KRW' ? '#1A1A1A' : '#9CA3AF' }}>
+                  <Text style={{ fontSize: 12, fontWeight: '600', color: settings.displayUnit === 'KRW' ? theme.text : theme.textMuted }}>
                     KRW
                   </Text>
                 </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Theme selector */}
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                padding: 16,
+                borderTopWidth: 1,
+                borderTopColor: theme.border,
+              }}
+            >
+              <Ionicons name="color-palette" size={24} color={theme.textSecondary} style={{ marginRight: 12 }} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 16, color: theme.text }}>{t('settings.theme')}</Text>
+              </View>
+              <View style={{ flexDirection: 'row', backgroundColor: theme.toggleTrack, borderRadius: 8, padding: 2 }}>
+                {(['light', 'dark', 'system'] as const).map((mode) => (
+                  <TouchableOpacity
+                    key={mode}
+                    style={{
+                      paddingHorizontal: 10,
+                      paddingVertical: 6,
+                      borderRadius: 6,
+                      backgroundColor: settings.theme === mode ? theme.primary : 'transparent',
+                    }}
+                    onPress={() => updateSettings({ theme: mode })}
+                  >
+                    <Text style={{
+                      fontSize: 11,
+                      fontWeight: '600',
+                      color: settings.theme === mode ? '#FFFFFF' : theme.textMuted,
+                    }}>
+                      {t(`settings.theme${mode.charAt(0).toUpperCase() + mode.slice(1)}`)}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
               </View>
             </View>
 
@@ -417,13 +457,13 @@ export default function SettingsScreen() {
               }}
               onPress={() => setShowLanguagePicker(true)}
             >
-              <Ionicons name="language" size={24} color="#666666" style={{ marginRight: 12 }} />
-              <Text style={{ flex: 1, fontSize: 16, color: '#1A1A1A' }}>{t('settings.language')}</Text>
-              <Text style={{ fontSize: 14, color: '#9CA3AF', marginRight: 8 }}>
+              <Ionicons name="language" size={24} color={theme.textSecondary} style={{ marginRight: 12 }} />
+              <Text style={{ flex: 1, fontSize: 16, color: theme.text }}>{t('settings.language')}</Text>
+              <Text style={{ fontSize: 14, color: theme.textMuted, marginRight: 8 }}>
                 {SUPPORTED_LANGUAGES[i18n.language as SupportedLanguage]?.flag}{' '}
                 {SUPPORTED_LANGUAGES[i18n.language as SupportedLanguage]?.nativeName}
               </Text>
-              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+              <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
             </TouchableOpacity>
 
             {/* Region selector */}
@@ -433,28 +473,28 @@ export default function SettingsScreen() {
                 alignItems: 'center',
                 padding: 16,
                 borderTopWidth: 1,
-                borderTopColor: '#F3F4F6',
+                borderTopColor: theme.borderLight,
               }}
               onPress={() => setShowRegionPicker(true)}
             >
-              <Ionicons name="globe-outline" size={24} color="#666666" style={{ marginRight: 12 }} />
-              <Text style={{ flex: 1, fontSize: 16, color: '#1A1A1A' }}>{t('settings.region')}</Text>
-              <Text style={{ fontSize: 14, color: '#9CA3AF', marginRight: 8 }}>
+              <Ionicons name="globe-outline" size={24} color={theme.textSecondary} style={{ marginRight: 12 }} />
+              <Text style={{ flex: 1, fontSize: 16, color: theme.text }}>{t('settings.region')}</Text>
+              <Text style={{ fontSize: 14, color: theme.textMuted, marginRight: 8 }}>
                 {SUPPORTED_REGIONS.find(r => r.id === currentRegion)?.flag}{' '}
                 {t(SUPPORTED_REGIONS.find(r => r.id === currentRegion)?.nameKey || 'regions.korea')}
               </Text>
-              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+              <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Security */}
         <View style={{ padding: 20 }}>
-          <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>{t('settings.security')}</Text>
+          <Text style={{ fontSize: 12, color: theme.textMuted, marginBottom: 12 }}>{t('settings.security')}</Text>
 
           <View
             style={{
-              backgroundColor: '#F9FAFB',
+              backgroundColor: theme.backgroundSecondary,
               borderRadius: 12,
               overflow: 'hidden',
             }}
@@ -465,13 +505,13 @@ export default function SettingsScreen() {
                 alignItems: 'center',
                 padding: 16,
                 borderBottomWidth: 1,
-                borderBottomColor: '#E5E7EB',
+                borderBottomColor: theme.border,
               }}
               onPress={() => router.push('/(modals)/change-password')}
             >
-              <Ionicons name="key" size={24} color="#666666" style={{ marginRight: 12 }} />
-              <Text style={{ flex: 1, fontSize: 16, color: '#1A1A1A' }}>{t('settings.changePassword')}</Text>
-              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+              <Ionicons name="key" size={24} color={theme.textSecondary} style={{ marginRight: 12 }} />
+              <Text style={{ flex: 1, fontSize: 16, color: theme.text }}>{t('settings.changePassword')}</Text>
+              <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
             </TouchableOpacity>
 
             {biometricAvailable && (
@@ -481,23 +521,23 @@ export default function SettingsScreen() {
                   alignItems: 'center',
                   padding: 16,
                   borderBottomWidth: 1,
-                  borderBottomColor: '#E5E7EB',
+                  borderBottomColor: theme.border,
                 }}
               >
                 <Ionicons
                   name="finger-print"
                   size={24}
-                  color="#666666"
+                  color={theme.textSecondary}
                   style={{ marginRight: 12 }}
                 />
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 16, color: '#1A1A1A' }}>{t('settings.biometric')}</Text>
-                  <Text style={{ fontSize: 12, color: '#9CA3AF' }}>{t('settings.biometricSub')}</Text>
+                  <Text style={{ fontSize: 16, color: theme.text }}>{t('settings.biometric')}</Text>
+                  <Text style={{ fontSize: 12, color: theme.textMuted }}>{t('settings.biometricSub')}</Text>
                 </View>
                 <Switch
                   value={biometricEnabled}
                   onValueChange={handleBiometricToggle}
-                  trackColor={{ true: '#F7931A' }}
+                  trackColor={{ false: theme.toggleTrack, true: theme.switchTrackOn }}
                 />
               </View>
             )}
@@ -508,16 +548,16 @@ export default function SettingsScreen() {
                 alignItems: 'center',
                 padding: 16,
                 borderBottomWidth: 1,
-                borderBottomColor: '#E5E7EB',
+                borderBottomColor: theme.border,
               }}
               onPress={() => setShowAutoLockPicker(true)}
             >
-              <Ionicons name="time" size={24} color="#666666" style={{ marginRight: 12 }} />
-              <Text style={{ flex: 1, fontSize: 16, color: '#1A1A1A' }}>{t('settings.autoLock')}</Text>
-              <Text style={{ fontSize: 14, color: '#9CA3AF', marginRight: 8 }}>
+              <Ionicons name="time" size={24} color={theme.textSecondary} style={{ marginRight: 12 }} />
+              <Text style={{ flex: 1, fontSize: 16, color: theme.text }}>{t('settings.autoLock')}</Text>
+              <Text style={{ fontSize: 14, color: theme.textMuted, marginRight: 8 }}>
                 {t(AUTO_LOCK_KEYS[settings.autoLockTime])}
               </Text>
-              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+              <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -528,19 +568,19 @@ export default function SettingsScreen() {
               }}
               onPress={handleLock}
             >
-              <Ionicons name="lock-closed" size={24} color="#666666" style={{ marginRight: 12 }} />
-              <Text style={{ flex: 1, fontSize: 16, color: '#1A1A1A' }}>{t('settings.lockApp')}</Text>
+              <Ionicons name="lock-closed" size={24} color={theme.textSecondary} style={{ marginRight: 12 }} />
+              <Text style={{ flex: 1, fontSize: 16, color: theme.text }}>{t('settings.lockApp')}</Text>
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Notifications */}
         <View style={{ padding: 20 }}>
-          <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>{t('settings.notifications')}</Text>
+          <Text style={{ fontSize: 12, color: theme.textMuted, marginBottom: 12 }}>{t('settings.notifications')}</Text>
 
           <View
             style={{
-              backgroundColor: '#F9FAFB',
+              backgroundColor: theme.backgroundSecondary,
               borderRadius: 12,
               overflow: 'hidden',
             }}
@@ -551,13 +591,13 @@ export default function SettingsScreen() {
                 alignItems: 'center',
                 padding: 16,
                 borderBottomWidth: 1,
-                borderBottomColor: '#E5E7EB',
+                borderBottomColor: theme.border,
               }}
             >
-              <Ionicons name="calendar" size={24} color="#666666" style={{ marginRight: 12 }} />
+              <Ionicons name="calendar" size={24} color={theme.textSecondary} style={{ marginRight: 12 }} />
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 16, color: '#1A1A1A' }}>{t('settings.dailyReminder')}</Text>
-                <Text style={{ fontSize: 12, color: '#9CA3AF' }}>{t('settings.dailyReminderSub')}</Text>
+                <Text style={{ fontSize: 16, color: theme.text }}>{t('settings.dailyReminder')}</Text>
+                <Text style={{ fontSize: 12, color: theme.textMuted }}>{t('settings.dailyReminderSub')}</Text>
               </View>
               <Switch
                 value={settings.dailyReminderEnabled}
@@ -572,7 +612,7 @@ export default function SettingsScreen() {
                     await cancelDailyReminder();
                   }
                 }}
-                trackColor={{ true: '#F7931A' }}
+                trackColor={{ false: theme.toggleTrack, true: theme.switchTrackOn }}
               />
             </View>
 
@@ -584,16 +624,16 @@ export default function SettingsScreen() {
                   padding: 16,
                   paddingLeft: 52,
                   borderBottomWidth: 1,
-                  borderBottomColor: '#E5E7EB',
+                  borderBottomColor: theme.border,
                 }}
                 onPress={() => setShowReminderTimePicker(true)}
               >
-                <Ionicons name="time-outline" size={20} color="#9CA3AF" style={{ marginRight: 12 }} />
-                <Text style={{ flex: 1, fontSize: 14, color: '#666666' }}>{t('settings.reminderTime')}</Text>
-                <Text style={{ fontSize: 14, color: '#F7931A', fontWeight: '500', marginRight: 8 }}>
+                <Ionicons name="time-outline" size={20} color={theme.textMuted} style={{ marginRight: 12 }} />
+                <Text style={{ flex: 1, fontSize: 14, color: theme.textSecondary }}>{t('settings.reminderTime')}</Text>
+                <Text style={{ fontSize: 14, color: theme.primary, fontWeight: '500', marginRight: 8 }}>
                   {settings.dailyReminderTime}
                 </Text>
-                <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+                <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
               </TouchableOpacity>
             )}
 
@@ -603,13 +643,13 @@ export default function SettingsScreen() {
                 alignItems: 'center',
                 padding: 16,
                 borderBottomWidth: 1,
-                borderBottomColor: '#E5E7EB',
+                borderBottomColor: theme.border,
               }}
             >
-              <Ionicons name="notifications" size={24} color="#666666" style={{ marginRight: 12 }} />
+              <Ionicons name="notifications" size={24} color={theme.textSecondary} style={{ marginRight: 12 }} />
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 16, color: '#1A1A1A' }}>{t('settings.subscriptionAlert')}</Text>
-                <Text style={{ fontSize: 12, color: '#9CA3AF' }}>{t('settings.subscriptionAlertSub')}</Text>
+                <Text style={{ fontSize: 16, color: theme.text }}>{t('settings.subscriptionAlert')}</Text>
+                <Text style={{ fontSize: 12, color: theme.textMuted }}>{t('settings.subscriptionAlertSub')}</Text>
               </View>
               <Switch
                 value={settings.subscriptionNotificationEnabled}
@@ -624,7 +664,7 @@ export default function SettingsScreen() {
                     await cancelAllSubscriptionNotifications();
                   }
                 }}
-                trackColor={{ true: '#F7931A' }}
+                trackColor={{ false: theme.toggleTrack, true: theme.switchTrackOn }}
               />
             </View>
 
@@ -640,9 +680,9 @@ export default function SettingsScreen() {
                   Alert.alert(t('settings.testNotification'), t('settings.testNotificationSent'));
                 }}
               >
-                <Ionicons name="happy" size={24} color="#666666" style={{ marginRight: 12 }} />
-                <Text style={{ flex: 1, fontSize: 16, color: '#1A1A1A' }}>{t('settings.testNotification')}</Text>
-                <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+                <Ionicons name="happy" size={24} color={theme.textSecondary} style={{ marginRight: 12 }} />
+                <Text style={{ flex: 1, fontSize: 16, color: theme.text }}>{t('settings.testNotification')}</Text>
+                <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
               </TouchableOpacity>
             )}
           </View>
@@ -650,11 +690,11 @@ export default function SettingsScreen() {
 
         {/* Data */}
         <View style={{ padding: 20 }}>
-          <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>{t('settings.data')}</Text>
+          <Text style={{ fontSize: 12, color: theme.textMuted, marginBottom: 12 }}>{t('settings.data')}</Text>
 
           <View
             style={{
-              backgroundColor: '#F9FAFB',
+              backgroundColor: theme.backgroundSecondary,
               borderRadius: 12,
               overflow: 'hidden',
             }}
@@ -665,16 +705,16 @@ export default function SettingsScreen() {
                 alignItems: 'center',
                 padding: 16,
                 borderBottomWidth: 1,
-                borderBottomColor: '#E5E7EB',
+                borderBottomColor: theme.border,
               }}
               onPress={() => router.push('/(modals)/card-list')}
             >
-              <Ionicons name="card" size={24} color="#666666" style={{ marginRight: 12 }} />
-              <Text style={{ flex: 1, fontSize: 16, color: '#1A1A1A' }}>{t('settings.cardManagement')}</Text>
-              <Text style={{ fontSize: 14, color: '#9CA3AF', marginRight: 8 }}>
+              <Ionicons name="card" size={24} color={theme.textSecondary} style={{ marginRight: 12 }} />
+              <Text style={{ flex: 1, fontSize: 16, color: theme.text }}>{t('settings.cardManagement')}</Text>
+              <Text style={{ fontSize: 14, color: theme.textMuted, marginRight: 8 }}>
                 {cards.length}{t('common.cards_unit')}
               </Text>
-              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+              <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -683,13 +723,13 @@ export default function SettingsScreen() {
                 alignItems: 'center',
                 padding: 16,
                 borderBottomWidth: 1,
-                borderBottomColor: '#E5E7EB',
+                borderBottomColor: theme.border,
               }}
             >
-              <Ionicons name="pricetag" size={24} color="#666666" style={{ marginRight: 12 }} />
-              <Text style={{ flex: 1, fontSize: 16, color: '#1A1A1A' }}>{t('settings.categoryManagement')}</Text>
-              <Text style={{ fontSize: 12, color: '#9CA3AF', marginRight: 8 }}>{t('common.comingSoon')}</Text>
-              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+              <Ionicons name="pricetag" size={24} color={theme.textSecondary} style={{ marginRight: 12 }} />
+              <Text style={{ flex: 1, fontSize: 16, color: theme.text }}>{t('settings.categoryManagement')}</Text>
+              <Text style={{ fontSize: 12, color: theme.textMuted, marginRight: 8 }}>{t('common.comingSoon')}</Text>
+              <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -698,16 +738,16 @@ export default function SettingsScreen() {
                 alignItems: 'center',
                 padding: 16,
                 borderBottomWidth: 1,
-                borderBottomColor: '#E5E7EB',
+                borderBottomColor: theme.border,
               }}
               onPress={handleBackup}
               disabled={isBackingUp}
             >
-              <Ionicons name="cloud-upload" size={24} color="#666666" style={{ marginRight: 12 }} />
-              <Text style={{ flex: 1, fontSize: 16, color: '#1A1A1A' }}>
+              <Ionicons name="cloud-upload" size={24} color={theme.textSecondary} style={{ marginRight: 12 }} />
+              <Text style={{ flex: 1, fontSize: 16, color: theme.text }}>
                 {isBackingUp ? t('settings.backingUp') : t('settings.backup')}
               </Text>
-              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+              <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -718,20 +758,20 @@ export default function SettingsScreen() {
               }}
               onPress={handleRestore}
             >
-              <Ionicons name="cloud-download" size={24} color="#666666" style={{ marginRight: 12 }} />
-              <Text style={{ flex: 1, fontSize: 16, color: '#1A1A1A' }}>{t('settings.restore')}</Text>
-              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+              <Ionicons name="cloud-download" size={24} color={theme.textSecondary} style={{ marginRight: 12 }} />
+              <Text style={{ flex: 1, fontSize: 16, color: theme.text }}>{t('settings.restore')}</Text>
+              <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
             </TouchableOpacity>
           </View>
         </View>
 
         {/* App info */}
         <View style={{ padding: 20 }}>
-          <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>{t('settings.appInfo')}</Text>
+          <Text style={{ fontSize: 12, color: theme.textMuted, marginBottom: 12 }}>{t('settings.appInfo')}</Text>
 
           <View
             style={{
-              backgroundColor: '#F9FAFB',
+              backgroundColor: theme.backgroundSecondary,
               borderRadius: 12,
               padding: 16,
             }}
@@ -743,10 +783,10 @@ export default function SettingsScreen() {
                 marginBottom: 12,
               }}
             >
-              <Text style={{ fontSize: 14, color: '#666666' }}>{t('settings.appName')}</Text>
+              <Text style={{ fontSize: 14, color: theme.textSecondary }}>{t('settings.appName')}</Text>
               <View style={{ alignItems: 'flex-end' }}>
-                <Text style={{ fontSize: 14, color: '#1A1A1A', fontWeight: '500' }}>SYBA</Text>
-                <Text style={{ fontSize: 10, color: '#9CA3AF' }}>Start Your Bitcoin Adoption</Text>
+                <Text style={{ fontSize: 14, color: theme.text, fontWeight: '500' }}>SYBA</Text>
+                <Text style={{ fontSize: 10, color: theme.textMuted }}>Start Your Bitcoin Adoption</Text>
               </View>
             </View>
             <View
@@ -756,13 +796,13 @@ export default function SettingsScreen() {
                 marginBottom: 12,
               }}
             >
-              <Text style={{ fontSize: 14, color: '#666666' }}>{t('settings.version')}</Text>
+              <Text style={{ fontSize: 14, color: theme.textSecondary }}>{t('settings.version')}</Text>
               <View style={{ alignItems: 'flex-end' }}>
-                <Text style={{ fontSize: 14, color: '#1A1A1A' }}>
+                <Text style={{ fontSize: 14, color: theme.text }}>
                   {Constants.expoConfig?.version || '0.1.0'}
                 </Text>
                 {Constants.expoConfig?.extra?.eas?.buildId && (
-                  <Text style={{ fontSize: 10, color: '#9CA3AF' }}>
+                  <Text style={{ fontSize: 10, color: theme.textMuted }}>
                     {Constants.expoConfig.extra.eas.buildId.slice(0, 8)}
                   </Text>
                 )}
@@ -775,7 +815,7 @@ export default function SettingsScreen() {
                 marginBottom: 12,
               }}
             >
-              <Text style={{ fontSize: 14, color: '#666666' }}>{t('settings.developer')}</Text>
+              <Text style={{ fontSize: 14, color: theme.textSecondary }}>{t('settings.developer')}</Text>
               <Text
                 style={{
                   fontSize: 14,
@@ -792,7 +832,7 @@ export default function SettingsScreen() {
                 justifyContent: 'space-between',
               }}
             >
-              <Text style={{ fontSize: 14, color: '#666666' }}>{t('settings.contact')}</Text>
+              <Text style={{ fontSize: 14, color: theme.textSecondary }}>{t('settings.contact')}</Text>
               <TouchableOpacity
                 onPress={() => {
                   Clipboard.setStringAsync('AsadoConKimchi@proton.me');
@@ -802,7 +842,7 @@ export default function SettingsScreen() {
                 <Text
                   style={{
                     fontSize: 14,
-                    color: '#3B82F6',
+                    color: theme.info,
                   }}
                 >
                   AsadoConKimchi@proton.me
@@ -813,16 +853,16 @@ export default function SettingsScreen() {
 
           <View
             style={{
-              backgroundColor: '#FEF3C7',
+              backgroundColor: theme.warningBanner,
               borderRadius: 12,
               padding: 16,
               marginTop: 12,
             }}
           >
-            <Text style={{ fontSize: 12, color: '#92400E', marginBottom: 4 }}>
+            <Text style={{ fontSize: 12, color: theme.warningBannerText, marginBottom: 4 }}>
               {t('settings.billingInfo')}
             </Text>
-            <Text style={{ fontSize: 11, color: '#78716C', lineHeight: 16 }}>
+            <Text style={{ fontSize: 11, color: theme.warningBannerSubtext, lineHeight: 16 }}>
               {t('settings.billingInfoDetail')}
             </Text>
           </View>
@@ -831,11 +871,11 @@ export default function SettingsScreen() {
         {/* Dev tools */}
         {__DEV__ && (
           <View style={{ padding: 20 }}>
-            <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>{t('settings.devTools')}</Text>
+            <Text style={{ fontSize: 12, color: theme.textMuted, marginBottom: 12 }}>{t('settings.devTools')}</Text>
 
             <View
               style={{
-                backgroundColor: '#FEF2F2',
+                backgroundColor: theme.errorBanner,
                 borderRadius: 12,
                 overflow: 'hidden',
               }}
@@ -846,7 +886,7 @@ export default function SettingsScreen() {
                   alignItems: 'center',
                   padding: 16,
                   borderBottomWidth: 1,
-                  borderBottomColor: '#FECACA',
+                  borderBottomColor: theme.errorBannerBorder,
                 }}
                 disabled={isDummyLoading}
                 onPress={async () => {
@@ -896,16 +936,16 @@ export default function SettingsScreen() {
                   );
                 }}
               >
-                <Ionicons name="flask" size={24} color="#DC2626" style={{ marginRight: 12 }} />
+                <Ionicons name="flask" size={24} color={theme.error} style={{ marginRight: 12 }} />
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 16, color: '#DC2626' }}>
+                  <Text style={{ fontSize: 16, color: theme.error }}>
                     {isDummyLoading ? t('common.processing') : t('settings.addDummyData')}
                   </Text>
-                  <Text style={{ fontSize: 12, color: '#9CA3AF' }}>
+                  <Text style={{ fontSize: 12, color: theme.textMuted }}>
                     {t('settings.addDummyDataSub')}
                   </Text>
                 </View>
-                <Ionicons name="add-circle" size={24} color="#DC2626" />
+                <Ionicons name="add-circle" size={24} color={theme.error} />
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -964,41 +1004,41 @@ export default function SettingsScreen() {
                   );
                 }}
               >
-                <Ionicons name="trash" size={24} color={hasDummy ? '#DC2626' : '#9CA3AF'} style={{ marginRight: 12 }} />
+                <Ionicons name="trash" size={24} color={hasDummy ? theme.error : theme.textMuted} style={{ marginRight: 12 }} />
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 16, color: hasDummy ? '#DC2626' : '#9CA3AF' }}>
+                  <Text style={{ fontSize: 16, color: hasDummy ? theme.error : theme.textMuted }}>
                     {t('settings.removeDummyData')}
                   </Text>
-                  <Text style={{ fontSize: 12, color: '#9CA3AF' }}>
+                  <Text style={{ fontSize: 12, color: theme.textMuted }}>
                     {hasDummy ? t('settings.removeDummyDataSub') : t('settings.noDummyData')}
                   </Text>
                 </View>
-                <Ionicons name="remove-circle" size={24} color={hasDummy ? '#DC2626' : '#9CA3AF'} />
+                <Ionicons name="remove-circle" size={24} color={hasDummy ? theme.error : theme.textMuted} />
               </TouchableOpacity>
             </View>
 
-            <Text style={{ fontSize: 11, color: '#9CA3AF', marginTop: 8, textAlign: 'center' }}>
+            <Text style={{ fontSize: 11, color: theme.textMuted, marginTop: 8, textAlign: 'center' }}>
               {t('settings.dummySafeNote')}
             </Text>
 
             <View
               style={{
-                backgroundColor: '#F0F9FF',
+                backgroundColor: theme.infoBanner,
                 borderRadius: 12,
                 padding: 16,
                 marginTop: 12,
               }}
             >
-              <Text style={{ fontSize: 12, fontWeight: '600', color: '#0369A1', marginBottom: 8 }}>
+              <Text style={{ fontSize: 12, fontWeight: '600', color: theme.infoBannerText, marginBottom: 8 }}>
                 {t('settings.envStatus')}
               </Text>
-              <Text style={{ fontSize: 11, color: '#0C4A6E', fontFamily: 'monospace' }}>
+              <Text style={{ fontSize: 11, color: theme.infoBannerSubtext, fontFamily: 'monospace' }}>
                 SUPABASE_URL: {SUPABASE_CONFIG.URL ? `✅ ${t('settings.envSet')}` : `❌ ${t('settings.envMissing')}`}
               </Text>
-              <Text style={{ fontSize: 11, color: '#0C4A6E', fontFamily: 'monospace' }}>
+              <Text style={{ fontSize: 11, color: theme.infoBannerSubtext, fontFamily: 'monospace' }}>
                 ANON_KEY: {SUPABASE_CONFIG.ANON_KEY ? `✅ ${t('settings.envSet')}` : `❌ ${t('settings.envMissing')}`}
               </Text>
-              <Text style={{ fontSize: 11, color: '#0C4A6E', fontFamily: 'monospace', marginTop: 4 }}>
+              <Text style={{ fontSize: 11, color: theme.infoBannerSubtext, fontFamily: 'monospace', marginTop: 4 }}>
                 URL: {SUPABASE_CONFIG.URL?.substring(0, 30) || 'N/A'}...
               </Text>
             </View>
@@ -1010,10 +1050,10 @@ export default function SettingsScreen() {
 
       {/* Auto lock picker modal */}
       <Modal visible={showAutoLockPicker} transparent animationType="slide">
-        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: theme.modalOverlay }}>
           <View
             style={{
-              backgroundColor: '#FFFFFF',
+              backgroundColor: theme.modalBackground,
               borderTopLeftRadius: 20,
               borderTopRightRadius: 20,
               padding: 20,
@@ -1027,9 +1067,9 @@ export default function SettingsScreen() {
                 marginBottom: 16,
               }}
             >
-              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{t('settings.autoLockTime')}</Text>
+              <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>{t('settings.autoLockTime')}</Text>
               <TouchableOpacity onPress={() => setShowAutoLockPicker(false)}>
-                <Ionicons name="close" size={24} color="#666666" />
+                <Ionicons name="close" size={24} color={theme.textSecondary} />
               </TouchableOpacity>
             </View>
 
@@ -1039,7 +1079,7 @@ export default function SettingsScreen() {
                 style={{
                   padding: 16,
                   borderRadius: 8,
-                  backgroundColor: settings.autoLockTime === key ? '#F7931A' : '#F3F4F6',
+                  backgroundColor: settings.autoLockTime === key ? theme.primary : theme.backgroundTertiary,
                   marginBottom: 8,
                 }}
                 onPress={() => handleAutoLockChange(key)}
@@ -1047,7 +1087,7 @@ export default function SettingsScreen() {
                 <Text
                   style={{
                     fontSize: 16,
-                    color: settings.autoLockTime === key ? '#FFFFFF' : '#1A1A1A',
+                    color: settings.autoLockTime === key ? '#FFFFFF' : theme.text,
                     textAlign: 'center',
                   }}
                 >
@@ -1061,10 +1101,10 @@ export default function SettingsScreen() {
 
       {/* Reminder time picker modal */}
       <Modal visible={showReminderTimePicker} transparent animationType="slide">
-        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: theme.modalOverlay }}>
           <View
             style={{
-              backgroundColor: '#FFFFFF',
+              backgroundColor: theme.modalBackground,
               borderTopLeftRadius: 20,
               borderTopRightRadius: 20,
               padding: 20,
@@ -1078,9 +1118,9 @@ export default function SettingsScreen() {
                 marginBottom: 16,
               }}
             >
-              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{t('settings.reminderTime')}</Text>
+              <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>{t('settings.reminderTime')}</Text>
               <TouchableOpacity onPress={() => setShowReminderTimePicker(false)}>
-                <Ionicons name="close" size={24} color="#666666" />
+                <Ionicons name="close" size={24} color={theme.textSecondary} />
               </TouchableOpacity>
             </View>
 
@@ -1090,7 +1130,7 @@ export default function SettingsScreen() {
                 style={{
                   padding: 16,
                   borderRadius: 8,
-                  backgroundColor: settings.dailyReminderTime === time ? '#F7931A' : '#F3F4F6',
+                  backgroundColor: settings.dailyReminderTime === time ? theme.primary : theme.backgroundTertiary,
                   marginBottom: 8,
                 }}
                 onPress={async () => {
@@ -1104,7 +1144,7 @@ export default function SettingsScreen() {
                 <Text
                   style={{
                     fontSize: 16,
-                    color: settings.dailyReminderTime === time ? '#FFFFFF' : '#1A1A1A',
+                    color: settings.dailyReminderTime === time ? '#FFFFFF' : theme.text,
                     textAlign: 'center',
                   }}
                 >
@@ -1118,10 +1158,10 @@ export default function SettingsScreen() {
 
       {/* Language picker modal */}
       <Modal visible={showLanguagePicker} transparent animationType="slide">
-        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: theme.modalOverlay }}>
           <View
             style={{
-              backgroundColor: '#FFFFFF',
+              backgroundColor: theme.modalBackground,
               borderTopLeftRadius: 20,
               borderTopRightRadius: 20,
               padding: 20,
@@ -1135,9 +1175,9 @@ export default function SettingsScreen() {
                 marginBottom: 16,
               }}
             >
-              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{t('settings.language')}</Text>
+              <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>{t('settings.language')}</Text>
               <TouchableOpacity onPress={() => setShowLanguagePicker(false)}>
-                <Ionicons name="close" size={24} color="#666666" />
+                <Ionicons name="close" size={24} color={theme.textSecondary} />
               </TouchableOpacity>
             </View>
 
@@ -1147,7 +1187,7 @@ export default function SettingsScreen() {
                 style={{
                   padding: 16,
                   borderRadius: 8,
-                  backgroundColor: i18n.language === lang ? '#F7931A' : '#F3F4F6',
+                  backgroundColor: i18n.language === lang ? theme.primary : theme.backgroundTertiary,
                   marginBottom: 8,
                   flexDirection: 'row',
                   alignItems: 'center',
@@ -1160,7 +1200,7 @@ export default function SettingsScreen() {
                 <Text
                   style={{
                     fontSize: 16,
-                    color: i18n.language === lang ? '#FFFFFF' : '#1A1A1A',
+                    color: i18n.language === lang ? '#FFFFFF' : theme.text,
                     flex: 1,
                   }}
                 >
@@ -1177,10 +1217,10 @@ export default function SettingsScreen() {
 
       {/* Region picker modal */}
       <Modal visible={showRegionPicker} transparent animationType="slide">
-        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: theme.modalOverlay }}>
           <View
             style={{
-              backgroundColor: '#FFFFFF',
+              backgroundColor: theme.modalBackground,
               borderTopLeftRadius: 20,
               borderTopRightRadius: 20,
               padding: 20,
@@ -1194,9 +1234,9 @@ export default function SettingsScreen() {
                 marginBottom: 16,
               }}
             >
-              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{t('settings.region')}</Text>
+              <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>{t('settings.region')}</Text>
               <TouchableOpacity onPress={() => setShowRegionPicker(false)}>
-                <Ionicons name="close" size={24} color="#666666" />
+                <Ionicons name="close" size={24} color={theme.textSecondary} />
               </TouchableOpacity>
             </View>
 
@@ -1206,7 +1246,7 @@ export default function SettingsScreen() {
                 style={{
                   padding: 16,
                   borderRadius: 8,
-                  backgroundColor: currentRegion === region.id ? '#F7931A' : '#F3F4F6',
+                  backgroundColor: currentRegion === region.id ? theme.primary : theme.backgroundTertiary,
                   marginBottom: 8,
                   flexDirection: 'row',
                   alignItems: 'center',
@@ -1219,7 +1259,7 @@ export default function SettingsScreen() {
                 <Text
                   style={{
                     fontSize: 16,
-                    color: currentRegion === region.id ? '#FFFFFF' : '#1A1A1A',
+                    color: currentRegion === region.id ? '#FFFFFF' : theme.text,
                     flex: 1,
                   }}
                 >
@@ -1228,7 +1268,7 @@ export default function SettingsScreen() {
                 <Text
                   style={{
                     fontSize: 14,
-                    color: currentRegion === region.id ? '#FFFFFF99' : '#9CA3AF',
+                    color: currentRegion === region.id ? 'rgba(255,255,255,0.6)' : theme.textMuted,
                   }}
                 >
                   {region.currency}

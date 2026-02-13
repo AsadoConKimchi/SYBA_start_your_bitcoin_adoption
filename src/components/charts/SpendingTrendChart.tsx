@@ -7,6 +7,7 @@ import { useLedgerStore } from '../../stores/ledgerStore';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { formatKrw, formatSats } from '../../utils/formatters';
 import { ChartEmptyState } from './ChartEmptyState';
+import { useTheme } from '../../hooks/useTheme';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -16,6 +17,7 @@ export function SpendingTrendChart() {
   const { t } = useTranslation();
   const { getMultiMonthTotals } = useLedgerStore();
   const { settings } = useSettingsStore();
+  const { theme, isDark } = useTheme();
   const [isExpanded, setIsExpanded] = useState(false);
   const [displayMode, setDisplayMode] = useState<DisplayMode>(settings.displayUnit);
 
@@ -35,31 +37,31 @@ export function SpendingTrendChart() {
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: 16,
-        backgroundColor: '#F9FAFB',
+        backgroundColor: theme.backgroundSecondary,
         borderRadius: isExpanded ? 0 : 12,
         borderTopLeftRadius: 12,
         borderTopRightRadius: 12,
       }}
       onPress={() => setIsExpanded(!isExpanded)}
     >
-      <Text style={{ fontSize: 14, fontWeight: '600', color: '#1A1A1A' }}>
+      <Text style={{ fontSize: 14, fontWeight: '600', color: theme.text }}>
         {t('charts.monthlySpendingFlow')} {monthlyData.length > 1 ? `(${t('charts.recentMonths', { count: monthlyData.length })})` : ''}
       </Text>
       <Ionicons
         name={isExpanded ? 'chevron-up' : 'chevron-down'}
         size={20}
-        color="#666666"
+        color={theme.textSecondary}
       />
     </TouchableOpacity>
   );
 
   if (!isExpanded) {
-    return <View style={{ backgroundColor: '#F9FAFB', borderRadius: 12 }}>{header}</View>;
+    return <View style={{ backgroundColor: theme.backgroundSecondary, borderRadius: 12 }}>{header}</View>;
   }
 
   if (!hasData) {
     return (
-      <View style={{ backgroundColor: '#F9FAFB', borderRadius: 12 }}>
+      <View style={{ backgroundColor: theme.backgroundSecondary, borderRadius: 12 }}>
         {header}
         <View style={{ padding: 16, paddingTop: 0 }}>
           <ChartEmptyState
@@ -89,27 +91,27 @@ export function SpendingTrendChart() {
     datasets: [
       {
         data: expenses,
-        color: () => '#EF4444',
+        color: () => theme.error,
         strokeWidth: 2,
       },
     ],
   };
 
   const chartConfig = {
-    backgroundColor: '#FFFFFF',
-    backgroundGradientFrom: '#FFFFFF',
-    backgroundGradientTo: '#FFFFFF',
+    backgroundColor: theme.chartBackground,
+    backgroundGradientFrom: theme.chartBackground,
+    backgroundGradientTo: theme.chartBackground,
     decimalPlaces: 0,
-    color: (opacity = 1) => `rgba(239, 68, 68, ${opacity})`,
-    labelColor: () => '#666666',
+    color: (opacity = 1) => isDark ? `rgba(248, 113, 113, ${opacity})` : `rgba(239, 68, 68, ${opacity})`,
+    labelColor: () => theme.chartLabelColor,
     propsForBackgroundLines: {
       strokeDasharray: '',
-      stroke: '#E5E7EB',
+      stroke: theme.chartGridLine,
     },
     propsForDots: {
       r: '4',
       strokeWidth: '2',
-      stroke: '#EF4444',
+      stroke: theme.error,
     },
   };
 
@@ -139,24 +141,24 @@ export function SpendingTrendChart() {
   const unit = displayMode === 'KRW' ? t('charts.tenThousandWon') : `sats (K)`;
 
   return (
-    <View style={{ backgroundColor: '#F9FAFB', borderRadius: 12 }}>
+    <View style={{ backgroundColor: theme.backgroundSecondary, borderRadius: 12 }}>
       {header}
 
       <View style={{ padding: 16, paddingTop: 0 }}>
         {/* BTC/KRW toggle */}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <Text style={{ fontSize: 11, color: '#9CA3AF' }}>{unit}</Text>
-          <View style={{ flexDirection: 'row', backgroundColor: '#E5E7EB', borderRadius: 8, padding: 2 }}>
+          <Text style={{ fontSize: 11, color: theme.textMuted }}>{unit}</Text>
+          <View style={{ flexDirection: 'row', backgroundColor: theme.toggleTrack, borderRadius: 8, padding: 2 }}>
             <TouchableOpacity
               style={{
                 paddingHorizontal: 12,
                 paddingVertical: 4,
                 borderRadius: 6,
-                backgroundColor: displayMode === 'BTC' ? '#F7931A' : 'transparent',
+                backgroundColor: displayMode === 'BTC' ? theme.primary : 'transparent',
               }}
               onPress={() => setDisplayMode('BTC')}
             >
-              <Text style={{ fontSize: 12, fontWeight: '500', color: displayMode === 'BTC' ? '#FFFFFF' : '#9CA3AF' }}>
+              <Text style={{ fontSize: 12, fontWeight: '500', color: displayMode === 'BTC' ? theme.textInverse : theme.textMuted }}>
                 BTC
               </Text>
             </TouchableOpacity>
@@ -165,11 +167,11 @@ export function SpendingTrendChart() {
                 paddingHorizontal: 12,
                 paddingVertical: 4,
                 borderRadius: 6,
-                backgroundColor: displayMode === 'KRW' ? '#FFFFFF' : 'transparent',
+                backgroundColor: displayMode === 'KRW' ? theme.toggleActiveKrw : 'transparent',
               }}
               onPress={() => setDisplayMode('KRW')}
             >
-              <Text style={{ fontSize: 12, fontWeight: '500', color: displayMode === 'KRW' ? '#1A1A1A' : '#9CA3AF' }}>
+              <Text style={{ fontSize: 12, fontWeight: '500', color: displayMode === 'KRW' ? theme.text : theme.textMuted }}>
                 KRW
               </Text>
             </TouchableOpacity>
@@ -201,24 +203,24 @@ export function SpendingTrendChart() {
             justifyContent: 'space-between',
             paddingTop: 12,
             borderTopWidth: 1,
-            borderTopColor: '#E5E7EB',
+            borderTopColor: theme.border,
           }}
         >
           {/* Trend (shown only when 2+ months) */}
           {canShowTrend ? (
             <View>
-              <Text style={{ fontSize: 11, color: '#9CA3AF' }}>{t('charts.spendingTrend')}</Text>
+              <Text style={{ fontSize: 11, color: theme.textMuted }}>{t('charts.spendingTrend')}</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <Ionicons
                   name={trendPercent > 0 ? 'trending-up' : trendPercent < 0 ? 'trending-down' : 'remove'}
                   size={16}
-                  color={trendPercent > 0 ? '#EF4444' : trendPercent < 0 ? '#22C55E' : '#9CA3AF'}
+                  color={trendPercent > 0 ? theme.error : trendPercent < 0 ? theme.success : theme.textMuted}
                 />
                 <Text
                   style={{
                     fontSize: 14,
                     fontWeight: '600',
-                    color: trendPercent > 0 ? '#EF4444' : trendPercent < 0 ? '#22C55E' : '#9CA3AF',
+                    color: trendPercent > 0 ? theme.error : trendPercent < 0 ? theme.success : theme.textMuted,
                     marginLeft: 4,
                   }}
                 >
@@ -228,19 +230,19 @@ export function SpendingTrendChart() {
             </View>
           ) : (
             <View>
-              <Text style={{ fontSize: 11, color: '#9CA3AF' }}>{t('charts.spendingTrend')}</Text>
-              <Text style={{ fontSize: 12, color: '#9CA3AF' }}>{t('charts.collectingData')}</Text>
+              <Text style={{ fontSize: 11, color: theme.textMuted }}>{t('charts.spendingTrend')}</Text>
+              <Text style={{ fontSize: 12, color: theme.textMuted }}>{t('charts.collectingData')}</Text>
             </View>
           )}
 
           {/* Highest spending */}
           {maxMonth && maxExpense > 0 && (
             <View style={{ alignItems: 'center' }}>
-              <Text style={{ fontSize: 11, color: '#9CA3AF' }}>{t('charts.highest')}</Text>
-              <Text style={{ fontSize: 12, fontWeight: '500', color: '#EF4444' }}>
+              <Text style={{ fontSize: 11, color: theme.textMuted }}>{t('charts.highest')}</Text>
+              <Text style={{ fontSize: 12, fontWeight: '500', color: theme.error }}>
                 {maxMonth.month}
               </Text>
-              <Text style={{ fontSize: 11, color: '#666666' }}>
+              <Text style={{ fontSize: 11, color: theme.textSecondary }}>
                 {displayMode === 'KRW' ? formatKrw(maxExpense) : formatSats(maxExpense)}
               </Text>
             </View>
@@ -249,11 +251,11 @@ export function SpendingTrendChart() {
           {/* Lowest spending */}
           {minMonth && minExpense > 0 && (
             <View style={{ alignItems: 'flex-end' }}>
-              <Text style={{ fontSize: 11, color: '#9CA3AF' }}>{t('charts.lowest')}</Text>
-              <Text style={{ fontSize: 12, fontWeight: '500', color: '#22C55E' }}>
+              <Text style={{ fontSize: 11, color: theme.textMuted }}>{t('charts.lowest')}</Text>
+              <Text style={{ fontSize: 12, fontWeight: '500', color: theme.success }}>
                 {minMonth.month}
               </Text>
-              <Text style={{ fontSize: 11, color: '#666666' }}>
+              <Text style={{ fontSize: 11, color: theme.textSecondary }}>
                 {displayMode === 'KRW' ? formatKrw(minExpense) : formatSats(minExpense)}
               </Text>
             </View>

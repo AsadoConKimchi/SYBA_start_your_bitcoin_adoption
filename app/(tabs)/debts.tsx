@@ -12,6 +12,7 @@ import { router } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '../../src/hooks/useTheme';
 import { useDebtStore } from '../../src/stores/debtStore';
 import { useCardStore } from '../../src/stores/cardStore';
 import { useAuthStore } from '../../src/stores/authStore';
@@ -25,6 +26,7 @@ export default function DebtsScreen() {
   const { encryptionKey } = useAuthStore();
   const { isSubscribed } = useSubscriptionStore();
   const { t } = useTranslation();
+  const { theme } = useTheme();
   const {
     installments,
     loans,
@@ -94,7 +96,7 @@ export default function DebtsScreen() {
       <TouchableOpacity
         key={item.id}
         style={{
-          backgroundColor: '#F9FAFB',
+          backgroundColor: theme.backgroundSecondary,
           borderRadius: 12,
           padding: 16,
           marginBottom: 12,
@@ -103,22 +105,22 @@ export default function DebtsScreen() {
       >
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 16, fontWeight: '600', color: '#1A1A1A' }}>
+            <Text style={{ fontSize: 16, fontWeight: '600', color: theme.text }}>
               {item.storeName}
             </Text>
-            <Text style={{ fontSize: 12, color: '#9CA3AF' }}>
+            <Text style={{ fontSize: 12, color: theme.textMuted }}>
               {card?.name || t('debts.deletedCard')} • {item.isInterestFree ? t('common.noInterest') : `${t('loan.annualRate').replace(' *', '')} ${item.interestRate}%`}
             </Text>
           </View>
           <View style={{ alignItems: 'flex-end' }}>
-            <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#EF4444' }}>
+            <Text style={{ fontSize: 16, fontWeight: 'bold', color: theme.error }}>
               {formatKrw(item.remainingAmount)}
             </Text>
-            <Text style={{ fontSize: 12, color: '#9CA3AF' }}>
+            <Text style={{ fontSize: 12, color: theme.textMuted }}>
               {t('debts.monthlyPayment')} {formatKrw(item.monthlyPayment)}
             </Text>
             {btcKrw && (
-              <Text style={{ fontSize: 10, color: '#D1D5DB' }}>
+              <Text style={{ fontSize: 10, color: theme.borderLight }}>
                 ≈ {formatSats(krwToSats(item.remainingAmount))}
               </Text>
             )}
@@ -129,7 +131,7 @@ export default function DebtsScreen() {
           <View
             style={{
               height: 6,
-              backgroundColor: '#E5E7EB',
+              backgroundColor: theme.border,
               borderRadius: 3,
               overflow: 'hidden',
             }}
@@ -138,16 +140,16 @@ export default function DebtsScreen() {
               style={{
                 height: '100%',
                 width: `${progress * 100}%`,
-                backgroundColor: '#F7931A',
+                backgroundColor: theme.primary,
                 borderRadius: 3,
               }}
             />
           </View>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
-            <Text style={{ fontSize: 11, color: '#9CA3AF' }}>
+            <Text style={{ fontSize: 11, color: theme.textMuted }}>
               {t('debts.paidMonths', { paid: item.paidMonths, total: item.months })}
             </Text>
-            <Text style={{ fontSize: 11, color: '#666666' }}>
+            <Text style={{ fontSize: 11, color: theme.textSecondary }}>
               {t('debts.remainingMonths', { count: remainingMonths })}
             </Text>
           </View>
@@ -164,7 +166,7 @@ export default function DebtsScreen() {
       <TouchableOpacity
         key={item.id}
         style={{
-          backgroundColor: '#F9FAFB',
+          backgroundColor: theme.backgroundSecondary,
           borderRadius: 12,
           padding: 16,
           marginBottom: 12,
@@ -173,22 +175,22 @@ export default function DebtsScreen() {
       >
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 16, fontWeight: '600', color: '#1A1A1A' }}>
+            <Text style={{ fontSize: 16, fontWeight: '600', color: theme.text }}>
               {item.name}
             </Text>
-            <Text style={{ fontSize: 12, color: '#9CA3AF' }}>
+            <Text style={{ fontSize: 12, color: theme.textMuted }}>
               {item.institution} • {REPAYMENT_TYPE_LABELS[item.repaymentType]}
             </Text>
           </View>
           <View style={{ alignItems: 'flex-end' }}>
-            <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#EF4444' }}>
+            <Text style={{ fontSize: 16, fontWeight: 'bold', color: theme.error }}>
               {formatKrw(item.remainingPrincipal)}
             </Text>
-            <Text style={{ fontSize: 12, color: '#9CA3AF' }}>
+            <Text style={{ fontSize: 12, color: theme.textMuted }}>
               {t('debts.monthlyPayment')} {formatKrw(item.monthlyPayment)}
             </Text>
             {btcKrw && (
-              <Text style={{ fontSize: 10, color: '#D1D5DB' }}>
+              <Text style={{ fontSize: 10, color: theme.borderLight }}>
                 ≈ {formatSats(krwToSats(item.remainingPrincipal))}
               </Text>
             )}
@@ -198,24 +200,24 @@ export default function DebtsScreen() {
         <View style={{ flexDirection: 'row', marginBottom: 8 }}>
           <View
             style={{
-              backgroundColor: '#E5E7EB',
+              backgroundColor: theme.border,
               paddingHorizontal: 8,
               paddingVertical: 2,
               borderRadius: 4,
               marginRight: 8,
             }}
           >
-            <Text style={{ fontSize: 11, color: '#666666' }}>{t('loan.annualRate').replace(' *', '')} {item.interestRate}%</Text>
+            <Text style={{ fontSize: 11, color: theme.textSecondary }}>{t('loan.annualRate').replace(' *', '')} {item.interestRate}%</Text>
           </View>
           <View
             style={{
-              backgroundColor: '#E5E7EB',
+              backgroundColor: theme.border,
               paddingHorizontal: 8,
               paddingVertical: 2,
               borderRadius: 4,
             }}
           >
-            <Text style={{ fontSize: 11, color: '#666666' }}>
+            <Text style={{ fontSize: 11, color: theme.textSecondary }}>
               {t('loan.principal')} {formatKrw(item.principal)}
             </Text>
           </View>
@@ -225,7 +227,7 @@ export default function DebtsScreen() {
           <View
             style={{
               height: 6,
-              backgroundColor: '#E5E7EB',
+              backgroundColor: theme.border,
               borderRadius: 3,
               overflow: 'hidden',
             }}
@@ -234,16 +236,16 @@ export default function DebtsScreen() {
               style={{
                 height: '100%',
                 width: `${progress * 100}%`,
-                backgroundColor: '#3B82F6',
+                backgroundColor: theme.info,
                 borderRadius: 3,
               }}
             />
           </View>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
-            <Text style={{ fontSize: 11, color: '#9CA3AF' }}>
+            <Text style={{ fontSize: 11, color: theme.textMuted }}>
               {t('debts.repaidMonths', { paid: item.paidMonths, total: item.termMonths })}
             </Text>
-            <Text style={{ fontSize: 11, color: '#666666' }}>
+            <Text style={{ fontSize: 11, color: theme.textSecondary }}>
               {t('debts.remainingMonths', { count: remainingMonths })}
             </Text>
           </View>
@@ -254,14 +256,14 @@ export default function DebtsScreen() {
 
   if (!isSubscribed) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
         <PremiumGate feature={t('debts.management')} />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
       <View
         style={{
           flexDirection: 'row',
@@ -269,16 +271,16 @@ export default function DebtsScreen() {
           alignItems: 'center',
           padding: 20,
           borderBottomWidth: 1,
-          borderBottomColor: '#E5E7EB',
+          borderBottomColor: theme.border,
         }}
       >
-        <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#1A1A1A' }}>{t('debts.title')}</Text>
+        <Text style={{ fontSize: 20, fontWeight: 'bold', color: theme.text }}>{t('debts.title')}</Text>
         <TouchableOpacity
           style={{
             width: 36,
             height: 36,
             borderRadius: 18,
-            backgroundColor: '#F7931A',
+            backgroundColor: theme.primary,
             alignItems: 'center',
             justifyContent: 'center',
           }}
@@ -300,7 +302,7 @@ export default function DebtsScreen() {
             );
           }}
         >
-          <Ionicons name="add" size={24} color="#FFFFFF" />
+          <Ionicons name="add" size={24} color={theme.textInverse} />
         </TouchableOpacity>
       </View>
 
@@ -313,18 +315,18 @@ export default function DebtsScreen() {
         <View style={{ padding: 20 }}>
           <View
             style={{
-              backgroundColor: '#FEF2F2',
+              backgroundColor: theme.expenseButtonBg,
               borderRadius: 16,
               padding: 20,
               marginBottom: 16,
             }}
           >
-            <Text style={{ fontSize: 14, color: '#991B1B', marginBottom: 4 }}>{t('debts.totalDebt')}</Text>
-            <Text style={{ fontSize: 32, fontWeight: 'bold', color: '#EF4444' }}>
+            <Text style={{ fontSize: 14, color: theme.offlineBannerText, marginBottom: 4 }}>{t('debts.totalDebt')}</Text>
+            <Text style={{ fontSize: 32, fontWeight: 'bold', color: theme.error }}>
               {formatKrw(totalDebt)}
             </Text>
             {btcKrw && (
-              <Text style={{ fontSize: 12, color: '#9CA3AF' }}>
+              <Text style={{ fontSize: 12, color: theme.textMuted }}>
                 ≈ {formatSats(krwToSats(totalDebt))}
               </Text>
             )}
@@ -335,25 +337,25 @@ export default function DebtsScreen() {
                 marginTop: 16,
                 paddingTop: 16,
                 borderTopWidth: 1,
-                borderTopColor: '#FECACA',
+                borderTopColor: theme.errorBannerBorder,
               }}
             >
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 12, color: '#991B1B' }}>{t('debts.installments')}</Text>
-                <Text style={{ fontSize: 16, fontWeight: '600', color: '#EF4444' }}>
+                <Text style={{ fontSize: 12, color: theme.offlineBannerText }}>{t('debts.installments')}</Text>
+                <Text style={{ fontSize: 16, fontWeight: '600', color: theme.error }}>
                   {formatKrw(activeInstallments.reduce((s, i) => s + i.remainingAmount, 0))}
                 </Text>
-                <Text style={{ fontSize: 11, color: '#9CA3AF' }}>
+                <Text style={{ fontSize: 11, color: theme.textMuted }}>
                   {t('debts.inProgress', { count: activeInstallments.length })}
                 </Text>
               </View>
-              <View style={{ width: 1, backgroundColor: '#FECACA', marginHorizontal: 16 }} />
+              <View style={{ width: 1, backgroundColor: theme.errorBannerBorder, marginHorizontal: 16 }} />
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 12, color: '#991B1B' }}>{t('debts.loans')}</Text>
-                <Text style={{ fontSize: 16, fontWeight: '600', color: '#EF4444' }}>
+                <Text style={{ fontSize: 12, color: theme.offlineBannerText }}>{t('debts.loans')}</Text>
+                <Text style={{ fontSize: 16, fontWeight: '600', color: theme.error }}>
                   {formatKrw(activeLoans.reduce((s, l) => s + l.remainingPrincipal, 0))}
                 </Text>
-                <Text style={{ fontSize: 11, color: '#9CA3AF' }}>
+                <Text style={{ fontSize: 11, color: theme.textMuted }}>
                   {t('debts.inProgress', { count: activeLoans.length })}
                 </Text>
               </View>
@@ -363,27 +365,27 @@ export default function DebtsScreen() {
           {thisMonthTotal > 0 && (
             <View
               style={{
-                backgroundColor: '#FEF3C7',
+                backgroundColor: theme.warningBanner,
                 borderRadius: 12,
                 padding: 16,
                 marginBottom: 16,
               }}
             >
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-                <Ionicons name="calendar" size={20} color="#92400E" style={{ marginRight: 8 }} />
-                <Text style={{ fontSize: 14, fontWeight: '600', color: '#92400E' }}>
+                <Ionicons name="calendar" size={20} color={theme.priceBannerText} style={{ marginRight: 8 }} />
+                <Text style={{ fontSize: 14, fontWeight: '600', color: theme.priceBannerText }}>
                   {t('debts.thisMonthDue')}
                 </Text>
               </View>
-              <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#B45309' }}>
+              <Text style={{ fontSize: 24, fontWeight: 'bold', color: theme.warning }}>
                 {formatKrw(thisMonthTotal)}
               </Text>
               {btcKrw && (
-                <Text style={{ fontSize: 11, color: '#92400E' }}>
+                <Text style={{ fontSize: 11, color: theme.priceBannerText }}>
                   ≈ {formatSats(krwToSats(thisMonthTotal))}
                 </Text>
               )}
-              <Text style={{ fontSize: 12, color: '#92400E', marginTop: 4 }}>
+              <Text style={{ fontSize: 12, color: theme.priceBannerText, marginTop: 4 }}>
                 {t('debts.thisMonthDueDetail', {
                   installments: thisMonthDue.installments.length,
                   loans: thisMonthDue.loans.length,
@@ -399,7 +401,7 @@ export default function DebtsScreen() {
             style={{
               flex: 1,
               paddingVertical: 12,
-              backgroundColor: activeTab === 'installment' ? '#F7931A' : '#F3F4F6',
+              backgroundColor: activeTab === 'installment' ? theme.primary : theme.backgroundTertiary,
               borderRadius: 8,
               marginRight: 8,
               alignItems: 'center',
@@ -410,7 +412,7 @@ export default function DebtsScreen() {
               style={{
                 fontSize: 14,
                 fontWeight: '600',
-                color: activeTab === 'installment' ? '#FFFFFF' : '#666666',
+                color: activeTab === 'installment' ? theme.textInverse : theme.textSecondary,
               }}
             >
               {t('debts.installmentCount', { count: activeInstallments.length })}
@@ -420,7 +422,7 @@ export default function DebtsScreen() {
             style={{
               flex: 1,
               paddingVertical: 12,
-              backgroundColor: activeTab === 'loan' ? '#3B82F6' : '#F3F4F6',
+              backgroundColor: activeTab === 'loan' ? theme.info : theme.backgroundTertiary,
               borderRadius: 8,
               alignItems: 'center',
             }}
@@ -430,7 +432,7 @@ export default function DebtsScreen() {
               style={{
                 fontSize: 14,
                 fontWeight: '600',
-                color: activeTab === 'loan' ? '#FFFFFF' : '#666666',
+                color: activeTab === 'loan' ? theme.textInverse : theme.textSecondary,
               }}
             >
               {t('debts.loanCount', { count: activeLoans.length })}
@@ -445,14 +447,14 @@ export default function DebtsScreen() {
             ) : (
               <View
                 style={{
-                  backgroundColor: '#F9FAFB',
+                  backgroundColor: theme.backgroundSecondary,
                   borderRadius: 12,
                   padding: 40,
                   alignItems: 'center',
                 }}
               >
-                <Ionicons name="card-outline" size={48} color="#D1D5DB" />
-                <Text style={{ fontSize: 14, color: '#9CA3AF', marginTop: 12 }}>
+                <Ionicons name="card-outline" size={48} color={theme.borderLight} />
+                <Text style={{ fontSize: 14, color: theme.textMuted, marginTop: 12 }}>
                   {t('debts.noInstallments')}
                 </Text>
                 <TouchableOpacity
@@ -460,12 +462,12 @@ export default function DebtsScreen() {
                     marginTop: 16,
                     paddingHorizontal: 20,
                     paddingVertical: 10,
-                    backgroundColor: '#F7931A',
+                    backgroundColor: theme.primary,
                     borderRadius: 8,
                   }}
                   onPress={() => router.push('/(modals)/add-installment')}
                 >
-                  <Text style={{ color: '#FFFFFF', fontWeight: '600' }}>{t('debts.addInstallment')}</Text>
+                  <Text style={{ color: theme.textInverse, fontWeight: '600' }}>{t('debts.addInstallment')}</Text>
                 </TouchableOpacity>
               </View>
             )
@@ -474,14 +476,14 @@ export default function DebtsScreen() {
           ) : (
             <View
               style={{
-                backgroundColor: '#F9FAFB',
+                backgroundColor: theme.backgroundSecondary,
                 borderRadius: 12,
                 padding: 40,
                 alignItems: 'center',
               }}
             >
-              <Ionicons name="business-outline" size={48} color="#D1D5DB" />
-              <Text style={{ fontSize: 14, color: '#9CA3AF', marginTop: 12 }}>
+              <Ionicons name="business-outline" size={48} color={theme.borderLight} />
+              <Text style={{ fontSize: 14, color: theme.textMuted, marginTop: 12 }}>
                 {t('debts.noLoans')}
               </Text>
               <TouchableOpacity
@@ -489,12 +491,12 @@ export default function DebtsScreen() {
                   marginTop: 16,
                   paddingHorizontal: 20,
                   paddingVertical: 10,
-                  backgroundColor: '#3B82F6',
+                  backgroundColor: theme.info,
                   borderRadius: 8,
                 }}
                 onPress={() => router.push('/(modals)/add-loan')}
               >
-                <Text style={{ color: '#FFFFFF', fontWeight: '600' }}>{t('debts.addLoan')}</Text>
+                <Text style={{ color: theme.textInverse, fontWeight: '600' }}>{t('debts.addLoan')}</Text>
               </TouchableOpacity>
             </View>
           )}

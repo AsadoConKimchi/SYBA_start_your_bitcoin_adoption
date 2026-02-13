@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '../../src/hooks/useTheme';
 import { useCardStore } from '../../src/stores/cardStore';
 import { useAssetStore } from '../../src/stores/assetStore';
 import { useSubscriptionStore } from '../../src/stores/subscriptionStore';
@@ -35,6 +36,7 @@ const CARD_COLORS = [
 
 export default function AddCardScreen() {
   const { t } = useTranslation();
+  const { theme } = useTheme();
   const [name, setName] = useState('');
   const [company, setCompany] = useState<CardCompanyId | null>(null);
   const [cardType, setCardType] = useState<CardType>('credit');
@@ -154,7 +156,7 @@ export default function AddCardScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
@@ -167,16 +169,16 @@ export default function AddCardScreen() {
             alignItems: 'center',
             padding: 20,
             borderBottomWidth: 1,
-            borderBottomColor: '#E5E7EB',
+            borderBottomColor: theme.border,
           }}
         >
-          <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1A1A1A' }}>{t('card.register')}</Text>
+          <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>{t('card.register')}</Text>
           <TouchableOpacity onPress={() => router.back()}>
-            <Ionicons name="close" size={24} color="#666666" />
+            <Ionicons name="close" size={24} color={theme.textSecondary} />
           </TouchableOpacity>
         </View>
 
-        <ScrollView style={{ flex: 1, padding: 20 }}>
+        <ScrollView style={{ flex: 1, padding: 20 }} keyboardShouldPersistTaps="handled">
           {/* 카드 미리보기 */}
           <View
             style={{
@@ -206,18 +208,18 @@ export default function AddCardScreen() {
 
           {/* 카드 이름 */}
           <View style={{ marginBottom: 24 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('card.cardName')}</Text>
+            <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('card.cardName')}</Text>
             <TextInput
               style={{
                 borderWidth: 1,
-                borderColor: '#E5E7EB',
+                borderColor: theme.inputBorder,
                 borderRadius: 8,
                 padding: 12,
                 fontSize: 16,
-                color: '#1A1A1A',
+                color: theme.inputText,
               }}
               placeholder={t('card.cardNamePlaceholder')}
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={theme.placeholder}
               value={name}
               onChangeText={setName}
             />
@@ -225,7 +227,7 @@ export default function AddCardScreen() {
 
           {/* 카드사 */}
           <View style={{ marginBottom: 24 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('card.company')}</Text>
+            <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('card.company')}</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {region.cardCompanies.map(comp => (
                 <TouchableOpacity
@@ -234,14 +236,14 @@ export default function AddCardScreen() {
                     paddingHorizontal: 12,
                     paddingVertical: 8,
                     borderRadius: 8,
-                    backgroundColor: company === comp.id ? '#F7931A' : '#F3F4F6',
+                    backgroundColor: company === comp.id ? theme.primary : theme.backgroundTertiary,
                   }}
                   onPress={() => setCompany(comp.id)}
                 >
                   <Text
                     style={{
                       fontSize: 14,
-                      color: company === comp.id ? '#FFFFFF' : '#666666',
+                      color: company === comp.id ? '#FFFFFF' : theme.textSecondary,
                     }}
                   >
                     {t('cardCompanies.' + comp.id)}
@@ -253,7 +255,7 @@ export default function AddCardScreen() {
 
           {/* 카드 종류 */}
           <View style={{ marginBottom: 24 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('card.cardType')}</Text>
+            <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('card.cardType')}</Text>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {[
                 { id: 'credit', label: t('card.credit') },
@@ -266,7 +268,7 @@ export default function AddCardScreen() {
                     flex: 1,
                     paddingVertical: 12,
                     borderRadius: 8,
-                    backgroundColor: cardType === type.id ? '#F7931A' : '#F3F4F6',
+                    backgroundColor: cardType === type.id ? theme.primary : theme.backgroundTertiary,
                     alignItems: 'center',
                   }}
                   onPress={() => setCardType(type.id as CardType)}
@@ -274,7 +276,7 @@ export default function AddCardScreen() {
                   <Text
                     style={{
                       fontSize: 14,
-                      color: cardType === type.id ? '#FFFFFF' : '#666666',
+                      color: cardType === type.id ? '#FFFFFF' : theme.textSecondary,
                     }}
                   >
                     {type.label}
@@ -287,11 +289,11 @@ export default function AddCardScreen() {
           {/* 결제일 (신용카드만) */}
           {cardType === 'credit' && (
             <View style={{ marginBottom: 24 }}>
-              <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('card.paymentDay')}</Text>
+              <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('card.paymentDay')}</Text>
               <TouchableOpacity
                 style={{
                   borderWidth: 1,
-                  borderColor: '#E5E7EB',
+                  borderColor: theme.inputBorder,
                   borderRadius: 8,
                   padding: 12,
                   flexDirection: 'row',
@@ -300,18 +302,18 @@ export default function AddCardScreen() {
                 }}
                 onPress={() => setShowPaymentDayPicker(true)}
               >
-                <Text style={{ fontSize: 16, color: paymentDay ? '#1A1A1A' : '#9CA3AF' }}>
+                <Text style={{ fontSize: 16, color: paymentDay ? theme.text : theme.textMuted }}>
                   {paymentDay ? t('card.paymentDayFormat', { day: paymentDay }) : t('card.selectPaymentDay')}
                 </Text>
-                <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+                <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
               </TouchableOpacity>
               {billingPeriodText && (
-                <Text style={{ fontSize: 12, color: '#9CA3AF', marginTop: 8 }}>
+                <Text style={{ fontSize: 12, color: theme.textMuted, marginTop: 8 }}>
                   {t('card.billingPeriod', { period: billingPeriodText })}
                 </Text>
               )}
               {!company && cardType === 'credit' && (
-                <Text style={{ fontSize: 12, color: '#F7931A', marginTop: 8 }}>
+                <Text style={{ fontSize: 12, color: theme.primary, marginTop: 8 }}>
                   * {t('card.selectCompanyFirst')}
                 </Text>
               )}
@@ -321,11 +323,11 @@ export default function AddCardScreen() {
           {/* 결제 계좌 (신용카드만) */}
           {cardType === 'credit' && (
             <View style={{ marginBottom: 24 }}>
-              <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('card.linkedAccount')}</Text>
+              <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('card.linkedAccount')}</Text>
               <TouchableOpacity
                 style={{
                   borderWidth: 1,
-                  borderColor: '#E5E7EB',
+                  borderColor: theme.inputBorder,
                   borderRadius: 8,
                   padding: 12,
                   flexDirection: 'row',
@@ -334,14 +336,14 @@ export default function AddCardScreen() {
                 }}
                 onPress={() => setShowAssetPicker(true)}
               >
-                <Text style={{ fontSize: 16, color: linkedAssetId ? '#1A1A1A' : '#9CA3AF' }}>
+                <Text style={{ fontSize: 16, color: linkedAssetId ? theme.text : theme.textMuted }}>
                   {linkedAssetId
                     ? fiatAssets.find(a => a.id === linkedAssetId)?.name ?? t('card.linkedAccount')
                     : t('card.selectLinkedAccount')}
                 </Text>
-                <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+                <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
               </TouchableOpacity>
-              <Text style={{ fontSize: 12, color: '#9CA3AF', marginTop: 8 }}>
+              <Text style={{ fontSize: 12, color: theme.textMuted, marginTop: 8 }}>
                 {t('card.autoDeductHint')}
               </Text>
             </View>
@@ -349,7 +351,7 @@ export default function AddCardScreen() {
 
           {/* 카드 색상 */}
           <View style={{ marginBottom: 24 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('card.cardColor')}</Text>
+            <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('card.cardColor')}</Text>
             <View style={{ flexDirection: 'row', gap: 12 }}>
               {CARD_COLORS.map(c => (
                 <TouchableOpacity
@@ -360,7 +362,7 @@ export default function AddCardScreen() {
                     borderRadius: 20,
                     backgroundColor: c,
                     borderWidth: color === c ? 3 : 0,
-                    borderColor: '#F7931A',
+                    borderColor: theme.primary,
                   }}
                   onPress={() => setColor(c)}
                 >
@@ -376,10 +378,10 @@ export default function AddCardScreen() {
         </ScrollView>
 
         {/* 저장 버튼 */}
-        <View style={{ padding: 20, borderTopWidth: 1, borderTopColor: '#E5E7EB' }}>
+        <View style={{ padding: 20, borderTopWidth: 1, borderTopColor: theme.border }}>
           <TouchableOpacity
             style={{
-              backgroundColor: '#F7931A',
+              backgroundColor: theme.primary,
               padding: 16,
               borderRadius: 8,
               alignItems: 'center',
@@ -397,24 +399,24 @@ export default function AddCardScreen() {
 
       {/* 결제일 선택 모달 */}
       <Modal visible={showPaymentDayPicker} transparent animationType="slide">
-        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: theme.modalOverlay }}>
           <View
             style={{
-              backgroundColor: '#FFFFFF',
+              backgroundColor: theme.modalBackground,
               borderTopLeftRadius: 20,
               borderTopRightRadius: 20,
               padding: 20,
             }}
           >
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{t('card.selectPaymentDayTitle')}</Text>
+              <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>{t('card.selectPaymentDayTitle')}</Text>
               <TouchableOpacity onPress={() => setShowPaymentDayPicker(false)}>
-                <Ionicons name="close" size={24} color="#666666" />
+                <Ionicons name="close" size={24} color={theme.textSecondary} />
               </TouchableOpacity>
             </View>
 
             {company && (
-              <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 16 }}>
+              <Text style={{ fontSize: 12, color: theme.textMuted, marginBottom: 16 }}>
                 {t('card.availablePaymentDays', { company: t('cardCompanies.' + company) })}
               </Text>
             )}
@@ -426,7 +428,7 @@ export default function AddCardScreen() {
                   style={{
                     width: '18%',
                     padding: 12,
-                    backgroundColor: paymentDay === day ? '#F7931A' : '#F3F4F6',
+                    backgroundColor: paymentDay === day ? theme.primary : theme.backgroundTertiary,
                     borderRadius: 8,
                     margin: '1%',
                     alignItems: 'center',
@@ -439,7 +441,7 @@ export default function AddCardScreen() {
                   <Text
                     style={{
                       fontSize: 16,
-                      color: paymentDay === day ? '#FFFFFF' : '#1A1A1A',
+                      color: paymentDay === day ? '#FFFFFF' : theme.text,
                     }}
                   >
                     {t('card.dayFormat', { day })}
@@ -449,7 +451,7 @@ export default function AddCardScreen() {
             </View>
 
             {availablePaymentDays.length === 0 && (
-              <Text style={{ fontSize: 14, color: '#9CA3AF', textAlign: 'center', marginBottom: 16 }}>
+              <Text style={{ fontSize: 14, color: theme.textMuted, textAlign: 'center', marginBottom: 16 }}>
                 {t('card.selectCompanyFirst')}
               </Text>
             )}
@@ -458,7 +460,7 @@ export default function AddCardScreen() {
             <TouchableOpacity
               style={{
                 padding: 16,
-                backgroundColor: '#F3F4F6',
+                backgroundColor: theme.backgroundTertiary,
                 borderRadius: 8,
                 alignItems: 'center',
               }}
@@ -469,7 +471,7 @@ export default function AddCardScreen() {
                 setShowPaymentDayPicker(false);
               }}
             >
-              <Text style={{ fontSize: 16, color: '#666666' }}>{t('card.noSettings')}</Text>
+              <Text style={{ fontSize: 16, color: theme.textSecondary }}>{t('card.noSettings')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -477,10 +479,10 @@ export default function AddCardScreen() {
 
       {/* 결제 계좌 선택 모달 */}
       <Modal visible={showAssetPicker} transparent animationType="slide">
-        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: theme.modalOverlay }}>
           <View
             style={{
-              backgroundColor: '#FFFFFF',
+              backgroundColor: theme.modalBackground,
               borderTopLeftRadius: 20,
               borderTopRightRadius: 20,
               padding: 20,
@@ -488,16 +490,16 @@ export default function AddCardScreen() {
             }}
           >
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
-              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{t('card.selectAccountTitle')}</Text>
+              <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>{t('card.selectAccountTitle')}</Text>
               <TouchableOpacity onPress={() => setShowAssetPicker(false)}>
-                <Ionicons name="close" size={24} color="#666666" />
+                <Ionicons name="close" size={24} color={theme.textSecondary} />
               </TouchableOpacity>
             </View>
 
             {fiatAssets.length === 0 ? (
               <View style={{ padding: 32, alignItems: 'center' }}>
-                <Ionicons name="wallet-outline" size={48} color="#9CA3AF" />
-                <Text style={{ fontSize: 14, color: '#9CA3AF', marginTop: 12, textAlign: 'center' }}>
+                <Ionicons name="wallet-outline" size={48} color={theme.textMuted} />
+                <Text style={{ fontSize: 14, color: theme.textMuted, marginTop: 12, textAlign: 'center' }}>
                   {t('card.noAccounts')}
                 </Text>
               </View>
@@ -510,7 +512,7 @@ export default function AddCardScreen() {
                       flexDirection: 'row',
                       alignItems: 'center',
                       padding: 16,
-                      backgroundColor: linkedAssetId === asset.id ? '#FEF3C7' : '#F9FAFB',
+                      backgroundColor: linkedAssetId === asset.id ? theme.warningBanner : theme.backgroundSecondary,
                       borderRadius: 8,
                       marginBottom: 8,
                     }}
@@ -532,9 +534,9 @@ export default function AddCardScreen() {
                     >
                       <Text style={{ fontSize: 18 }}>🏦</Text>
                     </View>
-                    <Text style={{ flex: 1, fontSize: 16, color: '#1A1A1A' }}>{asset.name}</Text>
+                    <Text style={{ flex: 1, fontSize: 16, color: theme.text }}>{asset.name}</Text>
                     {linkedAssetId === asset.id && (
-                      <Ionicons name="checkmark-circle" size={24} color="#F7931A" />
+                      <Ionicons name="checkmark-circle" size={24} color={theme.primary} />
                     )}
                   </TouchableOpacity>
                 ))}
@@ -545,7 +547,7 @@ export default function AddCardScreen() {
             <TouchableOpacity
               style={{
                 padding: 16,
-                backgroundColor: '#F3F4F6',
+                backgroundColor: theme.backgroundTertiary,
                 borderRadius: 8,
                 alignItems: 'center',
                 marginTop: 8,
@@ -555,7 +557,7 @@ export default function AddCardScreen() {
                 setShowAssetPicker(false);
               }}
             >
-              <Text style={{ fontSize: 16, color: '#666666' }}>{t('card.noSettings')}</Text>
+              <Text style={{ fontSize: 16, color: theme.textSecondary }}>{t('card.noSettings')}</Text>
             </TouchableOpacity>
           </View>
         </View>

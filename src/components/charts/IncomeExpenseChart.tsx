@@ -5,28 +5,30 @@ import { useTranslation } from 'react-i18next';
 import { useLedgerStore } from '../../stores/ledgerStore';
 import { formatKrw } from '../../utils/formatters';
 import { ChartEmptyState } from './ChartEmptyState';
+import { useTheme } from '../../hooks/useTheme';
 
 const screenWidth = Dimensions.get('window').width;
-
-const chartConfig = {
-  backgroundColor: '#FFFFFF',
-  backgroundGradientFrom: '#FFFFFF',
-  backgroundGradientTo: '#FFFFFF',
-  decimalPlaces: 0,
-  color: (opacity = 1) => `rgba(59, 130, 246, ${opacity})`,
-  labelColor: () => '#666666',
-  propsForBackgroundLines: {
-    strokeDasharray: '',
-    stroke: '#E5E7EB',
-  },
-  barPercentage: 0.5,
-};
 
 export function IncomeExpenseChart() {
   const { t } = useTranslation();
   const { getMultiMonthTotals } = useLedgerStore();
+  const { theme, isDark } = useTheme();
   const [showIncome, setShowIncome] = useState(true);
   const [showExpense, setShowExpense] = useState(true);
+
+  const chartConfig = {
+    backgroundColor: theme.chartBackground,
+    backgroundGradientFrom: theme.chartBackground,
+    backgroundGradientTo: theme.chartBackground,
+    decimalPlaces: 0,
+    color: (opacity = 1) => isDark ? `rgba(96, 165, 250, ${opacity})` : `rgba(59, 130, 246, ${opacity})`,
+    labelColor: () => theme.chartLabelColor,
+    propsForBackgroundLines: {
+      strokeDasharray: '',
+      stroke: theme.chartGridLine,
+    },
+    barPercentage: 0.5,
+  };
 
   // Filter months with data (max 6 months)
   const monthlyData = useMemo(() => {
@@ -53,7 +55,7 @@ export function IncomeExpenseChart() {
         ? [
             {
               data: monthlyData.map(m => m.income / 10000),
-              color: () => '#22C55E',
+              color: () => theme.success,
             },
           ]
         : []),
@@ -61,7 +63,7 @@ export function IncomeExpenseChart() {
         ? [
             {
               data: monthlyData.map(m => m.expense / 10000),
-              color: () => '#EF4444',
+              color: () => theme.error,
             },
           ]
         : []),
@@ -77,7 +79,7 @@ export function IncomeExpenseChart() {
         ? [
             {
               data: monthlyData.map(m => m.income / 10000 || 0),
-              color: () => '#22C55E',
+              color: () => theme.success,
               strokeWidth: 2,
             },
           ]
@@ -86,7 +88,7 @@ export function IncomeExpenseChart() {
         ? [
             {
               data: monthlyData.map(m => m.expense / 10000 || 0),
-              color: () => '#EF4444',
+              color: () => theme.error,
               strokeWidth: 2,
             },
           ]
@@ -101,12 +103,12 @@ export function IncomeExpenseChart() {
   return (
     <View
       style={{
-        backgroundColor: '#F9FAFB',
+        backgroundColor: theme.backgroundSecondary,
         borderRadius: 12,
         padding: 16,
       }}
     >
-      <Text style={{ fontSize: 14, fontWeight: '600', color: '#1A1A1A', marginBottom: 8 }}>
+      <Text style={{ fontSize: 14, fontWeight: '600', color: theme.text, marginBottom: 8 }}>
         {t('charts.incomeVsExpense')} {monthlyData.length > 1 ? `(${t('charts.recentMonths', { count: monthlyData.length })})` : ''}
       </Text>
 
@@ -119,7 +121,7 @@ export function IncomeExpenseChart() {
             paddingHorizontal: 12,
             paddingVertical: 6,
             borderRadius: 16,
-            backgroundColor: showIncome ? '#DCFCE7' : '#F3F4F6',
+            backgroundColor: showIncome ? (isDark ? '#15372D' : '#DCFCE7') : theme.backgroundTertiary,
           }}
           onPress={() => setShowIncome(!showIncome)}
         >
@@ -128,7 +130,7 @@ export function IncomeExpenseChart() {
               width: 10,
               height: 10,
               borderRadius: 5,
-              backgroundColor: '#22C55E',
+              backgroundColor: theme.success,
               marginRight: 6,
               opacity: showIncome ? 1 : 0.3,
             }}
@@ -136,7 +138,7 @@ export function IncomeExpenseChart() {
           <Text
             style={{
               fontSize: 12,
-              color: showIncome ? '#22C55E' : '#9CA3AF',
+              color: showIncome ? theme.success : theme.textMuted,
               fontWeight: '500',
             }}
           >
@@ -151,7 +153,7 @@ export function IncomeExpenseChart() {
             paddingHorizontal: 12,
             paddingVertical: 6,
             borderRadius: 16,
-            backgroundColor: showExpense ? '#FEE2E2' : '#F3F4F6',
+            backgroundColor: showExpense ? (isDark ? '#3D1515' : '#FEE2E2') : theme.backgroundTertiary,
           }}
           onPress={() => setShowExpense(!showExpense)}
         >
@@ -160,7 +162,7 @@ export function IncomeExpenseChart() {
               width: 10,
               height: 10,
               borderRadius: 5,
-              backgroundColor: '#EF4444',
+              backgroundColor: theme.error,
               marginRight: 6,
               opacity: showExpense ? 1 : 0.3,
             }}
@@ -168,7 +170,7 @@ export function IncomeExpenseChart() {
           <Text
             style={{
               fontSize: 12,
-              color: showExpense ? '#EF4444' : '#9CA3AF',
+              color: showExpense ? theme.error : theme.textMuted,
               fontWeight: '500',
             }}
           >
@@ -189,11 +191,11 @@ export function IncomeExpenseChart() {
             chartConfig={{
               ...chartConfig,
               color: (opacity = 1, index) => {
-                if (!showIncome) return `rgba(239, 68, 68, ${opacity})`;
-                if (!showExpense) return `rgba(34, 197, 94, ${opacity})`;
+                if (!showIncome) return isDark ? `rgba(248, 113, 113, ${opacity})` : `rgba(239, 68, 68, ${opacity})`;
+                if (!showExpense) return isDark ? `rgba(74, 222, 128, ${opacity})` : `rgba(34, 197, 94, ${opacity})`;
                 return index === 0
-                  ? `rgba(34, 197, 94, ${opacity})`
-                  : `rgba(239, 68, 68, ${opacity})`;
+                  ? (isDark ? `rgba(74, 222, 128, ${opacity})` : `rgba(34, 197, 94, ${opacity})`)
+                  : (isDark ? `rgba(248, 113, 113, ${opacity})` : `rgba(239, 68, 68, ${opacity})`);
               },
             }}
             fromZero
@@ -215,7 +217,7 @@ export function IncomeExpenseChart() {
             yAxisSuffix=""
             chartConfig={{
               ...chartConfig,
-              color: () => '#666666',
+              color: () => theme.textSecondary,
             }}
             bezier
             fromZero
@@ -234,18 +236,18 @@ export function IncomeExpenseChart() {
           marginTop: 16,
           paddingTop: 12,
           borderTopWidth: 1,
-          borderTopColor: '#E5E7EB',
+          borderTopColor: theme.border,
         }}
       >
         <View>
-          <Text style={{ fontSize: 11, color: '#9CA3AF' }}>{t('charts.monthlyAvgIncome')}</Text>
-          <Text style={{ fontSize: 14, fontWeight: '600', color: '#22C55E' }}>
+          <Text style={{ fontSize: 11, color: theme.textMuted }}>{t('charts.monthlyAvgIncome')}</Text>
+          <Text style={{ fontSize: 14, fontWeight: '600', color: theme.success }}>
             {formatKrw(Math.round(avgIncome))}
           </Text>
         </View>
         <View style={{ alignItems: 'flex-end' }}>
-          <Text style={{ fontSize: 11, color: '#9CA3AF' }}>{t('charts.monthlyAvgExpense')}</Text>
-          <Text style={{ fontSize: 14, fontWeight: '600', color: '#EF4444' }}>
+          <Text style={{ fontSize: 11, color: theme.textMuted }}>{t('charts.monthlyAvgExpense')}</Text>
+          <Text style={{ fontSize: 14, fontWeight: '600', color: theme.error }}>
             {formatKrw(Math.round(avgExpense))}
           </Text>
         </View>

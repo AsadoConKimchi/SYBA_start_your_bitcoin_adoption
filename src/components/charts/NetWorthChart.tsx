@@ -7,6 +7,7 @@ import { usePriceStore } from '../../stores/priceStore';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { formatKrw, formatSats } from '../../utils/formatters';
 import { ChartEmptyState } from './ChartEmptyState';
+import { useTheme } from '../../hooks/useTheme';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -17,6 +18,7 @@ export function NetWorthChart() {
   const { snapshots } = useSnapshotStore();
   const { btcKrw } = usePriceStore();
   const { settings } = useSettingsStore();
+  const { theme, isDark } = useTheme();
 
   const [showAssets, setShowAssets] = useState(true);
   const [showDebts, setShowDebts] = useState(true);
@@ -75,7 +77,7 @@ export function NetWorthChart() {
   if (showAssets) {
     datasets.push({
       data: chartData.map(d => d.asset || 0.1),
-      color: () => '#22C55E',
+      color: () => theme.success,
       strokeWidth: 2,
     });
   }
@@ -83,7 +85,7 @@ export function NetWorthChart() {
   if (showDebts) {
     datasets.push({
       data: chartData.map(d => d.debt || 0.1),
-      color: () => '#EF4444',
+      color: () => theme.error,
       strokeWidth: 2,
     });
   }
@@ -91,14 +93,14 @@ export function NetWorthChart() {
   if (showNetWorth) {
     datasets.push({
       data: chartData.map(d => d.netWorth || 0.1),
-      color: () => '#3B82F6',
+      color: () => theme.info,
       strokeWidth: 3,
     });
   }
 
   // Default data if nothing selected
   if (datasets.length === 0) {
-    datasets.push({ data: [0], color: () => '#9CA3AF', strokeWidth: 1 });
+    datasets.push({ data: [0], color: () => theme.textMuted, strokeWidth: 1 });
   }
 
   const lineData = {
@@ -121,15 +123,15 @@ export function NetWorthChart() {
   const unit = displayMode === 'KRW' ? t('charts.tenThousandWon') : `sats (K)`;
 
   const chartConfig = {
-    backgroundColor: '#FFFFFF',
-    backgroundGradientFrom: '#FFFFFF',
-    backgroundGradientTo: '#FFFFFF',
+    backgroundColor: theme.chartBackground,
+    backgroundGradientFrom: theme.chartBackground,
+    backgroundGradientTo: theme.chartBackground,
     decimalPlaces: 0,
-    color: (opacity = 1) => `rgba(102, 102, 102, ${opacity})`,
-    labelColor: () => '#666666',
+    color: (opacity = 1) => isDark ? `rgba(160, 160, 160, ${opacity})` : `rgba(102, 102, 102, ${opacity})`,
+    labelColor: () => theme.chartLabelColor,
     propsForBackgroundLines: {
       strokeDasharray: '',
-      stroke: '#E5E7EB',
+      stroke: theme.chartGridLine,
     },
     propsForDots: {
       r: '4',
@@ -140,29 +142,29 @@ export function NetWorthChart() {
   return (
     <View
       style={{
-        backgroundColor: '#F9FAFB',
+        backgroundColor: theme.backgroundSecondary,
         borderRadius: 12,
         padding: 16,
       }}
     >
       {/* Header */}
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <Text style={{ fontSize: 14, fontWeight: '600', color: '#1A1A1A' }}>
+        <Text style={{ fontSize: 14, fontWeight: '600', color: theme.text }}>
           {t('charts.assetFlow')}
         </Text>
 
         {/* BTC/KRW toggle */}
-        <View style={{ flexDirection: 'row', backgroundColor: '#E5E7EB', borderRadius: 8, padding: 2 }}>
+        <View style={{ flexDirection: 'row', backgroundColor: theme.toggleTrack, borderRadius: 8, padding: 2 }}>
           <TouchableOpacity
             style={{
               paddingHorizontal: 12,
               paddingVertical: 4,
               borderRadius: 6,
-              backgroundColor: displayMode === 'BTC' ? '#F7931A' : 'transparent',
+              backgroundColor: displayMode === 'BTC' ? theme.primary : 'transparent',
             }}
             onPress={() => setDisplayMode('BTC')}
           >
-            <Text style={{ fontSize: 12, fontWeight: '500', color: displayMode === 'BTC' ? '#FFFFFF' : '#9CA3AF' }}>
+            <Text style={{ fontSize: 12, fontWeight: '500', color: displayMode === 'BTC' ? theme.textInverse : theme.textMuted }}>
               BTC
             </Text>
           </TouchableOpacity>
@@ -171,11 +173,11 @@ export function NetWorthChart() {
               paddingHorizontal: 12,
               paddingVertical: 4,
               borderRadius: 6,
-              backgroundColor: displayMode === 'KRW' ? '#FFFFFF' : 'transparent',
+              backgroundColor: displayMode === 'KRW' ? theme.toggleActiveKrw : 'transparent',
             }}
             onPress={() => setDisplayMode('KRW')}
           >
-            <Text style={{ fontSize: 12, fontWeight: '500', color: displayMode === 'KRW' ? '#1A1A1A' : '#9CA3AF' }}>
+            <Text style={{ fontSize: 12, fontWeight: '500', color: displayMode === 'KRW' ? theme.text : theme.textMuted }}>
               KRW
             </Text>
           </TouchableOpacity>
@@ -183,7 +185,7 @@ export function NetWorthChart() {
       </View>
 
       {/* Unit display */}
-      <Text style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 8 }}>
+      <Text style={{ fontSize: 11, color: theme.textMuted, marginBottom: 8 }}>
         {unit}
       </Text>
 
@@ -196,7 +198,7 @@ export function NetWorthChart() {
             paddingHorizontal: 12,
             paddingVertical: 6,
             borderRadius: 16,
-            backgroundColor: showAssets ? '#DCFCE7' : '#F3F4F6',
+            backgroundColor: showAssets ? (isDark ? '#15372D' : '#DCFCE7') : theme.backgroundTertiary,
           }}
           onPress={() => setShowAssets(!showAssets)}
         >
@@ -205,12 +207,12 @@ export function NetWorthChart() {
               width: 10,
               height: 10,
               borderRadius: 5,
-              backgroundColor: '#22C55E',
+              backgroundColor: theme.success,
               marginRight: 6,
               opacity: showAssets ? 1 : 0.3,
             }}
           />
-          <Text style={{ fontSize: 12, color: showAssets ? '#22C55E' : '#9CA3AF', fontWeight: '500' }}>
+          <Text style={{ fontSize: 12, color: showAssets ? theme.success : theme.textMuted, fontWeight: '500' }}>
             {t('charts.assets')}
           </Text>
         </TouchableOpacity>
@@ -222,7 +224,7 @@ export function NetWorthChart() {
             paddingHorizontal: 12,
             paddingVertical: 6,
             borderRadius: 16,
-            backgroundColor: showDebts ? '#FEE2E2' : '#F3F4F6',
+            backgroundColor: showDebts ? (isDark ? '#3D1515' : '#FEE2E2') : theme.backgroundTertiary,
           }}
           onPress={() => setShowDebts(!showDebts)}
         >
@@ -231,12 +233,12 @@ export function NetWorthChart() {
               width: 10,
               height: 10,
               borderRadius: 5,
-              backgroundColor: '#EF4444',
+              backgroundColor: theme.error,
               marginRight: 6,
               opacity: showDebts ? 1 : 0.3,
             }}
           />
-          <Text style={{ fontSize: 12, color: showDebts ? '#EF4444' : '#9CA3AF', fontWeight: '500' }}>
+          <Text style={{ fontSize: 12, color: showDebts ? theme.error : theme.textMuted, fontWeight: '500' }}>
             {t('charts.debts')}
           </Text>
         </TouchableOpacity>
@@ -248,7 +250,7 @@ export function NetWorthChart() {
             paddingHorizontal: 12,
             paddingVertical: 6,
             borderRadius: 16,
-            backgroundColor: showNetWorth ? '#DBEAFE' : '#F3F4F6',
+            backgroundColor: showNetWorth ? (isDark ? '#152040' : '#DBEAFE') : theme.backgroundTertiary,
           }}
           onPress={() => setShowNetWorth(!showNetWorth)}
         >
@@ -257,12 +259,12 @@ export function NetWorthChart() {
               width: 10,
               height: 10,
               borderRadius: 5,
-              backgroundColor: '#3B82F6',
+              backgroundColor: theme.info,
               marginRight: 6,
               opacity: showNetWorth ? 1 : 0.3,
             }}
           />
-          <Text style={{ fontSize: 12, color: showNetWorth ? '#3B82F6' : '#9CA3AF', fontWeight: '500' }}>
+          <Text style={{ fontSize: 12, color: showNetWorth ? theme.info : theme.textMuted, fontWeight: '500' }}>
             {t('charts.netWorth')}
           </Text>
         </TouchableOpacity>
@@ -292,20 +294,20 @@ export function NetWorthChart() {
       <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 16, marginTop: 8 }}>
         {showAssets && (
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <View style={{ width: 16, height: 3, backgroundColor: '#22C55E', marginRight: 4 }} />
-            <Text style={{ fontSize: 11, color: '#666666' }}>{t('charts.assets')}</Text>
+            <View style={{ width: 16, height: 3, backgroundColor: theme.success, marginRight: 4 }} />
+            <Text style={{ fontSize: 11, color: theme.textSecondary }}>{t('charts.assets')}</Text>
           </View>
         )}
         {showDebts && (
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <View style={{ width: 16, height: 3, backgroundColor: '#EF4444', marginRight: 4 }} />
-            <Text style={{ fontSize: 11, color: '#666666' }}>{t('charts.debts')}</Text>
+            <View style={{ width: 16, height: 3, backgroundColor: theme.error, marginRight: 4 }} />
+            <Text style={{ fontSize: 11, color: theme.textSecondary }}>{t('charts.debts')}</Text>
           </View>
         )}
         {showNetWorth && (
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <View style={{ width: 16, height: 3, backgroundColor: '#3B82F6', marginRight: 4 }} />
-            <Text style={{ fontSize: 11, color: '#666666' }}>{t('charts.netWorth')}</Text>
+            <View style={{ width: 16, height: 3, backgroundColor: theme.info, marginRight: 4 }} />
+            <Text style={{ fontSize: 11, color: theme.textSecondary }}>{t('charts.netWorth')}</Text>
           </View>
         )}
       </View>
@@ -319,41 +321,41 @@ export function NetWorthChart() {
             marginTop: 16,
             paddingTop: 12,
             borderTopWidth: 1,
-            borderTopColor: '#E5E7EB',
+            borderTopColor: theme.border,
             gap: 8,
           }}
         >
           <View style={{ minWidth: 70 }}>
-            <Text style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 4 }}>{t('charts.netWorth')}</Text>
-            <Text style={{ fontSize: 13, fontWeight: '600', color: latestData.netWorth >= 0 ? '#22C55E' : '#EF4444' }}>
+            <Text style={{ fontSize: 11, color: theme.textMuted, marginBottom: 4 }}>{t('charts.netWorth')}</Text>
+            <Text style={{ fontSize: 13, fontWeight: '600', color: latestData.netWorth >= 0 ? theme.success : theme.error }}>
               {displayMode === 'KRW'
                 ? formatKrw(latestData.netWorth * 10000)
                 : `${Math.round(latestData.netWorth).toLocaleString()} K`}
             </Text>
           </View>
           <View style={{ minWidth: 60, alignItems: 'center' }}>
-            <Text style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 4 }}>{t('charts.assets')}</Text>
-            <Text style={{ fontSize: 13, fontWeight: '600', color: '#22C55E' }}>
+            <Text style={{ fontSize: 11, color: theme.textMuted, marginBottom: 4 }}>{t('charts.assets')}</Text>
+            <Text style={{ fontSize: 13, fontWeight: '600', color: theme.success }}>
               {displayMode === 'KRW'
                 ? formatKrw(latestData.asset * 10000)
                 : `${Math.round(latestData.asset).toLocaleString()} K`}
             </Text>
           </View>
           <View style={{ minWidth: 60, alignItems: 'center' }}>
-            <Text style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 4 }}>{t('charts.debts')}</Text>
-            <Text style={{ fontSize: 13, fontWeight: '600', color: '#EF4444' }}>
+            <Text style={{ fontSize: 11, color: theme.textMuted, marginBottom: 4 }}>{t('charts.debts')}</Text>
+            <Text style={{ fontSize: 13, fontWeight: '600', color: theme.error }}>
               {displayMode === 'KRW'
                 ? formatKrw(latestData.debt * 10000)
                 : `${Math.round(latestData.debt).toLocaleString()} K`}
             </Text>
           </View>
           <View style={{ minWidth: 50, alignItems: 'flex-end' }}>
-            <Text style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 4 }}>{t('charts.changeRate')}</Text>
+            <Text style={{ fontSize: 11, color: theme.textMuted, marginBottom: 4 }}>{t('charts.changeRate')}</Text>
             <Text
               style={{
                 fontSize: 13,
                 fontWeight: '600',
-                color: netWorthChange >= 0 ? '#22C55E' : '#EF4444',
+                color: netWorthChange >= 0 ? theme.success : theme.error,
               }}
             >
               {netWorthChange >= 0 ? '+' : ''}{netWorthChange.toFixed(1)}%

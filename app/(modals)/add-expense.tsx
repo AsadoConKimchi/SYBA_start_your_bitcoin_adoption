@@ -15,6 +15,7 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '../../src/hooks/useTheme';
 import { useLedgerStore } from '../../src/stores/ledgerStore';
 import { useCardStore } from '../../src/stores/cardStore';
 import { usePriceStore } from '../../src/stores/priceStore';
@@ -44,6 +45,7 @@ const INSTALLMENT_OPTIONS = [
 
 export default function AddExpenseScreen() {
   const { t } = useTranslation();
+  const { theme } = useTheme();
   const [amount, setAmount] = useState('');
   const [currencyMode, setCurrencyMode] = useState<CurrencyMode>('KRW');
   const [category, setCategory] = useState('');
@@ -226,7 +228,7 @@ export default function AddExpenseScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
@@ -239,32 +241,32 @@ export default function AddExpenseScreen() {
             alignItems: 'center',
             padding: 20,
             borderBottomWidth: 1,
-            borderBottomColor: '#E5E7EB',
+            borderBottomColor: theme.border,
           }}
         >
-          <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1A1A1A' }}>{t('expense.title')}</Text>
+          <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>{t('expense.title')}</Text>
           <TouchableOpacity onPress={() => router.back()}>
-            <Ionicons name="close" size={24} color="#666666" />
+            <Ionicons name="close" size={24} color={theme.textSecondary} />
           </TouchableOpacity>
         </View>
 
-        <ScrollView style={{ flex: 1, padding: 20 }}>
+        <ScrollView style={{ flex: 1, padding: 20 }} keyboardShouldPersistTaps="handled">
           {/* 날짜 선택 */}
           <View style={{ marginBottom: 24 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('common.date')}</Text>
+            <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('common.date')}</Text>
             <TouchableOpacity
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 borderWidth: 1,
-                borderColor: '#E5E7EB',
+                borderColor: theme.inputBorder,
                 borderRadius: 8,
                 padding: 12,
               }}
               onPress={() => setShowDatePicker(true)}
             >
-              <Text style={{ fontSize: 16, color: '#1A1A1A' }}>
+              <Text style={{ fontSize: 16, color: theme.text }}>
                 {selectedDate.toLocaleDateString('ko-KR', {
                   year: 'numeric',
                   month: 'long',
@@ -272,7 +274,7 @@ export default function AddExpenseScreen() {
                   weekday: 'short',
                 })}
               </Text>
-              <Ionicons name="calendar-outline" size={20} color="#666666" />
+              <Ionicons name="calendar-outline" size={20} color={theme.textSecondary} />
             </TouchableOpacity>
             {showDatePicker && (
               <DateTimePicker
@@ -289,22 +291,22 @@ export default function AddExpenseScreen() {
           {/* 금액 */}
           <View style={{ marginBottom: 24 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <Text style={{ fontSize: 14, color: '#666666' }}>{t('common.amount')}</Text>
+              <Text style={{ fontSize: 14, color: theme.textSecondary }}>{t('common.amount')}</Text>
               <TouchableOpacity
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
-                  backgroundColor: currencyMode === 'KRW' ? '#F3F4F6' : '#FEF3C7',
+                  backgroundColor: currencyMode === 'KRW' ? theme.backgroundTertiary : theme.warningBanner,
                   paddingHorizontal: 12,
                   paddingVertical: 6,
                   borderRadius: 16,
                 }}
                 onPress={toggleCurrencyMode}
               >
-                <Text style={{ fontSize: 12, color: currencyMode === 'KRW' ? '#666666' : '#F7931A', fontWeight: '600' }}>
+                <Text style={{ fontSize: 12, color: currencyMode === 'KRW' ? theme.textSecondary : theme.primary, fontWeight: '600' }}>
                   {currencyMode === 'KRW' ? t('common.krwAmount') : t('common.sats')}
                 </Text>
-                <Ionicons name="swap-horizontal" size={14} color={currencyMode === 'KRW' ? '#666666' : '#F7931A'} style={{ marginLeft: 4 }} />
+                <Ionicons name="swap-horizontal" size={14} color={currencyMode === 'KRW' ? theme.textSecondary : theme.primary} style={{ marginLeft: 4 }} />
               </TouchableOpacity>
             </View>
             <View
@@ -312,28 +314,28 @@ export default function AddExpenseScreen() {
                 flexDirection: 'row',
                 alignItems: 'center',
                 borderWidth: 1,
-                borderColor: '#E5E7EB',
+                borderColor: theme.inputBorder,
                 borderRadius: 8,
                 paddingHorizontal: 16,
               }}
             >
-              <Text style={{ fontSize: 18, color: currencyMode === 'KRW' ? '#666666' : '#F7931A', marginRight: 4 }}>
+              <Text style={{ fontSize: 18, color: currencyMode === 'KRW' ? theme.textSecondary : theme.primary, marginRight: 4 }}>
                 {currencyMode === 'KRW' ? '₩' : '₿'}
               </Text>
               <TextInput
-                style={{ flex: 1, fontSize: 24, fontWeight: 'bold', paddingVertical: 16, color: '#1A1A1A' }}
+                style={{ flex: 1, fontSize: 24, fontWeight: 'bold', paddingVertical: 16, color: theme.inputText }}
                 placeholder="0"
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={theme.placeholder}
                 keyboardType="numeric"
                 value={amount}
                 onChangeText={handleAmountChange}
               />
               {currencyMode === 'SATS' && (
-                <Text style={{ fontSize: 14, color: '#F7931A' }}>{t('common.sats')}</Text>
+                <Text style={{ fontSize: 14, color: theme.primary }}>{t('common.sats')}</Text>
               )}
             </View>
             {amountNumber > 0 && btcKrw && (
-              <Text style={{ fontSize: 12, color: '#F7931A', marginTop: 4 }}>
+              <Text style={{ fontSize: 12, color: theme.primary, marginTop: 4 }}>
                 {currencyMode === 'KRW'
                   ? `= ${formatSats(satsAmount)} (${t('common.currentRate')})`
                   : `= ${formatKrw(krwAmount)} (${t('common.currentRate')})`
@@ -344,7 +346,7 @@ export default function AddExpenseScreen() {
 
           {/* 카테고리 */}
           <View style={{ marginBottom: 24 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('expense.category')}</Text>
+            <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('expense.category')}</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {DEFAULT_EXPENSE_CATEGORIES.map(cat => (
                 <TouchableOpacity
@@ -353,14 +355,14 @@ export default function AddExpenseScreen() {
                     paddingHorizontal: 16,
                     paddingVertical: 10,
                     borderRadius: 20,
-                    backgroundColor: category === cat.name && !showCustomCategory ? cat.color : '#F3F4F6',
+                    backgroundColor: category === cat.name && !showCustomCategory ? cat.color : theme.backgroundTertiary,
                   }}
                   onPress={() => handleCategorySelect(cat.name)}
                 >
                   <Text
                     style={{
                       fontSize: 14,
-                      color: category === cat.name && !showCustomCategory ? '#FFFFFF' : '#666666',
+                      color: category === cat.name && !showCustomCategory ? '#FFFFFF' : theme.textSecondary,
                     }}
                   >
                     {cat.icon} {t('categories.' + cat.id)}
@@ -373,14 +375,14 @@ export default function AddExpenseScreen() {
                   paddingHorizontal: 16,
                   paddingVertical: 10,
                   borderRadius: 20,
-                  backgroundColor: showCustomCategory ? '#6B7280' : '#F3F4F6',
+                  backgroundColor: showCustomCategory ? '#6B7280' : theme.backgroundTertiary,
                 }}
                 onPress={() => handleCategorySelect('', true)}
               >
                 <Text
                   style={{
                     fontSize: 14,
-                    color: showCustomCategory ? '#FFFFFF' : '#666666',
+                    color: showCustomCategory ? '#FFFFFF' : theme.textSecondary,
                   }}
                 >
                   {t('expense.customCategory')}
@@ -393,14 +395,14 @@ export default function AddExpenseScreen() {
                 style={{
                   marginTop: 12,
                   borderWidth: 1,
-                  borderColor: '#E5E7EB',
+                  borderColor: theme.inputBorder,
                   borderRadius: 8,
                   padding: 12,
                   fontSize: 16,
-                  color: '#1A1A1A',
+                  color: theme.inputText,
                 }}
                 placeholder={t('expense.customCategoryPlaceholder')}
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={theme.placeholder}
                 value={customCategory}
                 onChangeText={setCustomCategory}
                 autoFocus
@@ -410,7 +412,7 @@ export default function AddExpenseScreen() {
 
           {/* 결제 수단 */}
           <View style={{ marginBottom: 24 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('expense.paymentMethod')}</Text>
+            <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('expense.paymentMethod')}</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {[
                 { id: 'cash', label: t('expense.cash') },
@@ -426,7 +428,7 @@ export default function AddExpenseScreen() {
                     paddingHorizontal: 16,
                     borderRadius: 8,
                     backgroundColor:
-                      paymentMethod === method.id ? '#F7931A' : '#F3F4F6',
+                      paymentMethod === method.id ? theme.primary : theme.backgroundTertiary,
                     alignItems: 'center',
                   }}
                   onPress={() => {
@@ -437,7 +439,7 @@ export default function AddExpenseScreen() {
                   <Text
                     style={{
                       fontSize: 14,
-                      color: paymentMethod === method.id ? '#FFFFFF' : '#666666',
+                      color: paymentMethod === method.id ? '#FFFFFF' : theme.textSecondary,
                     }}
                   >
                     {method.label}
@@ -450,7 +452,7 @@ export default function AddExpenseScreen() {
           {/* 자산 선택 (계좌이체/Lightning/Onchain) */}
           {(paymentMethod === 'bank' || paymentMethod === 'lightning' || paymentMethod === 'onchain') && (
             <View style={{ marginBottom: 24 }}>
-              <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>
+              <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>
                 {paymentMethod === 'bank' ? t('expense.selectAccount') : paymentMethod === 'lightning' ? t('expense.selectLightningWallet') : t('expense.selectOnchainWallet')}
               </Text>
               {availableAssets.length === 0 ? (
@@ -459,13 +461,13 @@ export default function AddExpenseScreen() {
                     padding: 16,
                     borderRadius: 8,
                     borderWidth: 1,
-                    borderColor: '#E5E7EB',
+                    borderColor: theme.border,
                     borderStyle: 'dashed',
                     alignItems: 'center',
                   }}
                   onPress={() => router.push('/(modals)/add-asset')}
                 >
-                  <Text style={{ color: '#9CA3AF' }}>
+                  <Text style={{ color: theme.textMuted }}>
                     {paymentMethod === 'bank' ? t('expense.addAccount') : t('expense.addWallet')}
                   </Text>
                 </TouchableOpacity>
@@ -473,7 +475,7 @@ export default function AddExpenseScreen() {
                 <TouchableOpacity
                   style={{
                     borderWidth: 1,
-                    borderColor: '#E5E7EB',
+                    borderColor: theme.inputBorder,
                     borderRadius: 8,
                     padding: 12,
                     flexDirection: 'row',
@@ -482,15 +484,15 @@ export default function AddExpenseScreen() {
                   }}
                   onPress={() => setShowAssetPicker(true)}
                 >
-                  <Text style={{ fontSize: 16, color: linkedAssetId ? '#1A1A1A' : '#9CA3AF' }}>
+                  <Text style={{ fontSize: 16, color: linkedAssetId ? theme.text : theme.textMuted }}>
                     {linkedAssetId
                       ? availableAssets.find(a => a.id === linkedAssetId)?.name ?? t('common.search')
                       : paymentMethod === 'bank' ? t('expense.accountSelectHint') : t('expense.walletSelectHint')}
                   </Text>
-                  <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+                  <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
                 </TouchableOpacity>
               )}
-              <Text style={{ fontSize: 12, color: '#9CA3AF', marginTop: 8 }}>
+              <Text style={{ fontSize: 12, color: theme.textMuted, marginTop: 8 }}>
                 {t('expense.autoDeductHint')}
               </Text>
             </View>
@@ -499,20 +501,20 @@ export default function AddExpenseScreen() {
           {/* 카드 선택 */}
           {paymentMethod === 'card' && (
             <View style={{ marginBottom: 24 }}>
-              <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('expense.selectCard')}</Text>
+              <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('expense.selectCard')}</Text>
               {cards.length === 0 ? (
                 <TouchableOpacity
                   style={{
                     padding: 16,
                     borderRadius: 8,
                     borderWidth: 1,
-                    borderColor: '#E5E7EB',
+                    borderColor: theme.border,
                     borderStyle: 'dashed',
                     alignItems: 'center',
                   }}
                   onPress={() => router.push('/(modals)/add-card')}
                 >
-                  <Text style={{ color: '#9CA3AF' }}>{t('expense.addCard')}</Text>
+                  <Text style={{ color: theme.textMuted }}>{t('expense.addCard')}</Text>
                 </TouchableOpacity>
               ) : (
                 <View style={{ gap: 8 }}>
@@ -523,7 +525,7 @@ export default function AddExpenseScreen() {
                         padding: 12,
                         borderRadius: 8,
                         backgroundColor:
-                          selectedCardId === card.id ? card.color : '#F3F4F6',
+                          selectedCardId === card.id ? card.color : theme.backgroundTertiary,
                         flexDirection: 'row',
                         alignItems: 'center',
                       }}
@@ -541,7 +543,7 @@ export default function AddExpenseScreen() {
                       />
                       <Text
                         style={{
-                          color: selectedCardId === card.id ? '#FFFFFF' : '#1A1A1A',
+                          color: selectedCardId === card.id ? '#FFFFFF' : theme.text,
                         }}
                       >
                         {card.name}
@@ -556,21 +558,21 @@ export default function AddExpenseScreen() {
           {/* 할부 선택 (카드 결제 시) */}
           {paymentMethod === 'card' && selectedCardId && (
             <View style={{ marginBottom: 24 }}>
-              <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('expense.installment')}</Text>
+              <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('expense.installment')}</Text>
               {showCustomInstallmentInput ? (
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <TextInput
                     style={{
                       flex: 1,
                       borderWidth: 1,
-                      borderColor: '#E5E7EB',
+                      borderColor: theme.inputBorder,
                       borderRadius: 8,
                       padding: 12,
                       fontSize: 16,
-                      color: '#1A1A1A',
+                      color: theme.inputText,
                     }}
                     placeholder={t('expense.monthsInput')}
-                    placeholderTextColor="#9CA3AF"
+                    placeholderTextColor={theme.placeholder}
                     keyboardType="numeric"
                     value={customInstallment}
                     onChangeText={(text) => {
@@ -580,7 +582,7 @@ export default function AddExpenseScreen() {
                     }}
                     autoFocus
                   />
-                  <Text style={{ fontSize: 16, color: '#666666' }}>{t('common.months')}</Text>
+                  <Text style={{ fontSize: 16, color: theme.textSecondary }}>{t('common.months')}</Text>
                   <TouchableOpacity
                     onPress={() => {
                       setShowCustomInstallmentInput(false);
@@ -588,7 +590,7 @@ export default function AddExpenseScreen() {
                       setInstallmentMonths(1);
                     }}
                   >
-                    <Ionicons name="close-circle" size={24} color="#9CA3AF" />
+                    <Ionicons name="close-circle" size={24} color={theme.textMuted} />
                   </TouchableOpacity>
                 </View>
               ) : (
@@ -598,16 +600,16 @@ export default function AddExpenseScreen() {
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     borderWidth: 1,
-                    borderColor: '#E5E7EB',
+                    borderColor: theme.inputBorder,
                     borderRadius: 8,
                     padding: 12,
                   }}
                   onPress={() => setShowInstallmentPicker(true)}
                 >
-                  <Text style={{ fontSize: 16, color: '#1A1A1A' }}>
+                  <Text style={{ fontSize: 16, color: theme.text }}>
                     {installmentMonths === 1 ? t('home.lumpSum') : `${installmentMonths}${t('common.months')}`}
                   </Text>
-                  <Ionicons name="chevron-down" size={20} color="#666666" />
+                  <Ionicons name="chevron-down" size={20} color={theme.textSecondary} />
                 </TouchableOpacity>
               )}
 
@@ -619,12 +621,12 @@ export default function AddExpenseScreen() {
                       flex: 1,
                       paddingVertical: 10,
                       borderRadius: 8,
-                      backgroundColor: isInterestFree ? '#22C55E' : '#F3F4F6',
+                      backgroundColor: isInterestFree ? '#22C55E' : theme.backgroundTertiary,
                       alignItems: 'center',
                     }}
                     onPress={() => setIsInterestFree(true)}
                   >
-                    <Text style={{ fontSize: 14, color: isInterestFree ? '#FFFFFF' : '#666666', fontWeight: '600' }}>
+                    <Text style={{ fontSize: 14, color: isInterestFree ? '#FFFFFF' : theme.textSecondary, fontWeight: '600' }}>
                       {t('common.noInterest')}
                     </Text>
                   </TouchableOpacity>
@@ -633,12 +635,12 @@ export default function AddExpenseScreen() {
                       flex: 1,
                       paddingVertical: 10,
                       borderRadius: 8,
-                      backgroundColor: !isInterestFree ? '#EF4444' : '#F3F4F6',
+                      backgroundColor: !isInterestFree ? '#EF4444' : theme.backgroundTertiary,
                       alignItems: 'center',
                     }}
                     onPress={() => setIsInterestFree(false)}
                   >
-                    <Text style={{ fontSize: 14, color: !isInterestFree ? '#FFFFFF' : '#666666', fontWeight: '600' }}>
+                    <Text style={{ fontSize: 14, color: !isInterestFree ? '#FFFFFF' : theme.textSecondary, fontWeight: '600' }}>
                       {t('common.withInterest')}
                     </Text>
                   </TouchableOpacity>
@@ -646,7 +648,7 @@ export default function AddExpenseScreen() {
               )}
 
               {installmentMonths > 1 && krwAmount > 0 && (
-                <Text style={{ fontSize: 12, color: '#666666', marginTop: 8 }}>
+                <Text style={{ fontSize: 12, color: theme.textSecondary, marginTop: 8 }}>
                   {t('expense.installmentSummary', {
                     amount: formatKrw(Math.ceil(krwAmount / installmentMonths)),
                     months: installmentMonths,
@@ -659,18 +661,18 @@ export default function AddExpenseScreen() {
 
           {/* 메모 */}
           <View style={{ marginBottom: 24 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('common.memo')}</Text>
+            <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('common.memo')}</Text>
             <TextInput
               style={{
                 borderWidth: 1,
-                borderColor: '#E5E7EB',
+                borderColor: theme.inputBorder,
                 borderRadius: 8,
                 padding: 12,
                 fontSize: 16,
-                color: '#1A1A1A',
+                color: theme.inputText,
               }}
               placeholder={t('common.memoPlaceholder')}
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={theme.placeholder}
               value={memo}
               onChangeText={setMemo}
             />
@@ -678,7 +680,7 @@ export default function AddExpenseScreen() {
         </ScrollView>
 
         {/* 저장 버튼 */}
-        <View style={{ padding: 20, borderTopWidth: 1, borderTopColor: '#E5E7EB' }}>
+        <View style={{ padding: 20, borderTopWidth: 1, borderTopColor: theme.border }}>
           <TouchableOpacity
             style={{
               backgroundColor: '#EF4444',
@@ -702,12 +704,12 @@ export default function AddExpenseScreen() {
           transparent
           animationType="slide"
         >
-          <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
-            <View style={{ backgroundColor: '#FFFFFF', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20 }}>
+          <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: theme.modalOverlay }}>
+            <View style={{ backgroundColor: theme.modalBackground, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{t('expense.selectInstallment')}</Text>
+                <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>{t('expense.selectInstallment')}</Text>
                 <TouchableOpacity onPress={() => setShowInstallmentPicker(false)}>
-                  <Ionicons name="close" size={24} color="#666666" />
+                  <Ionicons name="close" size={24} color={theme.textSecondary} />
                 </TouchableOpacity>
               </View>
               <ScrollView style={{ maxHeight: 300 }}>
@@ -717,7 +719,7 @@ export default function AddExpenseScreen() {
                     style={{
                       padding: 16,
                       borderRadius: 8,
-                      backgroundColor: installmentMonths === option.value && !showCustomInstallmentInput ? '#F7931A' : '#F3F4F6',
+                      backgroundColor: installmentMonths === option.value && !showCustomInstallmentInput ? theme.primary : theme.backgroundTertiary,
                       marginBottom: 8,
                     }}
                     onPress={() => {
@@ -736,7 +738,7 @@ export default function AddExpenseScreen() {
                   >
                     <Text style={{
                       fontSize: 16,
-                      color: installmentMonths === option.value && !showCustomInstallmentInput ? '#FFFFFF' : '#1A1A1A',
+                      color: installmentMonths === option.value && !showCustomInstallmentInput ? '#FFFFFF' : theme.text,
                       textAlign: 'center',
                     }}>
                       {getInstallmentLabel(option.value)}
@@ -750,10 +752,10 @@ export default function AddExpenseScreen() {
 
         {/* 자산 선택 모달 */}
         <Modal visible={showAssetPicker} transparent animationType="slide">
-          <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: theme.modalOverlay }}>
             <View
               style={{
-                backgroundColor: '#FFFFFF',
+                backgroundColor: theme.modalBackground,
                 borderTopLeftRadius: 20,
                 borderTopRightRadius: 20,
                 padding: 20,
@@ -761,11 +763,11 @@ export default function AddExpenseScreen() {
               }}
             >
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
-                <Text style={{ fontSize: 18, fontWeight: 'bold' }}>
+                <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>
                   {paymentMethod === 'bank' ? t('expense.selectAccount') : paymentMethod === 'lightning' ? t('expense.selectLightningWallet') : t('expense.selectOnchainWallet')}
                 </Text>
                 <TouchableOpacity onPress={() => setShowAssetPicker(false)}>
-                  <Ionicons name="close" size={24} color="#666666" />
+                  <Ionicons name="close" size={24} color={theme.textSecondary} />
                 </TouchableOpacity>
               </View>
 
@@ -777,7 +779,7 @@ export default function AddExpenseScreen() {
                       flexDirection: 'row',
                       alignItems: 'center',
                       padding: 16,
-                      backgroundColor: linkedAssetId === asset.id ? '#FEF3C7' : '#F9FAFB',
+                      backgroundColor: linkedAssetId === asset.id ? theme.warningBanner : theme.backgroundSecondary,
                       borderRadius: 8,
                       marginBottom: 8,
                     }}
@@ -801,9 +803,9 @@ export default function AddExpenseScreen() {
                         {paymentMethod === 'bank' ? '🏦' : paymentMethod === 'lightning' ? '⚡' : '₿'}
                       </Text>
                     </View>
-                    <Text style={{ flex: 1, fontSize: 16, color: '#1A1A1A' }}>{asset.name}</Text>
+                    <Text style={{ flex: 1, fontSize: 16, color: theme.text }}>{asset.name}</Text>
                     {linkedAssetId === asset.id && (
-                      <Ionicons name="checkmark-circle" size={24} color="#F7931A" />
+                      <Ionicons name="checkmark-circle" size={24} color={theme.primary} />
                     )}
                   </TouchableOpacity>
                 ))}
@@ -813,7 +815,7 @@ export default function AddExpenseScreen() {
               <TouchableOpacity
                 style={{
                   padding: 16,
-                  backgroundColor: '#F3F4F6',
+                  backgroundColor: theme.backgroundTertiary,
                   borderRadius: 8,
                   alignItems: 'center',
                   marginTop: 8,
@@ -823,7 +825,7 @@ export default function AddExpenseScreen() {
                   setShowAssetPicker(false);
                 }}
               >
-                <Text style={{ fontSize: 16, color: '#666666' }}>{t('income.noSelection')}</Text>
+                <Text style={{ fontSize: 16, color: theme.textSecondary }}>{t('income.noSelection')}</Text>
               </TouchableOpacity>
             </View>
           </View>

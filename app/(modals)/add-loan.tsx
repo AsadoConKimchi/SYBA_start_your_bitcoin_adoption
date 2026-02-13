@@ -8,12 +8,14 @@ import {
   Alert,
   Modal,
   Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '../../src/hooks/useTheme';
 import { useDebtStore } from '../../src/stores/debtStore';
 import { useAuthStore } from '../../src/stores/authStore';
 import { useAssetStore } from '../../src/stores/assetStore';
@@ -31,6 +33,7 @@ const LOAN_TERMS = [12, 24, 36, 48, 60, 120, 240, 360]; // 개월
 
 export default function AddLoanScreen() {
   const { t } = useTranslation();
+  const { theme } = useTheme();
   const { encryptionKey } = useAuthStore();
   const { addLoan } = useDebtStore();
   const { assets } = useAssetStore();
@@ -142,7 +145,11 @@ export default function AddLoanScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+      >
       {/* 헤더 */}
       <View
         style={{
@@ -151,13 +158,13 @@ export default function AddLoanScreen() {
           alignItems: 'center',
           padding: 20,
           borderBottomWidth: 1,
-          borderBottomColor: '#E5E7EB',
+          borderBottomColor: theme.border,
         }}
       >
         <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="close" size={24} color="#666666" />
+          <Ionicons name="close" size={24} color={theme.textSecondary} />
         </TouchableOpacity>
-        <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1A1A1A' }}>
+        <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>
           {t('loan.addTitle')}
         </Text>
         <TouchableOpacity onPress={handleSubmit} disabled={isSubmitting}>
@@ -165,7 +172,7 @@ export default function AddLoanScreen() {
             style={{
               fontSize: 16,
               fontWeight: '600',
-              color: isSubmitting ? '#9CA3AF' : '#3B82F6',
+              color: isSubmitting ? theme.textMuted : '#3B82F6',
             }}
           >
             {t('common.save')}
@@ -177,17 +184,17 @@ export default function AddLoanScreen() {
         <View style={{ padding: 20 }}>
           {/* 대출명 */}
           <View style={{ marginBottom: 20 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('loan.loanName')} *</Text>
+            <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('loan.loanName')} *</Text>
             <TextInput
               style={{
-                backgroundColor: '#F9FAFB',
+                backgroundColor: theme.backgroundSecondary,
                 borderRadius: 8,
                 padding: 16,
                 fontSize: 16,
-                color: '#1A1A1A',
+                color: theme.inputText,
               }}
               placeholder={t('loan.loanNamePlaceholder')}
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={theme.placeholder}
               value={name}
               onChangeText={setName}
             />
@@ -195,10 +202,10 @@ export default function AddLoanScreen() {
 
           {/* 대출 기관 */}
           <View style={{ marginBottom: 20 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('loan.lender')} *</Text>
+            <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('loan.lender')} *</Text>
             <TouchableOpacity
               style={{
-                backgroundColor: '#F9FAFB',
+                backgroundColor: theme.backgroundSecondary,
                 borderRadius: 8,
                 padding: 16,
                 flexDirection: 'row',
@@ -207,19 +214,19 @@ export default function AddLoanScreen() {
               }}
               onPress={() => setShowBankPicker(true)}
             >
-              <Text style={{ fontSize: 16, color: institution ? '#1A1A1A' : '#9CA3AF' }}>
+              <Text style={{ fontSize: 16, color: institution ? theme.text : theme.textMuted }}>
                 {institution || t('loan.selectLender')}
               </Text>
-              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+              <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
             </TouchableOpacity>
           </View>
 
           {/* 대출 원금 */}
           <View style={{ marginBottom: 20 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('loan.principal')} *</Text>
+            <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('loan.principal')} *</Text>
             <TextInput
               style={{
-                backgroundColor: '#F9FAFB',
+                backgroundColor: theme.backgroundSecondary,
                 borderRadius: 8,
                 padding: 16,
                 fontSize: 24,
@@ -228,7 +235,7 @@ export default function AddLoanScreen() {
                 textAlign: 'right',
               }}
               placeholder="0"
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={theme.placeholder}
               keyboardType="number-pad"
               value={principal}
               onChangeText={(text) => {
@@ -240,24 +247,24 @@ export default function AddLoanScreen() {
                 }
               }}
             />
-            <Text style={{ fontSize: 12, color: '#9CA3AF', textAlign: 'right', marginTop: 4 }}>
+            <Text style={{ fontSize: 12, color: theme.textMuted, textAlign: 'right', marginTop: 4 }}>
               {t('common.won')}
             </Text>
           </View>
 
           {/* 연 이자율 */}
           <View style={{ marginBottom: 20 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('loan.annualRate')}</Text>
+            <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('loan.annualRate')}</Text>
             <TextInput
               style={{
-                backgroundColor: '#F9FAFB',
+                backgroundColor: theme.backgroundSecondary,
                 borderRadius: 8,
                 padding: 16,
                 fontSize: 16,
-                color: '#1A1A1A',
+                color: theme.inputText,
               }}
               placeholder={t('loan.annualRatePlaceholder')}
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={theme.placeholder}
               keyboardType="decimal-pad"
               value={interestRate}
               onChangeText={setInterestRate}
@@ -266,10 +273,10 @@ export default function AddLoanScreen() {
 
           {/* 상환 방식 */}
           <View style={{ marginBottom: 20 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('loan.repaymentType')} *</Text>
+            <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('loan.repaymentType')} *</Text>
             <TouchableOpacity
               style={{
-                backgroundColor: '#F9FAFB',
+                backgroundColor: theme.backgroundSecondary,
                 borderRadius: 8,
                 padding: 16,
                 flexDirection: 'row',
@@ -279,23 +286,23 @@ export default function AddLoanScreen() {
               onPress={() => setShowTypePicker(true)}
             >
               <View>
-                <Text style={{ fontSize: 16, color: '#1A1A1A' }}>
+                <Text style={{ fontSize: 16, color: theme.text }}>
                   {REPAYMENT_TYPE_LABELS[repaymentType]}
                 </Text>
-                <Text style={{ fontSize: 12, color: '#9CA3AF', marginTop: 2 }}>
+                <Text style={{ fontSize: 12, color: theme.textMuted, marginTop: 2 }}>
                   {REPAYMENT_TYPE_DESCRIPTIONS[repaymentType]}
                 </Text>
               </View>
-              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+              <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
             </TouchableOpacity>
           </View>
 
           {/* 대출 기간 */}
           <View style={{ marginBottom: 20 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('loan.loanTerm')} *</Text>
+            <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('loan.loanTerm')} *</Text>
             <TouchableOpacity
               style={{
-                backgroundColor: '#F9FAFB',
+                backgroundColor: theme.backgroundSecondary,
                 borderRadius: 8,
                 padding: 16,
                 flexDirection: 'row',
@@ -304,19 +311,19 @@ export default function AddLoanScreen() {
               }}
               onPress={() => setShowTermPicker(true)}
             >
-              <Text style={{ fontSize: 16, color: '#1A1A1A' }}>
+              <Text style={{ fontSize: 16, color: theme.text }}>
                 {formatTermLabel(customTerm ? parseInt(customTerm) || termMonths : termMonths)}
               </Text>
-              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+              <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
             </TouchableOpacity>
           </View>
 
           {/* 시작일 */}
           <View style={{ marginBottom: 20 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('loan.startDate')}</Text>
+            <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('loan.startDate')}</Text>
             <TouchableOpacity
               style={{
-                backgroundColor: '#F9FAFB',
+                backgroundColor: theme.backgroundSecondary,
                 borderRadius: 8,
                 padding: 16,
                 flexDirection: 'row',
@@ -325,28 +332,28 @@ export default function AddLoanScreen() {
               }}
               onPress={() => setShowDatePicker(true)}
             >
-              <Text style={{ fontSize: 16, color: '#1A1A1A' }}>
+              <Text style={{ fontSize: 16, color: theme.text }}>
                 {startDate.toLocaleDateString('ko-KR')}
               </Text>
-              <Ionicons name="calendar-outline" size={20} color="#9CA3AF" />
+              <Ionicons name="calendar-outline" size={20} color={theme.textMuted} />
             </TouchableOpacity>
           </View>
 
           {/* 이미 상환한 개월 */}
           <View style={{ marginBottom: 20 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>
+            <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>
               {t('loan.paidMonths')}
             </Text>
             <TextInput
               style={{
-                backgroundColor: '#F9FAFB',
+                backgroundColor: theme.backgroundSecondary,
                 borderRadius: 8,
                 padding: 16,
                 fontSize: 16,
-                color: '#1A1A1A',
+                color: theme.inputText,
               }}
               placeholder="0"
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={theme.placeholder}
               keyboardType="number-pad"
               value={paidMonths}
               onChangeText={(text) => {
@@ -355,7 +362,7 @@ export default function AddLoanScreen() {
               }}
             />
             {!paidMonthsEdited && parseInt(paidMonths) > 0 && (
-              <Text style={{ fontSize: 11, color: '#9CA3AF', marginTop: 4 }}>
+              <Text style={{ fontSize: 11, color: theme.textMuted, marginTop: 4 }}>
                 {t('loan.autoCalculated')}
               </Text>
             )}
@@ -363,12 +370,12 @@ export default function AddLoanScreen() {
 
           {/* 상환일 */}
           <View style={{ marginBottom: 20 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>
+            <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>
               {t('loan.repaymentDay')}
             </Text>
             <TouchableOpacity
               style={{
-                backgroundColor: '#F9FAFB',
+                backgroundColor: theme.backgroundSecondary,
                 borderRadius: 8,
                 padding: 16,
                 flexDirection: 'row',
@@ -377,24 +384,24 @@ export default function AddLoanScreen() {
               }}
               onPress={() => setShowRepaymentDayPicker(true)}
             >
-              <Text style={{ fontSize: 16, color: repaymentDay ? '#1A1A1A' : '#9CA3AF' }}>
+              <Text style={{ fontSize: 16, color: repaymentDay ? theme.text : theme.textMuted }}>
                 {repaymentDay ? t('loan.repaymentDayFormat', { day: repaymentDay }) : t('loan.repaymentDayDefault')}
               </Text>
-              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+              <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
             </TouchableOpacity>
-            <Text style={{ fontSize: 11, color: '#9CA3AF', marginTop: 4 }}>
+            <Text style={{ fontSize: 11, color: theme.textMuted, marginTop: 4 }}>
               {t('loan.repaymentDayHint')}
             </Text>
           </View>
 
           {/* 연결 계좌 (자동 차감용) */}
           <View style={{ marginBottom: 20 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>
+            <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>
               {t('loan.linkedAccount')}
             </Text>
             <TouchableOpacity
               style={{
-                backgroundColor: '#F9FAFB',
+                backgroundColor: theme.backgroundSecondary,
                 borderRadius: 8,
                 padding: 16,
                 flexDirection: 'row',
@@ -403,32 +410,32 @@ export default function AddLoanScreen() {
               }}
               onPress={() => setShowAssetPicker(true)}
             >
-              <Text style={{ fontSize: 16, color: linkedAssetId ? '#1A1A1A' : '#9CA3AF' }}>
+              <Text style={{ fontSize: 16, color: linkedAssetId ? theme.text : theme.textMuted }}>
                 {linkedAssetId
                   ? fiatAssets.find((a) => a.id === linkedAssetId)?.name || t('loan.selectAccount')
                   : t('loan.selectAccount')}
               </Text>
-              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+              <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
             </TouchableOpacity>
-            <Text style={{ fontSize: 11, color: '#9CA3AF', marginTop: 4 }}>
+            <Text style={{ fontSize: 11, color: theme.textMuted, marginTop: 4 }}>
               {t('loan.autoDeductHint')}
             </Text>
           </View>
 
           {/* 메모 */}
           <View style={{ marginBottom: 20 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('common.memo')}</Text>
+            <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('common.memo')}</Text>
             <TextInput
               style={{
-                backgroundColor: '#F9FAFB',
+                backgroundColor: theme.backgroundSecondary,
                 borderRadius: 8,
                 padding: 16,
                 fontSize: 16,
-                color: '#1A1A1A',
+                color: theme.inputText,
                 minHeight: 80,
               }}
               placeholder={t('common.memo')}
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={theme.placeholder}
               multiline
               value={memo}
               onChangeText={setMemo}
@@ -439,33 +446,33 @@ export default function AddLoanScreen() {
           {amount > 0 && rate > 0 && (
             <View
               style={{
-                backgroundColor: '#EFF6FF',
+                backgroundColor: theme.infoBanner,
                 borderRadius: 12,
                 padding: 16,
                 marginBottom: 20,
               }}
             >
-              <Text style={{ fontSize: 14, fontWeight: '600', color: '#1E40AF', marginBottom: 12 }}>
+              <Text style={{ fontSize: 14, fontWeight: '600', color: theme.infoBannerSubtext, marginBottom: 12 }}>
                 {t('loan.calculationResult')}
               </Text>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-                <Text style={{ color: '#1E40AF' }}>
+                <Text style={{ color: theme.infoBannerSubtext }}>
                   {t('loan.monthlyPayment')} {repaymentType === 'bullet' && `(${t('loan.monthlyPaymentInterest').replace(t('loan.monthlyPayment') + ' ', '')})`}
                 </Text>
-                <Text style={{ fontWeight: 'bold', color: '#2563EB' }}>
+                <Text style={{ fontWeight: 'bold', color: theme.infoBannerText }}>
                   {formatKrw(monthlyPayment)}
                 </Text>
               </View>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-                <Text style={{ color: '#1E40AF' }}>{t('loan.totalInterest')}</Text>
-                <Text style={{ color: '#2563EB' }}>{formatKrw(totalInterest)}</Text>
+                <Text style={{ color: theme.infoBannerSubtext }}>{t('loan.totalInterest')}</Text>
+                <Text style={{ color: theme.infoBannerText }}>{formatKrw(totalInterest)}</Text>
               </View>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                <Text style={{ color: '#1E40AF' }}>{t('loan.totalRepayment')}</Text>
-                <Text style={{ color: '#2563EB' }}>{formatKrw(amount + totalInterest)}</Text>
+                <Text style={{ color: theme.infoBannerSubtext }}>{t('loan.totalRepayment')}</Text>
+                <Text style={{ color: theme.infoBannerText }}>{formatKrw(amount + totalInterest)}</Text>
               </View>
               {repaymentType === 'bullet' && (
-                <Text style={{ fontSize: 11, color: '#6B7280', marginTop: 8 }}>
+                <Text style={{ fontSize: 11, color: theme.textMuted, marginTop: 8 }}>
                   {t('loan.bulletNote', { amount: formatKrw(amount) })}
                 </Text>
               )}
@@ -476,19 +483,19 @@ export default function AddLoanScreen() {
 
       {/* 상환 방식 선택 모달 */}
       <Modal visible={showTypePicker} transparent animationType="slide">
-        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: theme.modalOverlay }}>
           <View
             style={{
-              backgroundColor: '#FFFFFF',
+              backgroundColor: theme.modalBackground,
               borderTopLeftRadius: 20,
               borderTopRightRadius: 20,
               padding: 20,
             }}
           >
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
-              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{t('loan.selectRepaymentType')}</Text>
+              <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>{t('loan.selectRepaymentType')}</Text>
               <TouchableOpacity onPress={() => setShowTypePicker(false)}>
-                <Ionicons name="close" size={24} color="#666666" />
+                <Ionicons name="close" size={24} color={theme.textSecondary} />
               </TouchableOpacity>
             </View>
 
@@ -497,7 +504,7 @@ export default function AddLoanScreen() {
                 key={type}
                 style={{
                   padding: 16,
-                  backgroundColor: repaymentType === type ? '#EFF6FF' : '#F9FAFB',
+                  backgroundColor: repaymentType === type ? theme.infoBanner : theme.backgroundSecondary,
                   borderRadius: 8,
                   marginBottom: 8,
                   borderWidth: repaymentType === type ? 1 : 0,
@@ -510,10 +517,10 @@ export default function AddLoanScreen() {
               >
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 16, fontWeight: '500', color: '#1A1A1A' }}>
+                    <Text style={{ fontSize: 16, fontWeight: '500', color: theme.text }}>
                       {REPAYMENT_TYPE_LABELS[type]}
                     </Text>
-                    <Text style={{ fontSize: 12, color: '#666666', marginTop: 4 }}>
+                    <Text style={{ fontSize: 12, color: theme.textSecondary, marginTop: 4 }}>
                       {REPAYMENT_TYPE_DESCRIPTIONS[type]}
                     </Text>
                   </View>
@@ -529,19 +536,19 @@ export default function AddLoanScreen() {
 
       {/* 대출 기간 선택 모달 */}
       <Modal visible={showTermPicker} transparent animationType="slide">
-        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: theme.modalOverlay }}>
           <View
             style={{
-              backgroundColor: '#FFFFFF',
+              backgroundColor: theme.modalBackground,
               borderTopLeftRadius: 20,
               borderTopRightRadius: 20,
               padding: 20,
             }}
           >
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
-              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{t('loan.selectLoanTerm')}</Text>
+              <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>{t('loan.selectLoanTerm')}</Text>
               <TouchableOpacity onPress={() => setShowTermPicker(false)}>
-                <Ionicons name="close" size={24} color="#666666" />
+                <Ionicons name="close" size={24} color={theme.textSecondary} />
               </TouchableOpacity>
             </View>
 
@@ -552,7 +559,7 @@ export default function AddLoanScreen() {
                   style={{
                     width: '30%',
                     padding: 12,
-                    backgroundColor: termMonths === m && !customTerm ? '#3B82F6' : '#F3F4F6',
+                    backgroundColor: termMonths === m && !customTerm ? '#3B82F6' : theme.backgroundTertiary,
                     borderRadius: 8,
                     margin: '1.5%',
                     alignItems: 'center',
@@ -566,7 +573,7 @@ export default function AddLoanScreen() {
                   <Text
                     style={{
                       fontSize: 14,
-                      color: termMonths === m && !customTerm ? '#FFFFFF' : '#1A1A1A',
+                      color: termMonths === m && !customTerm ? '#FFFFFF' : theme.text,
                     }}
                   >
                     {formatTermLabel(m)}
@@ -575,17 +582,17 @@ export default function AddLoanScreen() {
               ))}
             </View>
 
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('loan.customTermInput')}</Text>
+            <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('loan.customTermInput')}</Text>
             <TextInput
               style={{
-                backgroundColor: '#F9FAFB',
+                backgroundColor: theme.backgroundSecondary,
                 borderRadius: 8,
                 padding: 16,
                 fontSize: 16,
-                color: '#1A1A1A',
+                color: theme.inputText,
               }}
               placeholder={t('loan.customTermPlaceholder')}
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={theme.placeholder}
               keyboardType="number-pad"
               value={customTerm}
               onChangeText={setCustomTerm}
@@ -609,10 +616,10 @@ export default function AddLoanScreen() {
 
       {/* 은행 선택 모달 */}
       <Modal visible={showBankPicker} transparent animationType="slide">
-        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: theme.modalOverlay }}>
           <View
             style={{
-              backgroundColor: '#FFFFFF',
+              backgroundColor: theme.modalBackground,
               borderTopLeftRadius: 20,
               borderTopRightRadius: 20,
               padding: 20,
@@ -620,9 +627,9 @@ export default function AddLoanScreen() {
             }}
           >
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
-              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{t('loan.selectLenderTitle')}</Text>
+              <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>{t('loan.selectLenderTitle')}</Text>
               <TouchableOpacity onPress={() => setShowBankPicker(false)}>
-                <Ionicons name="close" size={24} color="#666666" />
+                <Ionicons name="close" size={24} color={theme.textSecondary} />
               </TouchableOpacity>
             </View>
 
@@ -632,7 +639,7 @@ export default function AddLoanScreen() {
                   key={bank.id}
                   style={{
                     padding: 16,
-                    backgroundColor: selectedBankId === bank.id ? '#EFF6FF' : '#F9FAFB',
+                    backgroundColor: selectedBankId === bank.id ? theme.infoBanner : theme.backgroundSecondary,
                     borderRadius: 8,
                     marginBottom: 8,
                     flexDirection: 'row',
@@ -645,7 +652,7 @@ export default function AddLoanScreen() {
                     setShowBankPicker(false);
                   }}
                 >
-                  <Text style={{ fontSize: 16, color: '#1A1A1A' }}>{t('banks.' + bank.id)}</Text>
+                  <Text style={{ fontSize: 16, color: theme.text }}>{t('banks.' + bank.id)}</Text>
                   {selectedBankId === bank.id && (
                     <Ionicons name="checkmark" size={20} color="#3B82F6" />
                   )}
@@ -655,19 +662,19 @@ export default function AddLoanScreen() {
 
             {/* 직접 입력 */}
             <View style={{ marginTop: 16 }}>
-              <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('loan.customLender')}</Text>
+              <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('loan.customLender')}</Text>
               <View style={{ flexDirection: 'row' }}>
                 <TextInput
                   style={{
                     flex: 1,
-                    backgroundColor: '#F9FAFB',
+                    backgroundColor: theme.backgroundSecondary,
                     borderRadius: 8,
                     padding: 16,
                     fontSize: 16,
-                    color: '#1A1A1A',
+                    color: theme.inputText,
                   }}
                   placeholder={t('loan.customLenderPlaceholder')}
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={theme.placeholder}
                   value={selectedBankId === 'custom' ? institution : ''}
                   onChangeText={(text) => {
                     setSelectedBankId('custom');
@@ -695,19 +702,19 @@ export default function AddLoanScreen() {
       {/* 날짜 선택 (캘린더) */}
       {showDatePicker && (
         <Modal visible={showDatePicker} transparent animationType="fade">
-          <View style={{ flex: 1, justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <View style={{ flex: 1, justifyContent: 'center', backgroundColor: theme.modalOverlay }}>
             <View
               style={{
-                backgroundColor: '#FFFFFF',
+                backgroundColor: theme.modalBackground,
                 margin: 20,
                 borderRadius: 16,
                 padding: 20,
               }}
             >
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
-                <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{t('common.selectDate')}</Text>
+                <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>{t('common.selectDate')}</Text>
                 <TouchableOpacity onPress={() => setShowDatePicker(false)}>
-                  <Ionicons name="close" size={24} color="#666666" />
+                  <Ionicons name="close" size={24} color={theme.textSecondary} />
                 </TouchableOpacity>
               </View>
               <DateTimePicker
@@ -746,10 +753,10 @@ export default function AddLoanScreen() {
 
       {/* 상환일 선택 모달 */}
       <Modal visible={showRepaymentDayPicker} transparent animationType="slide">
-        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: theme.modalOverlay }}>
           <View
             style={{
-              backgroundColor: '#FFFFFF',
+              backgroundColor: theme.modalBackground,
               borderTopLeftRadius: 20,
               borderTopRightRadius: 20,
               padding: 20,
@@ -757,9 +764,9 @@ export default function AddLoanScreen() {
             }}
           >
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
-              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{t('loan.selectRepaymentDay')}</Text>
+              <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>{t('loan.selectRepaymentDay')}</Text>
               <TouchableOpacity onPress={() => setShowRepaymentDayPicker(false)}>
-                <Ionicons name="close" size={24} color="#666666" />
+                <Ionicons name="close" size={24} color={theme.textSecondary} />
               </TouchableOpacity>
             </View>
 
@@ -767,7 +774,7 @@ export default function AddLoanScreen() {
             <TouchableOpacity
               style={{
                 padding: 16,
-                backgroundColor: repaymentDay === null ? '#EFF6FF' : '#F9FAFB',
+                backgroundColor: repaymentDay === null ? theme.infoBanner : theme.backgroundSecondary,
                 borderRadius: 8,
                 marginBottom: 12,
                 flexDirection: 'row',
@@ -781,7 +788,7 @@ export default function AddLoanScreen() {
                 setShowRepaymentDayPicker(false);
               }}
             >
-              <Text style={{ fontSize: 16, color: '#1A1A1A' }}>{t('loan.repaymentDayDefault')}</Text>
+              <Text style={{ fontSize: 16, color: theme.text }}>{t('loan.repaymentDayDefault')}</Text>
               {repaymentDay === null && (
                 <Ionicons name="checkmark-circle" size={24} color="#3B82F6" />
               )}
@@ -796,7 +803,7 @@ export default function AddLoanScreen() {
                       width: '14%',
                       aspectRatio: 1,
                       margin: '0.5%',
-                      backgroundColor: repaymentDay === day ? '#3B82F6' : '#F3F4F6',
+                      backgroundColor: repaymentDay === day ? '#3B82F6' : theme.backgroundTertiary,
                       borderRadius: 8,
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -810,7 +817,7 @@ export default function AddLoanScreen() {
                       style={{
                         fontSize: 14,
                         fontWeight: '500',
-                        color: repaymentDay === day ? '#FFFFFF' : '#1A1A1A',
+                        color: repaymentDay === day ? '#FFFFFF' : theme.text,
                       }}
                     >
                       {day}
@@ -825,10 +832,10 @@ export default function AddLoanScreen() {
 
       {/* 연결 계좌 선택 모달 */}
       <Modal visible={showAssetPicker} transparent animationType="slide">
-        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: theme.modalOverlay }}>
           <View
             style={{
-              backgroundColor: '#FFFFFF',
+              backgroundColor: theme.modalBackground,
               borderTopLeftRadius: 20,
               borderTopRightRadius: 20,
               padding: 20,
@@ -836,9 +843,9 @@ export default function AddLoanScreen() {
             }}
           >
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
-              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{t('loan.selectAccountTitle')}</Text>
+              <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>{t('loan.selectAccountTitle')}</Text>
               <TouchableOpacity onPress={() => setShowAssetPicker(false)}>
-                <Ionicons name="close" size={24} color="#666666" />
+                <Ionicons name="close" size={24} color={theme.textSecondary} />
               </TouchableOpacity>
             </View>
 
@@ -846,7 +853,7 @@ export default function AddLoanScreen() {
             <TouchableOpacity
               style={{
                 padding: 16,
-                backgroundColor: linkedAssetId === null ? '#EFF6FF' : '#F9FAFB',
+                backgroundColor: linkedAssetId === null ? theme.infoBanner : theme.backgroundSecondary,
                 borderRadius: 8,
                 marginBottom: 12,
                 flexDirection: 'row',
@@ -860,7 +867,7 @@ export default function AddLoanScreen() {
                 setShowAssetPicker(false);
               }}
             >
-              <Text style={{ fontSize: 16, color: '#1A1A1A' }}>{t('loan.noLinkedAccount')}</Text>
+              <Text style={{ fontSize: 16, color: theme.text }}>{t('loan.noLinkedAccount')}</Text>
               {linkedAssetId === null && (
                 <Ionicons name="checkmark-circle" size={24} color="#3B82F6" />
               )}
@@ -868,8 +875,8 @@ export default function AddLoanScreen() {
 
             {fiatAssets.length === 0 ? (
               <View style={{ padding: 20, alignItems: 'center' }}>
-                <Ionicons name="wallet-outline" size={48} color="#9CA3AF" />
-                <Text style={{ color: '#9CA3AF', marginTop: 8, textAlign: 'center' }}>
+                <Ionicons name="wallet-outline" size={48} color={theme.textMuted} />
+                <Text style={{ color: theme.textMuted, marginTop: 8, textAlign: 'center' }}>
                   {t('loan.noAccountsHint')}
                 </Text>
               </View>
@@ -880,7 +887,7 @@ export default function AddLoanScreen() {
                     key={asset.id}
                     style={{
                       padding: 16,
-                      backgroundColor: linkedAssetId === asset.id ? '#EFF6FF' : '#F9FAFB',
+                      backgroundColor: linkedAssetId === asset.id ? theme.infoBanner : theme.backgroundSecondary,
                       borderRadius: 8,
                       marginBottom: 8,
                       flexDirection: 'row',
@@ -895,8 +902,8 @@ export default function AddLoanScreen() {
                     }}
                   >
                     <View>
-                      <Text style={{ fontSize: 16, color: '#1A1A1A' }}>{asset.name}</Text>
-                      <Text style={{ fontSize: 12, color: '#9CA3AF', marginTop: 2 }}>
+                      <Text style={{ fontSize: 16, color: theme.text }}>{asset.name}</Text>
+                      <Text style={{ fontSize: 12, color: theme.textMuted, marginTop: 2 }}>
                         {asset.balance.toLocaleString()}{t('common.won')}
                         {asset.isOverdraft && ` (${t('assets.overdraft')})`}
                       </Text>
@@ -911,6 +918,7 @@ export default function AddLoanScreen() {
           </View>
         </View>
       </Modal>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

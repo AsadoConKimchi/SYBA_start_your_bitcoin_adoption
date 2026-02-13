@@ -12,6 +12,7 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import QRCode from 'react-native-qrcode-svg';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '../../src/hooks/useTheme';
 import { useSubscriptionStore } from '../../src/stores/subscriptionStore';
 import { CONFIG } from '../../src/constants/config';
 import { waitForPaymentWs, PaymentStatus } from '../../src/services/blinkProxy';
@@ -19,6 +20,7 @@ import { getSubscriptionPriceSats } from '../../src/services/appConfigService';
 
 export default function PaymentScreen() {
   const { t } = useTranslation();
+  const { theme } = useTheme();
   const {
     lightningInvoice,
     pendingPayment,
@@ -108,15 +110,15 @@ export default function PaymentScreen() {
 
   if (!lightningInvoice) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center' }}>
-        <Text style={{ color: '#666666' }}>{t('common.processing')}</Text>
-        <ActivityIndicator style={{ marginTop: 16 }} color="#F7931A" />
+      <SafeAreaView style={{ flex: 1, backgroundColor: theme.background, justifyContent: 'center', alignItems: 'center' }}>
+        <Text style={{ color: theme.textSecondary }}>{t('common.processing')}</Text>
+        <ActivityIndicator style={{ marginTop: 16 }} color={theme.primary} />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
       {/* 헤더 */}
       <View
         style={{
@@ -125,22 +127,22 @@ export default function PaymentScreen() {
           alignItems: 'center',
           padding: 20,
           borderBottomWidth: 1,
-          borderBottomColor: '#E5E7EB',
+          borderBottomColor: theme.border,
         }}
       >
-        <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1A1A1A' }}>
+        <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>
           {t('subscription.lightningPayment')}
         </Text>
         <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="close" size={24} color="#666666" />
+          <Ionicons name="close" size={24} color={theme.textSecondary} />
         </TouchableOpacity>
       </View>
 
       <View style={{ flex: 1, alignItems: 'center', padding: 20 }}>
         {/* 금액 */}
         <View style={{ marginBottom: 24, alignItems: 'center' }}>
-          <Text style={{ fontSize: 14, color: '#666666', marginBottom: 4 }}>{t('subscription.paymentAmount')}</Text>
-          <Text style={{ fontSize: 32, fontWeight: 'bold', color: '#F7931A' }}>
+          <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 4 }}>{t('subscription.paymentAmount')}</Text>
+          <Text style={{ fontSize: 32, fontWeight: 'bold', color: theme.primary }}>
             {subscriptionPrice.toLocaleString()} sats
           </Text>
         </View>
@@ -168,7 +170,7 @@ export default function PaymentScreen() {
             backgroundColor="#FFFFFF"
             color="#000000"
           />
-          <Text style={{ marginTop: 12, fontSize: 12, color: copied ? '#22C55E' : '#9CA3AF' }}>
+          <Text style={{ marginTop: 12, fontSize: 12, color: copied ? theme.success : theme.textMuted }}>
             {copied ? t('common.copied') : t('subscription.tapToCopyInvoice')}
           </Text>
         </TouchableOpacity>
@@ -183,26 +185,26 @@ export default function PaymentScreen() {
         >
           {status === 'waiting' && (
             <>
-              <ActivityIndicator size="small" color="#F7931A" style={{ marginRight: 8 }} />
-              <Text style={{ color: '#666666' }}>{t('subscription.waitingPayment')}</Text>
+              <ActivityIndicator size="small" color={theme.primary} style={{ marginRight: 8 }} />
+              <Text style={{ color: theme.textSecondary }}>{t('subscription.waitingPayment')}</Text>
             </>
           )}
           {status === 'checking' && (
             <>
-              <ActivityIndicator size="small" color="#F7931A" style={{ marginRight: 8 }} />
-              <Text style={{ color: '#666666' }}>{t('subscription.activating')}</Text>
+              <ActivityIndicator size="small" color={theme.primary} style={{ marginRight: 8 }} />
+              <Text style={{ color: theme.textSecondary }}>{t('subscription.activating')}</Text>
             </>
           )}
           {status === 'success' && (
             <>
-              <Ionicons name="checkmark-circle" size={20} color="#22C55E" style={{ marginRight: 8 }} />
-              <Text style={{ color: '#22C55E', fontWeight: '600' }}>{t('subscription.paymentComplete')}</Text>
+              <Ionicons name="checkmark-circle" size={20} color={theme.success} style={{ marginRight: 8 }} />
+              <Text style={{ color: theme.success, fontWeight: '600' }}>{t('subscription.paymentComplete')}</Text>
             </>
           )}
           {status === 'expired' && (
             <>
-              <Ionicons name="close-circle" size={20} color="#EF4444" style={{ marginRight: 8 }} />
-              <Text style={{ color: '#EF4444' }}>{t('subscription.expired')}</Text>
+              <Ionicons name="close-circle" size={20} color={theme.error} style={{ marginRight: 8 }} />
+              <Text style={{ color: theme.error }}>{t('subscription.expired')}</Text>
             </>
           )}
           {status === 'error' && (
@@ -216,14 +218,14 @@ export default function PaymentScreen() {
         {/* Invoice 미리보기 */}
         <View
           style={{
-            backgroundColor: '#F9FAFB',
+            backgroundColor: theme.backgroundSecondary,
             padding: 12,
             borderRadius: 8,
             width: '100%',
           }}
         >
           <Text
-            style={{ fontSize: 10, color: '#9CA3AF', fontFamily: 'monospace' }}
+            style={{ fontSize: 10, color: theme.textMuted, fontFamily: 'monospace' }}
             numberOfLines={3}
           >
             {lightningInvoice}
@@ -232,7 +234,7 @@ export default function PaymentScreen() {
 
         {/* 안내 문구 */}
         <View style={{ marginTop: 24, alignItems: 'center' }}>
-          <Text style={{ fontSize: 12, color: '#9CA3AF', textAlign: 'center' }}>
+          <Text style={{ fontSize: 12, color: theme.textMuted, textAlign: 'center' }}>
             {t('subscription.paymentInstructions')}
           </Text>
         </View>
