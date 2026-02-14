@@ -21,7 +21,7 @@ type DisplayMode = 'KRW' | 'BTC';
 
 export function CategoryPieChart({ year, month }: CategoryPieChartProps) {
   const { t } = useTranslation();
-  const { getRecordsByMonth } = useLedgerStore();
+  const { getRecordsByMonth, records } = useLedgerStore();
   const { btcKrw } = usePriceStore();
   const { settings } = useSettingsStore();
   const { theme, isDark } = useTheme();
@@ -110,7 +110,7 @@ export function CategoryPieChart({ year, month }: CategoryPieChartProps) {
     }
 
     return { items, totalKrw: totalExpenseKrw, totalSats: totalExpenseSats };
-  }, [year, month, getRecordsByMonth, t]);
+  }, [year, month, getRecordsByMonth, records, t]);
 
   // Toggle header
   const header = (

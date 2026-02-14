@@ -5,6 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { useSnapshotStore } from '../../stores/snapshotStore';
 import { usePriceStore } from '../../stores/priceStore';
 import { useSettingsStore } from '../../stores/settingsStore';
+import { useAssetStore } from '../../stores/assetStore';
+import { useDebtStore } from '../../stores/debtStore';
 import { formatKrw, formatSats } from '../../utils/formatters';
 import { ChartEmptyState } from './ChartEmptyState';
 import { useTheme } from '../../hooks/useTheme';
@@ -19,6 +21,8 @@ export function NetWorthChart() {
   const { btcKrw } = usePriceStore();
   const { settings } = useSettingsStore();
   const { theme, isDark } = useTheme();
+  const { getTotalAssetKrw } = useAssetStore();
+  const { getTotalDebt } = useDebtStore();
 
   const [showAssets, setShowAssets] = useState(true);
   const [showDebts, setShowDebts] = useState(true);
@@ -27,10 +31,31 @@ export function NetWorthChart() {
 
   // Sort snapshots by yearMonth ascending, take last 6
   const recentSnapshots = useMemo(() => {
-    return [...snapshots]
-      .sort((a, b) => a.yearMonth.localeCompare(b.yearMonth))
-      .slice(-6);
-  }, [snapshots]);
+    if (snapshots.length > 0) {
+      return [...snapshots]
+        .sort((a, b) => a.yearMonth.localeCompare(b.yearMonth))
+        .slice(-6);
+    }
+
+    // No snapshots: generate a single data point from current totals
+    const totalAssetKrw = getTotalAssetKrw(btcKrw);
+    const totalDebt = getTotalDebt();
+    const netWorthKrw = totalAssetKrw - totalDebt;
+
+    if (totalAssetKrw === 0 && totalDebt === 0) {
+      return [];
+    }
+
+    const now = new Date();
+    const yearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    return [{
+      yearMonth,
+      totalAssetKrw,
+      totalDebt,
+      netWorthKrw,
+      btcKrw: btcKrw || 150000000,
+    }] as typeof snapshots;
+  }, [snapshots, getTotalAssetKrw, getTotalDebt, btcKrw]);
 
   const hasData = recentSnapshots.length > 0;
 

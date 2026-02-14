@@ -15,7 +15,7 @@ type DisplayMode = 'KRW' | 'BTC';
 
 export function SpendingTrendChart() {
   const { t } = useTranslation();
-  const { getMultiMonthTotals } = useLedgerStore();
+  const { getMultiMonthTotals, records } = useLedgerStore();
   const { settings } = useSettingsStore();
   const { theme, isDark } = useTheme();
   const [isExpanded, setIsExpanded] = useState(false);
@@ -25,7 +25,7 @@ export function SpendingTrendChart() {
   const monthlyData = useMemo(() => {
     const allMonths = getMultiMonthTotals(6);
     return allMonths.filter(m => m.expense > 0 || m.expenseSats > 0);
-  }, [getMultiMonthTotals]);
+  }, [getMultiMonthTotals, records]);
 
   const hasData = monthlyData.length > 0;
 
