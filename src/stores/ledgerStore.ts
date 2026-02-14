@@ -542,16 +542,22 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
   // 카테고리별 지출 분류 (상위 5개 + 기타)
   getCategoryBreakdown: (year, month) => {
     const monthRecords = get().getRecordsByMonth(year, month);
-    const expenses = monthRecords.filter(r => r.type === 'expense' && r.currency === 'KRW');
+    const expenses = monthRecords.filter(r => r.type === 'expense');
 
-    // 카테고리별 합계
+    // 카테고리별 합계 (SATS → KRW 환산 포함)
     const categoryTotals: Record<string, number> = {};
     let totalExpense = 0;
 
     for (const expense of expenses) {
       const category = expense.category || i18n.t('categories.uncategorized');
-      categoryTotals[category] = (categoryTotals[category] || 0) + expense.amount;
-      totalExpense += expense.amount;
+      let krwAmount: number;
+      if (expense.currency === 'SATS' && 'btcKrwAtTime' in expense && expense.btcKrwAtTime) {
+        krwAmount = satsToKrw(expense.amount, expense.btcKrwAtTime);
+      } else {
+        krwAmount = expense.amount;
+      }
+      categoryTotals[category] = (categoryTotals[category] || 0) + krwAmount;
+      totalExpense += krwAmount;
     }
 
     if (totalExpense === 0) return [];

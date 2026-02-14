@@ -41,7 +41,7 @@ export function CategoryPieChart({ year, month }: CategoryPieChartProps) {
   // Category spending calculation (KRW + sats)
   const breakdown = useMemo(() => {
     const monthRecords = getRecordsByMonth(year, month);
-    const expenses = monthRecords.filter(r => r.type === 'expense' && r.currency === 'KRW');
+    const expenses = monthRecords.filter(r => r.type === 'expense');
 
     // Category totals
     const categoryTotals: Record<string, { krw: number; sats: number }> = {};
@@ -53,13 +53,24 @@ export function CategoryPieChart({ year, month }: CategoryPieChartProps) {
       if (!categoryTotals[category]) {
         categoryTotals[category] = { krw: 0, sats: 0 };
       }
-      categoryTotals[category].krw += expense.amount;
-      categoryTotals[category].sats += expense.satsEquivalent || 0;
-      totalExpenseKrw += expense.amount;
-      totalExpenseSats += expense.satsEquivalent || 0;
+
+      if (expense.currency === 'KRW') {
+        categoryTotals[category].krw += expense.amount;
+        categoryTotals[category].sats += expense.satsEquivalent || 0;
+        totalExpenseKrw += expense.amount;
+        totalExpenseSats += expense.satsEquivalent || 0;
+      } else if (expense.currency === 'SATS') {
+        // Convert SATS to KRW using btcKrwAtTime
+        const btcPrice = expense.btcKrwAtTime || btcKrw || 150000000;
+        const krwAmount = Math.round(expense.amount * (btcPrice / 100_000_000));
+        categoryTotals[category].krw += krwAmount;
+        categoryTotals[category].sats += expense.amount;
+        totalExpenseKrw += krwAmount;
+        totalExpenseSats += expense.amount;
+      }
     }
 
-    if (totalExpenseKrw === 0) return { items: [], totalKrw: 0, totalSats: 0 };
+    if (totalExpenseKrw === 0 && totalExpenseSats === 0) return { items: [], totalKrw: 0, totalSats: 0 };
 
     // Sort and extract top 5
     const sorted = Object.entries(categoryTotals)

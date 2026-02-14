@@ -27,6 +27,7 @@ export default function SetupScreen() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [isRestoring, setIsRestoring] = useState(false);
   const [restoreModalVisible, setRestoreModalVisible] = useState(false);
   const [restorePassword, setRestorePassword] = useState('');
@@ -57,8 +58,9 @@ export default function SetupScreen() {
     }
 
     setIsLoading(true);
+    setProgress(0);
     try {
-      await setupPassword(password);
+      await setupPassword(password, (p) => setProgress(p));
 
       if (biometricAvailable) {
         router.replace('/(auth)/biometric-setup');
@@ -195,7 +197,7 @@ export default function SetupScreen() {
             autoCapitalize="none"
           />
 
-          <View style={{ marginBottom: 12 }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
             {([
               ['uppercase', t('auth.passwordReqUppercase')],
               ['lowercase', t('auth.passwordReqLowercase')],
@@ -204,14 +206,9 @@ export default function SetupScreen() {
             ] as const).map(([key, label]) => {
               const met = passwordChecks[key as keyof typeof passwordChecks];
               return (
-                <View key={key} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-                  <Text style={{ fontSize: 14, color: met ? '#22C55E' : '#EF4444', marginRight: 8 }}>
-                    {met ? '✅' : '❌'}
-                  </Text>
-                  <Text style={{ fontSize: 14, color: met ? '#22C55E' : '#EF4444' }}>
-                    {label}
-                  </Text>
-                </View>
+                <Text key={key} style={{ fontSize: 11, color: met ? '#22C55E' : '#EF4444' }}>
+                  {met ? '✅' : '❌'}{label}
+                </Text>
               );
             })}
           </View>
@@ -237,21 +234,50 @@ export default function SetupScreen() {
           />
         </View>
 
-        <TouchableOpacity
-          style={{
-            backgroundColor: theme.primary,
-            padding: 16,
+        {isLoading ? (
+          <View style={{
             borderRadius: 8,
-            alignItems: 'center',
-            opacity: isLoading || !allRequirementsMet ? 0.5 : 1,
-          }}
-          onPress={handleSetup}
-          disabled={isLoading || !allRequirementsMet}
-        >
-          <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }}>
-            {isLoading ? t('auth.settingUp') : t('common.next')}
-          </Text>
-        </TouchableOpacity>
+            overflow: 'hidden',
+            backgroundColor: theme.border,
+            height: 52,
+            justifyContent: 'center',
+          }}>
+            <View style={{
+              position: 'absolute',
+              left: 0,
+              top: 0,
+              bottom: 0,
+              width: `${Math.round(progress * 100)}%`,
+              backgroundColor: '#F7931A',
+              borderRadius: 8,
+            }} />
+            <Text style={{
+              color: '#FFFFFF',
+              fontSize: 16,
+              fontWeight: '600',
+              textAlign: 'center',
+              zIndex: 1,
+            }}>
+              🔐 {t('auth.settingUp')} {Math.round(progress * 100)}%
+            </Text>
+          </View>
+        ) : (
+          <TouchableOpacity
+            style={{
+              backgroundColor: theme.primary,
+              padding: 16,
+              borderRadius: 8,
+              alignItems: 'center',
+              opacity: !allRequirementsMet ? 0.5 : 1,
+            }}
+            onPress={handleSetup}
+            disabled={!allRequirementsMet}
+          >
+            <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }}>
+              {t('common.next')}
+            </Text>
+          </TouchableOpacity>
+        )}
 
         <View style={{ marginTop: 24, padding: 16, backgroundColor: theme.warningBanner, borderRadius: 8 }}>
           <Text style={{ fontSize: 14, color: theme.warningBannerText, textAlign: 'center' }}>

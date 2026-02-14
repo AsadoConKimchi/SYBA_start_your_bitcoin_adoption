@@ -179,25 +179,20 @@ export default function ChangePasswordScreen() {
           </View>
 
           {/* 비밀번호 강도 체크 */}
-          <View style={{ marginBottom: 16, marginTop: -16 }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16, marginTop: -16 }}>
               {([
                 ['hasUppercase', t('auth.passwordReqUppercase')],
                 ['hasLowercase', t('auth.passwordReqLowercase')],
                 ['hasNumber', t('auth.passwordReqNumber')],
                 ['hasLength', t('auth.passwordReqLength')],
-              ] as const).map(([key, label]) => (
-                <View key={key} style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
-                  <Text style={{ fontSize: 14, marginRight: 6 }}>
-                    {passwordChecks[key as keyof typeof passwordChecks] ? '✅' : '❌'}
+              ] as const).map(([key, label]) => {
+                const met = passwordChecks[key as keyof typeof passwordChecks];
+                return (
+                  <Text key={key} style={{ fontSize: 11, color: met ? '#22C55E' : '#EF4444' }}>
+                    {met ? '✅' : '❌'}{label}
                   </Text>
-                  <Text style={{
-                    fontSize: 13,
-                    color: passwordChecks[key as keyof typeof passwordChecks] ? '#22C55E' : '#EF4444',
-                  }}>
-                    {label}
-                  </Text>
-                </View>
-              ))}
+                );
+              })}
             </View>
 
           {/* 새 비밀번호 확인 */}

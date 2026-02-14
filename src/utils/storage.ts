@@ -1,5 +1,6 @@
 import * as FileSystem from 'expo-file-system/legacy';
-import { encrypt, decrypt, getSecure, SECURE_KEYS } from './encryption';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { encrypt, decrypt, getSecure, deleteSecure, SECURE_KEYS } from './encryption';
 
 console.log('[DEBUG] FileSystem.documentDirectory:', FileSystem.documentDirectory);
 const DATA_DIR = FileSystem.documentDirectory + 'data/';
@@ -172,6 +173,9 @@ export async function clearAllData(): Promise<void> {
   if (dirInfo.exists) {
     await FileSystem.deleteAsync(DATA_DIR, { idempotent: true });
   }
+  // Clear subscription/lightning data
+  await deleteSecure('SYBA_USER_ID').catch(() => {});
+  await AsyncStorage.removeItem('SYBA_PENDING_INVOICE').catch(() => {});
 }
 
 // 백업 파일 생성

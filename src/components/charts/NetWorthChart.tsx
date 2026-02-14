@@ -137,6 +137,7 @@ export function NetWorthChart() {
       r: '4',
       strokeWidth: '2',
     },
+    paddingRight: 32,
   };
 
   return (
@@ -272,10 +273,10 @@ export function NetWorthChart() {
 
       {/* Line chart */}
       {(showAssets || showDebts || showNetWorth) && (
-        <View style={{ marginLeft: -16 }}>
+        <View style={{ marginLeft: -24 }}>
           <LineChart
             data={lineData}
-            width={screenWidth - 40}
+            width={screenWidth - 24}
             height={200}
             yAxisLabel=""
             yAxisSuffix=""
