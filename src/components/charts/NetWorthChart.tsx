@@ -137,7 +137,11 @@ export function NetWorthChart() {
       r: '4',
       strokeWidth: '2',
     },
-    paddingRight: 32,
+    paddingRight: 24,
+    paddingLeft: 0,
+    propsForLabels: {
+      fontSize: 10,
+    },
   };
 
   return (
@@ -273,10 +277,10 @@ export function NetWorthChart() {
 
       {/* Line chart */}
       {(showAssets || showDebts || showNetWorth) && (
-        <View style={{ marginLeft: -16 }}>
+        <View style={{ marginLeft: -24, marginRight: -8 }}>
           <LineChart
             data={lineData}
-            width={screenWidth - 8}
+            width={screenWidth}
             height={200}
             yAxisLabel=""
             yAxisSuffix=""
@@ -326,31 +330,31 @@ export function NetWorthChart() {
             gap: 8,
           }}
         >
-          <View style={{ minWidth: 70 }}>
+          <View style={{ flex: 1, alignItems: 'center' }}>
             <Text style={{ fontSize: 11, color: theme.textMuted, marginBottom: 4 }}>{t('charts.netWorth')}</Text>
-            <Text style={{ fontSize: 13, fontWeight: '600', color: latestData.netWorth >= 0 ? theme.success : theme.error }}>
+            <Text style={{ fontSize: 13, fontWeight: '600', color: latestData.netWorth >= 0 ? theme.success : theme.error }} numberOfLines={1} adjustsFontSizeToFit>
               {displayMode === 'KRW'
                 ? formatKrw(latestData.netWorth * 10000)
                 : `${Math.round(latestData.netWorth).toLocaleString()} K`}
             </Text>
           </View>
-          <View style={{ minWidth: 60, alignItems: 'center' }}>
+          <View style={{ flex: 1, alignItems: 'center' }}>
             <Text style={{ fontSize: 11, color: theme.textMuted, marginBottom: 4 }}>{t('charts.assets')}</Text>
-            <Text style={{ fontSize: 13, fontWeight: '600', color: theme.success }}>
+            <Text style={{ fontSize: 13, fontWeight: '600', color: theme.success }} numberOfLines={1} adjustsFontSizeToFit>
               {displayMode === 'KRW'
                 ? formatKrw(latestData.asset * 10000)
                 : `${Math.round(latestData.asset).toLocaleString()} K`}
             </Text>
           </View>
-          <View style={{ minWidth: 60, alignItems: 'center' }}>
+          <View style={{ flex: 1, alignItems: 'center' }}>
             <Text style={{ fontSize: 11, color: theme.textMuted, marginBottom: 4 }}>{t('charts.debts')}</Text>
-            <Text style={{ fontSize: 13, fontWeight: '600', color: theme.error }}>
+            <Text style={{ fontSize: 13, fontWeight: '600', color: theme.error }} numberOfLines={1} adjustsFontSizeToFit>
               {displayMode === 'KRW'
                 ? formatKrw(latestData.debt * 10000)
                 : `${Math.round(latestData.debt).toLocaleString()} K`}
             </Text>
           </View>
-          <View style={{ minWidth: 50, alignItems: 'flex-end' }}>
+          <View style={{ flex: 1, alignItems: 'center' }}>
             <Text style={{ fontSize: 11, color: theme.textMuted, marginBottom: 4 }}>{t('charts.changeRate')}</Text>
             <Text
               style={{
@@ -358,6 +362,8 @@ export function NetWorthChart() {
                 fontWeight: '600',
                 color: netWorthChange >= 0 ? theme.success : theme.error,
               }}
+              numberOfLines={1}
+              adjustsFontSizeToFit
             >
               {netWorthChange >= 0 ? '+' : ''}{netWorthChange.toFixed(1)}%
             </Text>
