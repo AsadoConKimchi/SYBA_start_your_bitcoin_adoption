@@ -135,7 +135,7 @@ export const usePriceStore = create<PriceState & PriceActions>((set, get) => ({
 
     // 첫 번째 구독자일 때만 연결
     if (newCount === 1) {
-      console.log('[PriceStore] WebSocket 연결 시작');
+      if (__DEV__) { console.log('[PriceStore] WebSocket 연결 시작'); }
 
       connectWebSocket((price: number) => {
         // 실시간 가격 업데이트
@@ -160,7 +160,7 @@ export const usePriceStore = create<PriceState & PriceActions>((set, get) => ({
 
     // 마지막 구독자가 해제될 때만 연결 종료
     if (newCount === 0) {
-      console.log('[PriceStore] WebSocket 연결 해제');
+      if (__DEV__) { console.log('[PriceStore] WebSocket 연결 해제'); }
       disconnectWebSocket();
       set({ isWebSocketConnected: false });
     }

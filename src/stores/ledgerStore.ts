@@ -83,29 +83,29 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
 
   // 파일에 저장
   saveRecords: async () => {
-    console.log('[DEBUG] saveRecords 시작');
+    if (__DEV__) { console.log('[DEBUG] saveRecords 시작'); }
     const encryptionKey = useAuthStore.getState().encryptionKey;
-    console.log('[DEBUG] encryptionKey:', encryptionKey ? '있음' : '없음 (null)');
+    if (__DEV__) { console.log('[DEBUG] encryptionKey:', encryptionKey ? '있음' : '없음 (null)'); }
 
     if (!encryptionKey) {
-      console.log('[DEBUG] encryptionKey가 없어서 저장 중단');
+      if (__DEV__) { console.log('[DEBUG] encryptionKey가 없어서 저장 중단'); }
       set({ error: i18n.t('errors.noEncryptionKey') });
       return;
     }
 
     try {
-      console.log('[DEBUG] saveEncrypted 호출 시도');
+      if (__DEV__) { console.log('[DEBUG] saveEncrypted 호출 시도'); }
       await saveEncrypted(FILE_PATHS.LEDGER, get().records, encryptionKey);
-      console.log('[DEBUG] saveEncrypted 성공');
+      if (__DEV__) { console.log('[DEBUG] saveEncrypted 성공'); }
     } catch (error) {
-      console.log('[DEBUG] saveEncrypted 실패:', error);
+      if (__DEV__) { console.log('[DEBUG] saveEncrypted 실패:', error); }
       set({ error: i18n.t('errors.saveFailed') });
     }
   },
 
   // 지출 추가
   addExpense: async (expenseData, overrideBtcKrw) => {
-    console.log('[DEBUG] addExpense 시작', expenseData);
+    if (__DEV__) { console.log('[DEBUG] addExpense 시작', expenseData); }
     try {
       const now = new Date().toISOString();
       let btcKrwAtTime: number | null = overrideBtcKrw ?? null;
@@ -116,11 +116,11 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
       if (expenseData.currency === 'KRW') {
         if (!btcKrwAtTime) {
           try {
-            console.log('[DEBUG] BTC 시세 조회 시도');
+            if (__DEV__) { console.log('[DEBUG] BTC 시세 조회 시도'); }
             btcKrwAtTime = await fetchHistoricalBtcPrice(expenseData.date);
-            console.log('[DEBUG] BTC 시세 조회 성공:', btcKrwAtTime);
+            if (__DEV__) { console.log('[DEBUG] BTC 시세 조회 성공:', btcKrwAtTime); }
           } catch (e) {
-            console.log('[DEBUG] BTC 시세 조회 실패, 나중에 동기화:', e);
+            if (__DEV__) { console.log('[DEBUG] BTC 시세 조회 실패, 나중에 동기화:', e); }
             needsPriceSync = true;
           }
         }
@@ -134,17 +134,17 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
         if (!btcKrwAtTime) {
           try {
             btcKrwAtTime = await fetchHistoricalBtcPrice(expenseData.date);
-            console.log('[DEBUG] SATS 기록 - BTC 시세 조회 성공:', btcKrwAtTime);
+            if (__DEV__) { console.log('[DEBUG] SATS 기록 - BTC 시세 조회 성공:', btcKrwAtTime); }
           } catch (e) {
-            console.log('[DEBUG] SATS 기록 - BTC 시세 조회 실패:', e);
+            if (__DEV__) { console.log('[DEBUG] SATS 기록 - BTC 시세 조회 실패:', e); }
             needsPriceSync = true;
           }
         }
       }
 
-      console.log('[DEBUG] UUID 생성 시도');
+      if (__DEV__) { console.log('[DEBUG] UUID 생성 시도'); }
       const id = uuidv4();
-      console.log('[DEBUG] UUID 생성 성공:', id);
+      if (__DEV__) { console.log('[DEBUG] UUID 생성 성공:', id); }
 
       const expense: Expense = {
         ...expenseData,
@@ -158,13 +158,13 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
         createdAt: now,
         updatedAt: now,
       };
-      console.log('[DEBUG] expense 객체 생성 완료');
+      if (__DEV__) { console.log('[DEBUG] expense 객체 생성 완료'); }
 
       set(state => ({ records: [...state.records, expense] }));
-      console.log('[DEBUG] state 업데이트 완료');
+      if (__DEV__) { console.log('[DEBUG] state 업데이트 완료'); }
 
       await get().saveRecords();
-      console.log('[DEBUG] addExpense 완료');
+      if (__DEV__) { console.log('[DEBUG] addExpense 완료'); }
 
       // 자산 연동: 즉시 차감 (계좌이체/Lightning/Onchain)
       const encryptionKey = useAuthStore.getState().encryptionKey;
@@ -175,7 +175,7 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
           expenseData.paymentMethod === 'lightning' ||
           expenseData.paymentMethod === 'onchain')
       ) {
-        console.log('[DEBUG] 자산 잔액 차감 시작:', expenseData.linkedAssetId);
+        if (__DEV__) { console.log('[DEBUG] 자산 잔액 차감 시작:', expenseData.linkedAssetId); }
         // SATS 기록 또는 비트코인 결제: sats로 차감
         // KRW 기록 + 계좌이체: KRW로 차감
         let deductAmount: number;
@@ -192,12 +192,12 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
           -deductAmount, // 지출이므로 마이너스
           encryptionKey
         );
-        console.log('[DEBUG] 자산 잔액 차감 완료');
+        if (__DEV__) { console.log('[DEBUG] 자산 잔액 차감 완료'); }
       }
 
       return id; // Return expense ID for linking
     } catch (error) {
-      console.log('[DEBUG] addExpense 에러:', error);
+      if (__DEV__) { console.log('[DEBUG] addExpense 에러:', error); }
       throw error;  // 에러를 다시 던져서 UI에서 처리
     }
   },
@@ -215,7 +215,7 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
         try {
           btcKrwAtTime = await fetchHistoricalBtcPrice(incomeData.date);
         } catch (error) {
-          console.log('[오프라인] BTC 시세 조회 실패, 나중에 동기화:', error);
+          if (__DEV__) { console.log('[오프라인] BTC 시세 조회 실패, 나중에 동기화:', error); }
           needsPriceSync = true;
         }
       }
@@ -229,9 +229,9 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
       if (!btcKrwAtTime) {
         try {
           btcKrwAtTime = await fetchHistoricalBtcPrice(incomeData.date);
-          console.log('[DEBUG] SATS 수입 - BTC 시세 조회 성공:', btcKrwAtTime);
+          if (__DEV__) { console.log('[DEBUG] SATS 수입 - BTC 시세 조회 성공:', btcKrwAtTime); }
         } catch (error) {
-          console.log('[DEBUG] SATS 수입 - BTC 시세 조회 실패:', error);
+          if (__DEV__) { console.log('[DEBUG] SATS 수입 - BTC 시세 조회 실패:', error); }
           needsPriceSync = true;
         }
       }
@@ -255,7 +255,7 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
     // 자산 연동: 수입 시 자산 증가
     const encryptionKey = useAuthStore.getState().encryptionKey;
     if (incomeData.linkedAssetId && encryptionKey) {
-      console.log('[DEBUG] 수입 - 자산 잔액 증가 시작:', incomeData.linkedAssetId);
+      if (__DEV__) { console.log('[DEBUG] 수입 - 자산 잔액 증가 시작:', incomeData.linkedAssetId); }
 
       // SATS 기록: sats 값 그대로 증가
       // KRW 기록 + 비트코인 자산: sats 환산값으로 증가
@@ -275,7 +275,7 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
         addAmount, // 수입이므로 플러스
         encryptionKey
       );
-      console.log('[DEBUG] 수입 - 자산 잔액 증가 완료');
+      if (__DEV__) { console.log('[DEBUG] 수입 - 자산 잔액 증가 완료'); }
     }
 
     return id; // Return income ID
@@ -361,7 +361,7 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
         -oldDelta, // 역복원
         encryptionKey
       );
-      console.log('[DEBUG] updateRecord - 이전 자산 역복원:', oldRecord.linkedAssetId, -oldDelta);
+      if (__DEV__) { console.log('[DEBUG] updateRecord - 이전 자산 역복원:', oldRecord.linkedAssetId, -oldDelta); }
     }
 
     // Case 2: 새로운 자산 연동 → 새 자산 반영
@@ -372,7 +372,7 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
         newDelta,
         encryptionKey
       );
-      console.log('[DEBUG] updateRecord - 새 자산 반영:', newRecord.linkedAssetId, newDelta);
+      if (__DEV__) { console.log('[DEBUG] updateRecord - 새 자산 반영:', newRecord.linkedAssetId, newDelta); }
     }
   },
 
@@ -428,7 +428,7 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
           record.type === 'expense' ? restoreAmount : restoreAmount, // expense: +복원, income: -차감
           encryptionKey
         );
-        console.log('[DEBUG] deleteRecord - 자산 역복원:', record.linkedAssetId, restoreAmount);
+        if (__DEV__) { console.log('[DEBUG] deleteRecord - 자산 역복원:', record.linkedAssetId, restoreAmount); }
       }
     }
 
@@ -454,7 +454,7 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
           needsPriceSync: false,
         });
       } catch (error) {
-        console.log('[오프라인] 시세 동기화 실패, 다음에 재시도:', error);
+        if (__DEV__) { console.log('[오프라인] 시세 동기화 실패, 다음에 재시도:', error); }
       }
     }
   },

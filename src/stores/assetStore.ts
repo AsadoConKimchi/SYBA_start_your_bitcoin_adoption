@@ -184,7 +184,7 @@ export const useAssetStore = create<AssetState & AssetActions>((set, get) => ({
 
     set({ assets });
     await saveEncrypted(FILE_PATHS.ASSETS, assets, encryptionKey);
-    console.log(`[adjustAssetBalance] ${asset.name}: ${asset.balance} → ${newBalance} (${amount >= 0 ? '+' : ''}${amount})`);
+    if (__DEV__) { console.log(`[adjustAssetBalance] ${asset.name}: ${asset.balance} → ${newBalance} (${amount >= 0 ? '+' : ''}${amount})`); }
   },
 
   // ID로 자산 조회

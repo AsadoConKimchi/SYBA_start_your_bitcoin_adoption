@@ -91,11 +91,6 @@ export async function deriveKey(
   return derivedKey.toString();
 }
 
-// Verification (run once to confirm byte-for-byte match with CryptoJS default):
-// const testKey1 = CryptoJS.PBKDF2('test', 'salt', { keySize: 256/32, iterations: 100000 }).toString();
-// const testKey2 = await deriveKey('test', 'salt');
-// console.assert(testKey1 === testKey2, 'PBKDF2 mismatch!', testKey1, testKey2);
-
 // 동기 버전 (레거시 호환, 내부 사용)
 // 동기 버전 — SHA-1 (CryptoJS default), 기존 호환성 유지
 export function deriveKeySync(password: string, salt: string): string {

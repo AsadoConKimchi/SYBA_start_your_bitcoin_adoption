@@ -118,10 +118,10 @@ export const useSubscriptionStore = create<SubscriptionState & SubscriptionActio
               const saved = await AsyncStorage.getItem(PENDING_INVOICE_KEY);
               if (saved) {
                 const { paymentId, invoice, paymentHash } = JSON.parse(saved);
-                console.log('[Subscription] 미확인 인보이스 발견, 상태 확인...');
+                if (__DEV__) { console.log('[Subscription] 미확인 인보이스 발견, 상태 확인...'); }
                 const status = await checkPaymentStatus(invoice);
                 if (status === 'PAID') {
-                  console.log('[Subscription] 미확인 결제 확인됨! 프리미엄 활성화');
+                  if (__DEV__) { console.log('[Subscription] 미확인 결제 확인됨! 프리미엄 활성화'); }
                   await updatePaymentStatus(paymentId, 'paid', paymentHash);
                   const newSub = await activateSubscription(user.id);
                   if (newSub) {
@@ -153,13 +153,13 @@ export const useSubscriptionStore = create<SubscriptionState & SubscriptionActio
 
   // LNURL-auth 시작
   startLnurlAuth: async () => {
-    console.log('[SubscriptionStore] startLnurlAuth 시작');
+    if (__DEV__) { console.log('[SubscriptionStore] startLnurlAuth 시작'); }
     try {
       set({ authStatus: 'waiting' });
 
-      console.log('[SubscriptionStore] createLnurlAuthSession 호출');
+      if (__DEV__) { console.log('[SubscriptionStore] createLnurlAuthSession 호출'); }
       const session = await createLnurlAuthSession();
-      console.log('[SubscriptionStore] createLnurlAuthSession 결과:', session ? 'success' : 'null');
+      if (__DEV__) { console.log('[SubscriptionStore] createLnurlAuthSession 결과:', session ? 'success' : 'null'); }
 
       if (!session) {
         console.error('[SubscriptionStore] 세션 생성 실패');
@@ -167,7 +167,7 @@ export const useSubscriptionStore = create<SubscriptionState & SubscriptionActio
         return null;
       }
 
-      console.log('[SubscriptionStore] LNURL 생성 성공:', session.sessionId);
+      if (__DEV__) { console.log('[SubscriptionStore] LNURL 생성 성공:', session.sessionId); }
       set({
         authSessionId: session.sessionId,
         authLnurl: session.lnurl,
