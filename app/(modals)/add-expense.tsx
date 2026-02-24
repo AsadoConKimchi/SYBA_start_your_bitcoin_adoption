@@ -219,8 +219,8 @@ export default function AddExpenseScreen() {
       // 2. 지출 기록 추가
       // - KRW 모드: amount는 원화, currency는 'KRW'
       // - SATS 모드: amount는 sats, currency는 'SATS'
-      // 항상 해당 날짜 종가 fetch (오늘 날짜도 당일 최신 캔들 가격 사용)
-      const overrideBtcKrw = undefined;
+      // 오늘 날짜면 실시간 현재가, 과거 날짜면 해당 날짜 종가 fetch
+      const overrideBtcKrw = dateString === getTodayString() ? btcKrw : undefined;
       const expenseId = await addExpense({
         date: dateString,
         amount: currencyMode === 'KRW' ? amountNumber : amountNumber,
