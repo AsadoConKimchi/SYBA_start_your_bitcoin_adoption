@@ -136,8 +136,10 @@ export default function EditRecordScreen() {
   }
 
   const amountNumber = parseInt(amount.replace(/[^0-9]/g, '')) || 0;
-  const krwAmount = currencyMode === 'KRW' ? amountNumber : btcKrw ? satsToKrw(amountNumber, btcKrw) : 0;
-  const satsAmount = currencyMode === 'SATS' ? amountNumber : btcKrw ? krwToSats(amountNumber, btcKrw) : 0;
+  // 기록 당시 시세 우선 사용 (없으면 현재 시세로 fallback)
+  const recordBtcKrw = (!isTransfer(record) && record.btcKrwAtTime) ? record.btcKrwAtTime : btcKrw;
+  const krwAmount = currencyMode === 'KRW' ? amountNumber : recordBtcKrw ? satsToKrw(amountNumber, recordBtcKrw) : 0;
+  const satsAmount = currencyMode === 'SATS' ? amountNumber : recordBtcKrw ? krwToSats(amountNumber, recordBtcKrw) : 0;
 
   const handleAmountChange = (text: string) => {
     const numbers = text.replace(/[^0-9]/g, '');
@@ -203,6 +205,10 @@ export default function EditRecordScreen() {
         category: finalCategory,
         memo: memo || null,
       };
+      // 금액 변경 시 기록 당시 시세 기준으로 satsEquivalent 재계산
+      if (recordBtcKrw) {
+        (updates as any).satsEquivalent = satsAmount;
+      }
 
       if (isExpenseRecord) {
         Object.assign(updates, {
@@ -365,9 +371,9 @@ export default function EditRecordScreen() {
               />
               {currencyMode === 'SATS' && <Text style={{ fontSize: 14, color: theme.primary }}>{t('common.sats')}</Text>}
             </View>
-            {amountNumber > 0 && btcKrw && (
+            {amountNumber > 0 && recordBtcKrw && (
               <Text style={{ fontSize: 12, color: theme.primary, marginTop: 4 }}>
-                {currencyMode === 'KRW' ? `= ${formatSats(satsAmount)} (${t('common.currentRate')})` : `= ${formatKrw(krwAmount)} (${t('common.currentRate')})`}
+                {currencyMode === 'KRW' ? `= ${formatSats(satsAmount)} (${t('common.recordedRate')})` : `= ${formatKrw(krwAmount)} (${t('common.recordedRate')})`}
               </Text>
             )}
           </View>

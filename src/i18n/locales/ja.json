@@ -50,6 +50,8 @@
     "authRequired": "認証が必要です。",
     "networkError": "BTC価格を取得できません。ネットワークを確認してください。",
     "currentRate": "現在のレート",
+    "closingRate": "当日終値",
+    "recordedRate": "記録時のレート",
     "lastDay": "末日"
   },
   "tabs": {

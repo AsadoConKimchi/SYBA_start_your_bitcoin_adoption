@@ -50,6 +50,8 @@
     "authRequired": "Se requiere autenticación.",
     "networkError": "No se puede obtener el precio de BTC. Verificá tu conexión.",
     "currentRate": "Tipo de cambio actual",
+    "closingRate": "Precio de cierre del día",
+    "recordedRate": "Cotización al momento del registro",
     "lastDay": "último día"
   },
   "tabs": {

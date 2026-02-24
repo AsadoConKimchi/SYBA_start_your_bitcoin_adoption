@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -26,6 +26,7 @@ import { useCategoryStore } from '../../src/stores/categoryStore';
 import { formatKrw, formatSats, getTodayString } from '../../src/utils/formatters';
 import { krwToSats, satsToKrw } from '../../src/utils/calculations';
 import { isFiatAsset, isBitcoinAsset } from '../../src/types/asset';
+import { fetchHistoricalBtcPrice } from '../../src/services/api/upbit';
 
 type PaymentMethod = 'cash' | 'card' | 'bank' | 'lightning' | 'onchain';
 type CurrencyMode = 'KRW' | 'SATS';
@@ -65,6 +66,7 @@ export default function AddExpenseScreen() {
   const [linkedAssetId, setLinkedAssetId] = useState<string | null>(null);
   const [showAssetPicker, setShowAssetPicker] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [historicalBtcKrw, setHistoricalBtcKrw] = useState<number | null>(null);
 
   const { addExpense } = useLedgerStore();
   const activeExpenseCategories = useCategoryStore(s => s.getActiveExpenseCategories)();
@@ -93,16 +95,6 @@ export default function AddExpenseScreen() {
 
   // 금액 파싱
   const amountNumber = parseInt(amount.replace(/[^0-9]/g, '')) || 0;
-
-  // 원화 금액 계산 (sats 모드일 경우 변환)
-  const krwAmount = currencyMode === 'KRW'
-    ? amountNumber
-    : btcKrw ? satsToKrw(amountNumber, btcKrw) : 0;
-
-  // sats 금액 계산 (원화 모드일 경우 변환)
-  const satsAmount = currencyMode === 'SATS'
-    ? amountNumber
-    : btcKrw ? krwToSats(amountNumber, btcKrw) : 0;
 
   const handleAmountChange = (text: string) => {
     const numbers = text.replace(/[^0-9]/g, '');
@@ -143,6 +135,33 @@ export default function AddExpenseScreen() {
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   };
+
+  // 날짜 변경 시 과거 날짜면 해당 날짜 종가 fetch (미리보기용)
+  useEffect(() => {
+    const dateString = formatDateString(selectedDate);
+    const todayStr = getTodayString();
+    if (dateString !== todayStr) {
+      fetchHistoricalBtcPrice(dateString)
+        .then(price => setHistoricalBtcKrw(price))
+        .catch(() => setHistoricalBtcKrw(null));
+    } else {
+      setHistoricalBtcKrw(null);
+    }
+  }, [selectedDate]);
+
+  // 미리보기에 사용할 시세: 오늘은 실시간, 과거는 해당 날짜 종가
+  const isToday = formatDateString(selectedDate) === getTodayString();
+  const previewBtcKrw = isToday ? btcKrw : historicalBtcKrw;
+
+  // 원화 금액 계산 (sats 모드일 경우 변환)
+  const krwAmount = currencyMode === 'KRW'
+    ? amountNumber
+    : previewBtcKrw ? satsToKrw(amountNumber, previewBtcKrw) : 0;
+
+  // sats 금액 계산 (원화 모드일 경우 변환)
+  const satsAmount = currencyMode === 'SATS'
+    ? amountNumber
+    : previewBtcKrw ? krwToSats(amountNumber, previewBtcKrw) : 0;
 
   const handleSave = async () => {
     if (!amountNumber) {
@@ -200,8 +219,8 @@ export default function AddExpenseScreen() {
       // 2. 지출 기록 추가
       // - KRW 모드: amount는 원화, currency는 'KRW'
       // - SATS 모드: amount는 sats, currency는 'SATS'
-      // 오늘 날짜면 현재 시세 사용, 과거 날짜면 해당 날짜 종가 자동 fetch
-      const overrideBtcKrw = dateString === getTodayString() ? btcKrw : undefined;
+      // 항상 해당 날짜 종가 fetch (오늘 날짜도 당일 최신 캔들 가격 사용)
+      const overrideBtcKrw = undefined;
       const expenseId = await addExpense({
         date: dateString,
         amount: currencyMode === 'KRW' ? amountNumber : amountNumber,
@@ -357,11 +376,11 @@ export default function AddExpenseScreen() {
                 <Text style={{ fontSize: 14, color: theme.primary }}>{t('common.sats')}</Text>
               )}
             </View>
-            {amountNumber > 0 && btcKrw && (
+            {amountNumber > 0 && previewBtcKrw && (
               <Text style={{ fontSize: 12, color: theme.primary, marginTop: 4 }}>
                 {currencyMode === 'KRW'
-                  ? `= ${formatSats(satsAmount)} (${t('common.currentRate')})`
-                  : `= ${formatKrw(krwAmount)} (${t('common.currentRate')})`
+                  ? `= ${formatSats(satsAmount)} (${isToday ? t('common.currentRate') : t('common.closingRate')})`
+                  : `= ${formatKrw(krwAmount)} (${isToday ? t('common.currentRate') : t('common.closingRate')})`
                 }
               </Text>
             )}

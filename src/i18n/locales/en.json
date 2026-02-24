@@ -50,6 +50,8 @@
     "authRequired": "Authentication required.",
     "networkError": "Cannot fetch BTC price. Please check your network.",
     "currentRate": "Current rate",
+    "closingRate": "Daily closing rate",
+    "recordedRate": "Rate at time of record",
     "lastDay": "last day"
   },
   "tabs": {
