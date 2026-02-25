@@ -44,5 +44,14 @@ supabase/.temp/
 /ios
 /android
 *.apk
+*.aab
 *.ipa
 /build
+
+# internal dev docs
+ADMIN_GUIDE.md
+AUDIT_*.md
+PENDING_CHANGES.md
+SECURITY_ASSESSMENT.md
+SYBA_Admin_Guide*.docx
+claude.md

@@ -122,7 +122,7 @@ app/
 
 ## 라이선스
 
-MIT License
+GNU General Public License v3.0
 
 ## 기여
 
