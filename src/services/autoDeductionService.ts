@@ -204,6 +204,9 @@ export async function processLoanRepayments(): Promise<{
   );
 
   for (const loan of linkedLoans) {
+    let currentPaidMonths = loan.paidMonths;
+    let currentRemainingPrincipal = loan.remainingPrincipal;
+
     try {
       // 상환일 계산 (repaymentDay가 없으면 시작일 기준)
       const repaymentDay = loan.repaymentDay ?? parseInt(loan.startDate.split('-')[2]);
@@ -223,7 +226,7 @@ export async function processLoanRepayments(): Promise<{
         }
 
         // 이미 완납했는지 확인
-        if (loan.paidMonths >= loan.termMonths) {
+        if (currentPaidMonths >= loan.termMonths) {
           console.log(`[AutoDeduction] 대출 ${loan.name}: 이미 완납됨`);
           lastDeduction[loan.id] = yearMonth;
           continue;
@@ -237,7 +240,11 @@ export async function processLoanRepayments(): Promise<{
         );
 
         // 기록탭에 지출 자동 기록 (원화 기준)
-        const recordData = createLoanRepaymentRecordData(loan);
+        const recordData = createLoanRepaymentRecordData({
+          ...loan,
+          paidMonths: currentPaidMonths,
+          remainingPrincipal: currentRemainingPrincipal,
+        });
         if (recordData) {
           const { addExpense } = useLedgerStore.getState();
           await addExpense({
@@ -257,18 +264,18 @@ export async function processLoanRepayments(): Promise<{
         }
 
         // 대출 상환 상태 업데이트
-        const newPaidMonths = loan.paidMonths + 1;
+        const newPaidMonths = currentPaidMonths + 1;
         const isCompleted = newPaidMonths >= loan.termMonths;
 
         // 잔여 원금 계산 (상환 방식에 따라 다름)
-        let newRemainingPrincipal = loan.remainingPrincipal;
+        let newRemainingPrincipal = currentRemainingPrincipal;
         if (loan.repaymentType === 'equalPrincipal') {
           const monthlyPrincipal = loan.principal / loan.termMonths;
-          newRemainingPrincipal = Math.max(0, loan.remainingPrincipal - monthlyPrincipal);
+          newRemainingPrincipal = Math.max(0, currentRemainingPrincipal - monthlyPrincipal);
         } else if (loan.repaymentType === 'equalPrincipalAndInterest') {
-          const monthlyInterest = (loan.remainingPrincipal * loan.interestRate) / 100 / 12;
+          const monthlyInterest = (currentRemainingPrincipal * loan.interestRate) / 100 / 12;
           const monthlyPrincipal = loan.monthlyPayment - monthlyInterest;
-          newRemainingPrincipal = Math.max(0, loan.remainingPrincipal - monthlyPrincipal);
+          newRemainingPrincipal = Math.max(0, currentRemainingPrincipal - monthlyPrincipal);
         }
         if (isCompleted && loan.repaymentType === 'bullet') {
           newRemainingPrincipal = 0;
@@ -283,6 +290,10 @@ export async function processLoanRepayments(): Promise<{
           },
           encryptionKey
         );
+
+        // 로컬 추적 변수 갱신 (다음 반복에서 올바른 값 사용)
+        currentPaidMonths = newPaidMonths;
+        currentRemainingPrincipal = Math.round(newRemainingPrincipal);
 
         // 처리 기록 저장
         lastDeduction[loan.id] = yearMonth;
@@ -340,6 +351,9 @@ export async function processInstallmentPayments(): Promise<{
   const activeInstallments = installments.filter((i) => i.status === 'active');
 
   for (const installment of activeInstallments) {
+    let currentPaidMonths = installment.paidMonths;
+    let currentRemainingAmount = installment.remainingAmount;
+
     try {
       // 해당 카드 찾기
       const card = cards.find((c) => c.id === installment.cardId);
@@ -362,7 +376,7 @@ export async function processInstallmentPayments(): Promise<{
         }
 
         // 이미 완납했는지 확인
-        if (installment.paidMonths >= installment.months) {
+        if (currentPaidMonths >= installment.months) {
           console.log(`[AutoDeduction] 할부 ${installment.storeName}: 이미 완납됨`);
           lastDeduction[installment.id] = yearMonth;
           continue;
@@ -374,9 +388,9 @@ export async function processInstallmentPayments(): Promise<{
         // 여기서는 할부 상태(paidMonths, remainingAmount)만 업데이트
 
         // 할부 상태 업데이트
-        const newPaidMonths = installment.paidMonths + 1;
+        const newPaidMonths = currentPaidMonths + 1;
         const isCompleted = newPaidMonths >= installment.months;
-        const newRemainingAmount = Math.max(0, installment.remainingAmount - installment.monthlyPayment);
+        const newRemainingAmount = Math.max(0, currentRemainingAmount - installment.monthlyPayment);
 
         await updateInstallment(
           installment.id,
@@ -387,6 +401,10 @@ export async function processInstallmentPayments(): Promise<{
           },
           encryptionKey
         );
+
+        // 로컬 추적 변수 갱신 (다음 반복에서 올바른 값 사용)
+        currentPaidMonths = newPaidMonths;
+        currentRemainingAmount = Math.round(newRemainingAmount);
 
         // 처리 기록 저장
         lastDeduction[installment.id] = yearMonth;
