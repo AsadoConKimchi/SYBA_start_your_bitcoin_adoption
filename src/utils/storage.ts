@@ -36,6 +36,7 @@ export const FILE_PATHS = {
   CATEGORIES: DATA_DIR + 'categories.enc',
   SUBSCRIPTION: DATA_DIR + 'subscription.enc',
   SNAPSHOTS: DATA_DIR + 'snapshots.enc',
+  RECURRING: DATA_DIR + 'recurring.enc',
 } as const;
 
 // 디렉토리 초기화
@@ -132,6 +133,7 @@ export async function checkDataIntegrity(
     FILE_PATHS.ASSETS,
     FILE_PATHS.CATEGORIES,
     FILE_PATHS.SNAPSHOTS,
+    FILE_PATHS.RECURRING,
   ];
 
   for (const path of filesToCheck) {
@@ -192,6 +194,13 @@ export async function createBackup(
     throw new Error('Encryption salt not found');
   }
 
+  // 자동차감 기록 수집
+  const [lastCardDeduction, lastLoanDeduction, lastInstallmentDeduction] = await Promise.all([
+    AsyncStorage.getItem('lastCardDeduction'),
+    AsyncStorage.getItem('lastLoanDeduction'),
+    AsyncStorage.getItem('lastInstallmentDeduction'),
+  ]);
+
   // 모든 데이터 수집
   const backupData = {
     ledger: await loadEncrypted(FILE_PATHS.LEDGER, encryptionKey, []),
@@ -204,6 +213,12 @@ export async function createBackup(
       income: [],
     }),
     snapshots: await loadEncrypted(FILE_PATHS.SNAPSHOTS, encryptionKey, []),
+    recurring: await loadEncrypted(FILE_PATHS.RECURRING, encryptionKey, []),
+    deductionRecords: {
+      lastCardDeduction: lastCardDeduction ? JSON.parse(lastCardDeduction) : null,
+      lastLoanDeduction: lastLoanDeduction ? JSON.parse(lastLoanDeduction) : null,
+      lastInstallmentDeduction: lastInstallmentDeduction ? JSON.parse(lastInstallmentDeduction) : null,
+    },
     exportedAt: new Date().toISOString(),
     version: '1.0.0',
     salt,
@@ -226,6 +241,12 @@ interface BackupData {
   assets: unknown[];
   categories: { expense: unknown[]; income: unknown[] };
   snapshots?: unknown[]; // 선택적 (기존 백업 호환)
+  recurring?: unknown[]; // 선택적 (기존 백업 호환)
+  deductionRecords?: {
+    lastCardDeduction: Record<string, string> | null;
+    lastLoanDeduction: Record<string, string> | null;
+    lastInstallmentDeduction: Record<string, string> | null;
+  };
   exportedAt: string;
   version: string;
   salt?: string; // v1.0.0+ 백업에 포함된 솔트
@@ -235,7 +256,7 @@ interface BackupData {
 export async function restoreBackup(
   backupFilePath: string,
   encryptionKey: string
-): Promise<{ salt?: string }> {
+): Promise<{ salt?: string; hasDeductionRecords: boolean }> {
   console.log('[DEBUG] restoreBackup 시작, path:', backupFilePath);
 
   // 백업 파일 읽기
@@ -272,11 +293,23 @@ export async function restoreBackup(
     saveEncrypted(FILE_PATHS.CATEGORIES, backupData.categories, encryptionKey),
     // 스냅샷이 있으면 복원 (기존 백업 호환)
     ...(backupData.snapshots ? [saveEncrypted(FILE_PATHS.SNAPSHOTS, backupData.snapshots, encryptionKey)] : []),
+    // 고정비용이 있으면 복원 (기존 백업 호환)
+    ...(backupData.recurring ? [saveEncrypted(FILE_PATHS.RECURRING, backupData.recurring, encryptionKey)] : []),
   ]);
+
+  // 자동차감 기록 복원
+  if (backupData.deductionRecords) {
+    const { lastCardDeduction, lastLoanDeduction, lastInstallmentDeduction } = backupData.deductionRecords;
+    const pairs: [string, string][] = [];
+    if (lastCardDeduction) pairs.push(['lastCardDeduction', JSON.stringify(lastCardDeduction)]);
+    if (lastLoanDeduction) pairs.push(['lastLoanDeduction', JSON.stringify(lastLoanDeduction)]);
+    if (lastInstallmentDeduction) pairs.push(['lastInstallmentDeduction', JSON.stringify(lastInstallmentDeduction)]);
+    if (pairs.length > 0) await AsyncStorage.multiSet(pairs);
+  }
 
   console.log('[DEBUG] 모든 데이터 복원 완료');
 
-  return { salt: embeddedSalt ?? backupData.salt };
+  return { salt: embeddedSalt ?? backupData.salt, hasDeductionRecords: !!backupData.deductionRecords };
 }
 
 // 모든 데이터를 새 키로 재암호화 (비밀번호 변경 시 사용)
@@ -296,6 +329,7 @@ export async function reEncryptAllData(
     { path: FILE_PATHS.CATEGORIES, default: { expense: [], income: [] } },
     { path: FILE_PATHS.SUBSCRIPTION, default: null },
     { path: FILE_PATHS.SNAPSHOTS, default: [] },
+    { path: FILE_PATHS.RECURRING, default: [] },
   ];
 
   for (const { path, default: defaultValue } of filePaths) {

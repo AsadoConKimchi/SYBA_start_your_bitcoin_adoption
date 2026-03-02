@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Tabs } from 'expo-router';
-import { Alert, Platform } from 'react-native';
+import { Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -22,7 +22,12 @@ import { useCategoryStore } from '../../src/stores/categoryStore';
 // } from '../../src/services/debtAutoRecord';
 // import { scheduleMonthlySummaryNotification } from '../../src/services/notifications';
 import { processAllAutoDeductions } from '../../src/services/autoDeductionService';
+import { useRecurringStore } from '../../src/stores/recurringStore';
 import { checkDataIntegrity, deleteCorruptedFiles, FILE_PATHS } from '../../src/utils/storage';
+
+// 모듈 레벨 잠금 — 컴포넌트 언마운트/리마운트에도 유지
+let autoDeductionLock = false;
+let autoDeductionDone = false;
 
 export default function TabsLayout() {
   const { isAuthenticated, getEncryptionKey } = useAuthStore();
@@ -35,12 +40,12 @@ export default function TabsLayout() {
   const { loadCachedPrices, fetchPrices } = usePriceStore();
   const { loadSnapshots, checkAndSaveMonthlySnapshot } = useSnapshotStore();
   const { loadCategories } = useCategoryStore();
+  const { loadRecurrings, executeOverdueRecurrings } = useRecurringStore();
   const { initialize: initSubscription } = useSubscriptionStore();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const { theme } = useTheme();
 
-  const autoDeductionProcessed = useRef(false);
   const snapshotChecked = useRef(false);
   const integrityChecked = useRef(false);
 
@@ -89,19 +94,38 @@ export default function TabsLayout() {
           loadAssets(encryptionKey),
           loadSnapshots(encryptionKey),
           loadCategories(encryptionKey),
+          loadRecurrings(encryptionKey),
           initSubscription(),
         ]);
 
-        if (!autoDeductionProcessed.current) {
-          autoDeductionProcessed.current = true;
+        if (!autoDeductionDone && !autoDeductionLock) {
+          autoDeductionLock = true;
+
           try {
             const result = await processAllAutoDeductions();
             if (result.cards.processed > 0 || result.loans.processed > 0) {
               console.log('[TabsLayout] Auto deduction done:', result);
             }
+
+            const allWarnings = [...result.cards.warnings, ...result.loans.warnings];
+            if (allWarnings.length > 0) {
+              const message = allWarnings.map(w => `${w.assetName}: ${w.requested.toLocaleString()} → ${w.actual.toLocaleString()}`).join('\n');
+              Alert.alert(t('autoDeduction.insufficientBalanceTitle'), t('autoDeduction.insufficientBalanceMessage') + '\n\n' + message);
+            }
           } catch (error) {
             console.error('[TabsLayout] Auto deduction error:', error);
           }
+
+          // 고정비용 자동 실행
+          try {
+            const recurringResult = await executeOverdueRecurrings();
+            if (recurringResult.executed.length > 0) {
+              console.log('[TabsLayout] Recurring expenses executed:', recurringResult.executed.length);
+            }
+          } catch (error) {
+            console.error('[TabsLayout] Recurring expense error:', error);
+          }
+          autoDeductionDone = true;
         }
 
         if (!snapshotChecked.current) {

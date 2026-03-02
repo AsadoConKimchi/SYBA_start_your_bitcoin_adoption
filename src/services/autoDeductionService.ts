@@ -87,8 +87,9 @@ export async function processCardPayments(): Promise<{
   processed: number;
   skipped: number;
   errors: string[];
+  warnings: Array<{ assetName: string; requested: number; actual: number }>;
 }> {
-  const result = { processed: 0, skipped: 0, errors: [] as string[] };
+  const result = { processed: 0, skipped: 0, errors: [] as string[], warnings: [] as Array<{ assetName: string; requested: number; actual: number }> };
 
   const encryptionKey = useAuthStore.getState().getEncryptionKey();
   if (!encryptionKey) {
@@ -142,14 +143,21 @@ export async function processCardPayments(): Promise<{
         }
 
         // 자산에서 차감
-        await adjustAssetBalance(
+        const balanceResult = await adjustAssetBalance(
           card.linkedAssetId,
           -payment.totalPayment,
           encryptionKey
         );
+        if (balanceResult.clamped) {
+          result.warnings.push({ assetName: balanceResult.assetName, requested: balanceResult.requested, actual: balanceResult.actual });
+        }
 
-        // 처리 기록 저장
+        // 처리 기록 즉시 저장 (Race Condition 방지)
         lastDeduction[card.id] = yearMonth;
+        await AsyncStorage.setItem(
+          STORAGE_KEYS.LAST_CARD_DEDUCTION,
+          JSON.stringify(lastDeduction)
+        );
         result.processed++;
 
         console.log(
@@ -163,12 +171,6 @@ export async function processCardPayments(): Promise<{
     }
   }
 
-  // 마지막 차감 기록 저장
-  await AsyncStorage.setItem(
-    STORAGE_KEYS.LAST_CARD_DEDUCTION,
-    JSON.stringify(lastDeduction)
-  );
-
   return result;
 }
 
@@ -179,8 +181,9 @@ export async function processLoanRepayments(): Promise<{
   processed: number;
   skipped: number;
   errors: string[];
+  warnings: Array<{ assetName: string; requested: number; actual: number }>;
 }> {
-  const result = { processed: 0, skipped: 0, errors: [] as string[] };
+  const result = { processed: 0, skipped: 0, errors: [] as string[], warnings: [] as Array<{ assetName: string; requested: number; actual: number }> };
 
   const encryptionKey = useAuthStore.getState().getEncryptionKey();
   if (!encryptionKey) {
@@ -204,6 +207,9 @@ export async function processLoanRepayments(): Promise<{
   );
 
   for (const loan of linkedLoans) {
+    let currentPaidMonths = loan.paidMonths;
+    let currentRemainingPrincipal = loan.remainingPrincipal;
+
     try {
       // 상환일 계산 (repaymentDay가 없으면 시작일 기준)
       const repaymentDay = loan.repaymentDay ?? parseInt(loan.startDate.split('-')[2]);
@@ -223,21 +229,28 @@ export async function processLoanRepayments(): Promise<{
         }
 
         // 이미 완납했는지 확인
-        if (loan.paidMonths >= loan.termMonths) {
+        if (currentPaidMonths >= loan.termMonths) {
           console.log(`[AutoDeduction] 대출 ${loan.name}: 이미 완납됨`);
           lastDeduction[loan.id] = yearMonth;
           continue;
         }
 
         // 자산에서 차감
-        await adjustAssetBalance(
+        const balanceResult = await adjustAssetBalance(
           loan.linkedAssetId,
           -loan.monthlyPayment,
           encryptionKey
         );
+        if (balanceResult.clamped) {
+          result.warnings.push({ assetName: balanceResult.assetName, requested: balanceResult.requested, actual: balanceResult.actual });
+        }
 
         // 기록탭에 지출 자동 기록 (원화 기준)
-        const recordData = createLoanRepaymentRecordData(loan);
+        const recordData = createLoanRepaymentRecordData({
+          ...loan,
+          paidMonths: currentPaidMonths,
+          remainingPrincipal: currentRemainingPrincipal,
+        });
         if (recordData) {
           const { addExpense } = useLedgerStore.getState();
           await addExpense({
@@ -257,18 +270,18 @@ export async function processLoanRepayments(): Promise<{
         }
 
         // 대출 상환 상태 업데이트
-        const newPaidMonths = loan.paidMonths + 1;
+        const newPaidMonths = currentPaidMonths + 1;
         const isCompleted = newPaidMonths >= loan.termMonths;
 
         // 잔여 원금 계산 (상환 방식에 따라 다름)
-        let newRemainingPrincipal = loan.remainingPrincipal;
+        let newRemainingPrincipal = currentRemainingPrincipal;
         if (loan.repaymentType === 'equalPrincipal') {
           const monthlyPrincipal = loan.principal / loan.termMonths;
-          newRemainingPrincipal = Math.max(0, loan.remainingPrincipal - monthlyPrincipal);
+          newRemainingPrincipal = Math.max(0, currentRemainingPrincipal - monthlyPrincipal);
         } else if (loan.repaymentType === 'equalPrincipalAndInterest') {
-          const monthlyInterest = (loan.remainingPrincipal * loan.interestRate) / 100 / 12;
+          const monthlyInterest = (currentRemainingPrincipal * loan.interestRate) / 100 / 12;
           const monthlyPrincipal = loan.monthlyPayment - monthlyInterest;
-          newRemainingPrincipal = Math.max(0, loan.remainingPrincipal - monthlyPrincipal);
+          newRemainingPrincipal = Math.max(0, currentRemainingPrincipal - monthlyPrincipal);
         }
         if (isCompleted && loan.repaymentType === 'bullet') {
           newRemainingPrincipal = 0;
@@ -284,8 +297,16 @@ export async function processLoanRepayments(): Promise<{
           encryptionKey
         );
 
-        // 처리 기록 저장
+        // 로컬 추적 변수 갱신 (다음 반복에서 올바른 값 사용)
+        currentPaidMonths = newPaidMonths;
+        currentRemainingPrincipal = Math.round(newRemainingPrincipal);
+
+        // 처리 기록 즉시 저장 (Race Condition 방지)
         lastDeduction[loan.id] = yearMonth;
+        await AsyncStorage.setItem(
+          STORAGE_KEYS.LAST_LOAN_DEDUCTION,
+          JSON.stringify(lastDeduction)
+        );
         result.processed++;
 
         console.log(
@@ -298,12 +319,6 @@ export async function processLoanRepayments(): Promise<{
       console.error('[AutoDeduction]', errorMsg);
     }
   }
-
-  // 마지막 차감 기록 저장
-  await AsyncStorage.setItem(
-    STORAGE_KEYS.LAST_LOAN_DEDUCTION,
-    JSON.stringify(lastDeduction)
-  );
 
   return result;
 }
@@ -340,6 +355,9 @@ export async function processInstallmentPayments(): Promise<{
   const activeInstallments = installments.filter((i) => i.status === 'active');
 
   for (const installment of activeInstallments) {
+    let currentPaidMonths = installment.paidMonths;
+    let currentRemainingAmount = installment.remainingAmount;
+
     try {
       // 해당 카드 찾기
       const card = cards.find((c) => c.id === installment.cardId);
@@ -362,7 +380,7 @@ export async function processInstallmentPayments(): Promise<{
         }
 
         // 이미 완납했는지 확인
-        if (installment.paidMonths >= installment.months) {
+        if (currentPaidMonths >= installment.months) {
           console.log(`[AutoDeduction] 할부 ${installment.storeName}: 이미 완납됨`);
           lastDeduction[installment.id] = yearMonth;
           continue;
@@ -374,9 +392,9 @@ export async function processInstallmentPayments(): Promise<{
         // 여기서는 할부 상태(paidMonths, remainingAmount)만 업데이트
 
         // 할부 상태 업데이트
-        const newPaidMonths = installment.paidMonths + 1;
+        const newPaidMonths = currentPaidMonths + 1;
         const isCompleted = newPaidMonths >= installment.months;
-        const newRemainingAmount = Math.max(0, installment.remainingAmount - installment.monthlyPayment);
+        const newRemainingAmount = Math.max(0, currentRemainingAmount - installment.monthlyPayment);
 
         await updateInstallment(
           installment.id,
@@ -388,8 +406,16 @@ export async function processInstallmentPayments(): Promise<{
           encryptionKey
         );
 
-        // 처리 기록 저장
+        // 로컬 추적 변수 갱신 (다음 반복에서 올바른 값 사용)
+        currentPaidMonths = newPaidMonths;
+        currentRemainingAmount = Math.round(newRemainingAmount);
+
+        // 처리 기록 즉시 저장 (Race Condition 방지)
         lastDeduction[installment.id] = yearMonth;
+        await AsyncStorage.setItem(
+          STORAGE_KEYS.LAST_INSTALLMENT_DEDUCTION,
+          JSON.stringify(lastDeduction)
+        );
         result.processed++;
 
         console.log(
@@ -403,21 +429,16 @@ export async function processInstallmentPayments(): Promise<{
     }
   }
 
-  // 마지막 처리 기록 저장
-  await AsyncStorage.setItem(
-    STORAGE_KEYS.LAST_INSTALLMENT_DEDUCTION,
-    JSON.stringify(lastDeduction)
-  );
-
   return result;
 }
+
 
 /**
  * 모든 자동 차감 처리 (앱 시작 시 호출)
  */
 export async function processAllAutoDeductions(): Promise<{
-  cards: { processed: number; skipped: number; errors: string[] };
-  loans: { processed: number; skipped: number; errors: string[] };
+  cards: { processed: number; skipped: number; errors: string[]; warnings: Array<{ assetName: string; requested: number; actual: number }> };
+  loans: { processed: number; skipped: number; errors: string[]; warnings: Array<{ assetName: string; requested: number; actual: number }> };
   installments: { processed: number; skipped: number; errors: string[] };
 }> {
   console.log('[AutoDeduction] 자동 차감 처리 시작...');

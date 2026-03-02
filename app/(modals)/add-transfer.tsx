@@ -123,7 +123,7 @@ export default function AddTransferScreen() {
   const selectedCard = prepaidCards.find(c => c.id === toCardId);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={{ flex: 1, backgroundColor: theme.background }}>
       {/* 헤더 */}
       <View
         style={{

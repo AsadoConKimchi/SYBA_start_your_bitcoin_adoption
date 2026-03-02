@@ -10,6 +10,50 @@ import { fetchHistoricalBtcPrice } from '../services/api/upbit';
 import { krwToSats, satsToKrw } from '../utils/calculations';
 import { getTodayString } from '../utils/formatters';
 
+/**
+ * 대출 원리금 자동 기록의 중복 제거 (순수 함수)
+ * 동일한 (date + memo) 조합이 2건 이상이면 첫 번째만 남기고 나머지 제거.
+ * loadRecords()에서 Zustand 세팅 전에 호출 → UI에 중복 금액이 절대 표시되지 않음.
+ */
+function deduplicateLoanRecords(
+  records: LedgerRecord[]
+): { deduped: LedgerRecord[]; removedCount: number } {
+  const repaymentPattern = /\(\d+\/\d+/;
+  const groups = new Map<string, LedgerRecord[]>();
+
+  for (const r of records) {
+    if (
+      r.type === 'expense' &&
+      r.category === 'finance' &&
+      r.paymentMethod === 'bank' &&
+      r.memo &&
+      repaymentPattern.test(r.memo)
+    ) {
+      const key = `${r.date}|${r.memo}`;
+      const group = groups.get(key) || [];
+      group.push(r);
+      groups.set(key, group);
+    }
+  }
+
+  const idsToRemove = new Set<string>();
+  for (const [key, group] of groups) {
+    if (group.length <= 1) continue;
+    group.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+    for (let i = 1; i < group.length; i++) {
+      idsToRemove.add(group[i].id);
+    }
+  }
+
+  if (idsToRemove.size === 0) return { deduped: records, removedCount: 0 };
+
+  console.log(`[Dedup] 대출 원리금 중복 기록 ${idsToRemove.size}건 제거`);
+  return {
+    deduped: records.filter((r) => !idsToRemove.has(r.id)),
+    removedCount: idsToRemove.size,
+  };
+}
+
 interface LedgerState {
   records: LedgerRecord[];
   isLoading: boolean;
@@ -74,12 +118,20 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
     set({ isLoading: true });
 
     try {
-      const records = await loadEncrypted<LedgerRecord[]>(
+      const rawRecords = await loadEncrypted<LedgerRecord[]>(
         FILE_PATHS.LEDGER,
         encryptionKey,
         []
       );
-      set({ records, isLoading: false, error: null });
+
+      // 대출 원리금 중복 제거 (Zustand 세팅 전에 처리 → UI에 중복 표시 방지)
+      const { deduped, removedCount } = deduplicateLoanRecords(rawRecords);
+      if (removedCount > 0) {
+        // 정리된 데이터를 디스크에도 반영
+        await saveEncrypted(FILE_PATHS.LEDGER, deduped, encryptionKey);
+      }
+
+      set({ records: deduped, isLoading: false, error: null });
     } catch (error) {
       set({ error: i18n.t('errors.dataLoadFailed'), isLoading: false });
     }
@@ -204,6 +256,40 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
           set(state => ({ records: state.records.filter(r => r.id !== id) }));
           await get().saveRecords();
           throw assetError;
+        }
+      }
+
+      // 체크카드 연결계좌 자동 차감
+      if (
+        expenseData.paymentMethod === 'card' &&
+        expenseData.cardId &&
+        encryptionKey
+      ) {
+        const card = useCardStore.getState().getCardById(expenseData.cardId);
+        if (card?.type === 'debit' && card.linkedAccountId) {
+          const deductAmount = expenseData.currency === 'SATS'
+            ? (satsEquivalent ? satsToKrw(expenseData.amount, btcKrwAtTime!) : expenseData.amount)
+            : expenseData.amount;
+          try {
+            await useAssetStore.getState().adjustAssetBalance(
+              card.linkedAccountId,
+              -deductAmount,
+              encryptionKey
+            );
+            // linkedAssetId를 기록에 반영하여 수정/삭제 시 역복원 가능하게
+            set(state => ({
+              records: state.records.map(r =>
+                r.id === id ? { ...r, linkedAssetId: card.linkedAccountId } as LedgerRecord : r
+              ),
+            }));
+            await get().saveRecords();
+            if (__DEV__) { console.log('[DEBUG] 체크카드 연결계좌 차감 완료:', card.linkedAccountId); }
+          } catch (assetError) {
+            if (__DEV__) { console.log('[DEBUG] 체크카드 연결계좌 차감 실패, 기록 롤백:', assetError); }
+            set(state => ({ records: state.records.filter(r => r.id !== id) }));
+            await get().saveRecords();
+            throw assetError;
+          }
         }
       }
 
@@ -407,12 +493,13 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
       if (record.type === 'transfer') return false;
       if (!record.linkedAssetId) return false;
       if (record.type === 'income') return true;
-      // expense는 bank/lightning/onchain만 자산 연동
+      // expense는 bank/lightning/onchain + 체크카드(card with linkedAssetId) 자산 연동
       return (
         record.type === 'expense' &&
         (record.paymentMethod === 'bank' ||
           record.paymentMethod === 'lightning' ||
-          record.paymentMethod === 'onchain')
+          record.paymentMethod === 'onchain' ||
+          record.paymentMethod === 'card')
       );
     };
 
@@ -486,11 +573,12 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
       let restoreAmount = 0;
 
       if (record.type === 'expense') {
-        // expense는 bank/lightning/onchain만 자산 연동되었음
+        // expense는 bank/lightning/onchain + 체크카드(linkedAssetId 있는 card) 자산 연동
         if (
           record.paymentMethod === 'bank' ||
           record.paymentMethod === 'lightning' ||
-          record.paymentMethod === 'onchain'
+          record.paymentMethod === 'onchain' ||
+          record.paymentMethod === 'card'
         ) {
           shouldRestore = true;
           // 원래 차감된 금액 복원 (addExpense 로직 역순)

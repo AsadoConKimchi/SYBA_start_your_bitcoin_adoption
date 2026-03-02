@@ -14,6 +14,7 @@ import {
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import * as DocumentPicker from 'expo-document-picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useAuthStore } from '../../src/stores/authStore';
 import { restoreBackup } from '../../src/utils/storage';
@@ -21,6 +22,7 @@ import {
   generateSalt,
   hashPassword,
   deriveKey,
+  deriveKeySync,
   saveSecure,
   SECURE_KEYS,
 } from '../../src/utils/encryption';
@@ -129,8 +131,6 @@ export default function SetupScreen() {
         salt = fileContent.substring('SYBA_BACKUP:'.length, newlineIdx);
       } else {
         // Old format without salt header - can't restore cross-device
-        // Old backups used deriveKeySync(password, salt) where salt was device-specific
-        // from SecureStore. Without the original salt, decryption is impossible.
         Alert.alert(
           t('common.error'),
           '이 백업 파일은 이전 버전 형식입니다. 원래 기기에서 새 백업을 생성해주세요.'
@@ -138,11 +138,24 @@ export default function SetupScreen() {
         return;
       }
 
-      // Derive encryption key using backup's original salt
-      const encryptionKey = await deriveKey(backupPassword, salt);
-
-      // Restore backup data (re-encrypts all files with the same key)
-      await restoreBackup(fileUri, encryptionKey);
+      // Derive encryption key — try new async method first, fallback to old sync method
+      let encryptionKey: string;
+      let hasDeductionRecords = false;
+      try {
+        encryptionKey = await deriveKey(backupPassword, salt);
+        const restoreResult = await restoreBackup(fileUri, encryptionKey);
+        hasDeductionRecords = restoreResult.hasDeductionRecords;
+      } catch {
+        // Fallback: pre-v0.1.10 backups used CryptoJS.PBKDF2 (sync) which produces different keys
+        const fallbackKey = deriveKeySync(backupPassword, salt);
+        const restoreResult = await restoreBackup(fileUri, fallbackKey);
+        hasDeductionRecords = restoreResult.hasDeductionRecords;
+        // Fallback succeeded — re-derive with new method for future consistency
+        encryptionKey = await deriveKey(backupPassword, salt);
+        // Re-encrypt all restored files with the new key
+        const { reEncryptAllData } = await import('../../src/utils/storage');
+        await reEncryptAllData(fallbackKey, encryptionKey);
+      }
 
       // Save credentials to SecureStore
       const hash = hashPassword(backupPassword, salt);
@@ -151,6 +164,19 @@ export default function SetupScreen() {
         saveSecure(SECURE_KEYS.PASSWORD_HASH, hash),
         saveSecure(SECURE_KEYS.ENCRYPTION_KEY, encryptionKey),
       ]);
+
+      // 자동차감 기록 초기화 — 백업에 차감 기록이 포함되지 않은 경우만
+      // 백업의 자산 잔액에 이미 반영되어 있으므로 이 기록이 없으면 앱 시작 시 이중 차감 발생
+      if (!hasDeductionRecords) {
+        await AsyncStorage.multiRemove([
+          'lastCardDeduction',
+          'lastLoanDeduction',
+          'lastInstallmentDeduction',
+        ]);
+      }
+
+      // Update authStore state so data loads immediately
+      useAuthStore.getState().setAuthenticatedFromRestore(encryptionKey);
 
       Alert.alert('', t('auth.restoreSuccess'), [
         { text: 'OK', onPress: () => router.replace('/(tabs)') },
