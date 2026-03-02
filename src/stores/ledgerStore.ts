@@ -39,7 +39,6 @@ function deduplicateLoanRecords(
   const idsToRemove = new Set<string>();
   for (const [key, group] of groups) {
     if (group.length <= 1) continue;
-    console.log(`[Dedup:TRACE] 중복 발견 — key:"${key}", count:${group.length}, ids:[${group.map(r => r.id.slice(0,8)).join(',')}], createdAts:[${group.map(r => r.createdAt).join(',')}]`);
     group.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
     for (let i = 1; i < group.length; i++) {
       idsToRemove.add(group[i].id);

@@ -206,8 +206,6 @@ export async function processLoanRepayments(): Promise<{
       !!loan.linkedAssetId && loan.status === 'active'
   );
 
-  console.log(`[AutoDeduction:TRACE] processLoanRepayments 시작 — linkedLoans: ${linkedLoans.length}건, lastDeduction:`, JSON.stringify(lastDeduction));
-
   for (const loan of linkedLoans) {
     let currentPaidMonths = loan.paidMonths;
     let currentRemainingPrincipal = loan.remainingPrincipal;
@@ -217,8 +215,6 @@ export async function processLoanRepayments(): Promise<{
       const repaymentDay = loan.repaymentDay ?? parseInt(loan.startDate.split('-')[2]);
 
       const monthsToProcess = getMonthsToProcess(repaymentDay, lastDeduction[loan.id]);
-
-      console.log(`[AutoDeduction:TRACE] 대출 "${loan.name}" (id:${loan.id.slice(0,8)}) — paidMonths:${loan.paidMonths}, repaymentDay:${repaymentDay}, lastDeduction:"${lastDeduction[loan.id] ?? 'none'}", monthsToProcess:`, JSON.stringify(monthsToProcess));
 
       if (monthsToProcess.length === 0) {
         continue;
@@ -256,7 +252,6 @@ export async function processLoanRepayments(): Promise<{
           remainingPrincipal: currentRemainingPrincipal,
         });
         if (recordData) {
-          console.log(`[AutoDeduction:TRACE] 대출 "${loan.name}" — 기록 생성: date="${recordData.date}", memo="${recordData.memo?.slice(0, 40)}", currentPaidMonths:${currentPaidMonths}, yearMonth:${yearMonth}`);
           const { addExpense } = useLedgerStore.getState();
           await addExpense({
             date: recordData.date,

@@ -98,10 +98,8 @@ export default function TabsLayout() {
           initSubscription(),
         ]);
 
-        console.log(`[TabsLayout:TRACE] lock 확인 — autoDeductionDone:${autoDeductionDone}, autoDeductionLock:${autoDeductionLock}`);
         if (!autoDeductionDone && !autoDeductionLock) {
           autoDeductionLock = true;
-          console.log('[TabsLayout:TRACE] processAllAutoDeductions 시작');
 
           try {
             const result = await processAllAutoDeductions();
