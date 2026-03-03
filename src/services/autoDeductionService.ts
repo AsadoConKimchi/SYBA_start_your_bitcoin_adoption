@@ -2,6 +2,11 @@
  * 자동 자산 차감 서비스
  * - 카드 결제일에 연결 계좌에서 자동 차감
  * - 대출 상환일에 연결 계좌에서 자동 차감 + 기록탭에 지출 기록
+ *
+ * 핵심 원칙:
+ * - 대출/할부: paidMonths + startDate 기반으로 다음 납부일 판단 (AsyncStorage 의존 제거)
+ * - 카드 결제: 이번 달만 처리 (이전 달 소급 처리 금지)
+ * - AsyncStorage는 이중 실행 방지용 보조 안전장치로만 사용
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -13,7 +18,7 @@ import { useAuthStore } from '../stores/authStore';
 import { calculateAllCardsPayment } from '../utils/cardPaymentCalculator';
 import { createLoanRepaymentRecordData } from './debtAutoRecord';
 import { Card } from '../types/card';
-import { Loan } from '../types/debt';
+import { Loan, Installment } from '../types/debt';
 import i18n from '../i18n';
 
 const STORAGE_KEYS = {
@@ -22,66 +27,58 @@ const STORAGE_KEYS = {
   LAST_INSTALLMENT_DEDUCTION: 'lastInstallmentDeduction', // { installmentId: 'YYYY-MM' }
 };
 
+// ─── 유틸리티 함수 ────────────────────────────────────────────
+
 /**
- * 오늘 날짜 정보 가져오기
+ * 오늘 날짜 (시간 제거, 날짜 비교용)
  */
-function getTodayInfo() {
-  const today = new Date();
-  return {
-    year: today.getFullYear(),
-    month: today.getMonth() + 1,
-    day: today.getDate(),
-    yearMonth: `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`,
-  };
+function getToday(): Date {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
 }
 
 /**
- * 처리해야 할 월(들)을 반환.
- * paymentDay가 오늘 이전(또는 오늘)이고 아직 처리하지 않은 달을 반환한다.
- * 이전 달도 누락됐으면 이전 달도 포함.
- * 각 항목: { yearMonth: 'YYYY-MM', dateStr: 'YYYY-MM-DD' }
+ * Date → 'YYYY-MM' 형식
  */
-function getMonthsToProcess(
-  paymentDay: number,
-  lastProcessedYearMonth: string | undefined
-): { yearMonth: string; dateStr: string }[] {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = today.getMonth() + 1; // 1-based
-  const day = today.getDate();
-
-  const results: { yearMonth: string; dateStr: string }[] = [];
-
-  // 이전 달 체크
-  const prevDate = new Date(year, month - 2, 1); // month-2 because Date month is 0-based
-  const prevYear = prevDate.getFullYear();
-  const prevMonth = prevDate.getMonth() + 1;
-  const prevYearMonth = `${prevYear}-${String(prevMonth).padStart(2, '0')}`;
-  // 이전 달의 paymentDay가 유효한 날짜인지 확인 (예: 31일이 없는 달)
-  const prevLastDay = new Date(prevYear, prevMonth, 0).getDate();
-  const prevPayDay = Math.min(paymentDay, prevLastDay);
-  const prevDateStr = `${prevYear}-${String(prevMonth).padStart(2, '0')}-${String(prevPayDay).padStart(2, '0')}`;
-
-  if (lastProcessedYearMonth !== prevYearMonth) {
-    // 이전 달의 결제일은 이미 지났으므로 (현재 달이 왔으니) 무조건 처리 대상
-    results.push({ yearMonth: prevYearMonth, dateStr: prevDateStr });
-  }
-
-  // 이번 달 체크
-  const currentYearMonth = `${year}-${String(month).padStart(2, '0')}`;
-  const currentLastDay = new Date(year, month, 0).getDate();
-  const currentPayDay = Math.min(paymentDay, currentLastDay);
-
-  if (day >= currentPayDay && lastProcessedYearMonth !== currentYearMonth) {
-    const currentDateStr = `${year}-${String(month).padStart(2, '0')}-${String(currentPayDay).padStart(2, '0')}`;
-    results.push({ yearMonth: currentYearMonth, dateStr: currentDateStr });
-  }
-
-  return results;
+function toYearMonth(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 }
+
+/**
+ * paidMonths 기반으로 다음 납부일 계산
+ *
+ * 스케줄 규칙 (generateRepaymentSchedule과 동일):
+ *   1회차 = startDate + 1개월
+ *   N회차 = startDate + N개월
+ * 따라서 다음 납부 = startDate + (paidMonths + 1)개월의 paymentDay일
+ *
+ * @param startDate 시작일 (YYYY-MM-DD)
+ * @param paidMonths 이미 납부한 회차 수
+ * @param paymentDay 납부일 (1~31, 해당 월의 마지막 날 초과 시 자동 조정)
+ */
+function getNextPaymentDate(startDate: string, paidMonths: number, paymentDay: number): Date {
+  const start = new Date(startDate);
+  const nextPaymentNumber = paidMonths + 1; // 다음 회차 (1-based)
+
+  // startDate + nextPaymentNumber 개월 후의 월
+  const targetYear = start.getFullYear();
+  const targetMonth = start.getMonth() + nextPaymentNumber; // JS Date가 자동으로 연도 넘김 처리
+  const firstOfMonth = new Date(targetYear, targetMonth, 1);
+
+  // 해당 월의 마지막 날 확인 (예: 2월은 28/29일)
+  const lastDayOfMonth = new Date(firstOfMonth.getFullYear(), firstOfMonth.getMonth() + 1, 0).getDate();
+  const day = Math.min(paymentDay, lastDayOfMonth);
+
+  return new Date(firstOfMonth.getFullYear(), firstOfMonth.getMonth(), day);
+}
+
+// ─── 카드 결제일 자동 차감 ──────────────────────────────────────
 
 /**
  * 카드 결제일 자동 차감 처리
+ *
+ * 카드는 paidMonths 개념이 없으므로 AsyncStorage 기반 유지.
+ * 단, 이전 달 소급 처리는 제거 — 이번 달만 처리.
  */
 export async function processCardPayments(): Promise<{
   processed: number;
@@ -114,56 +111,62 @@ export async function processCardPayments(): Promise<{
       !!card.linkedAssetId && !!card.paymentDay
   );
 
-  // 각 카드의 결제 예정액 계산
+  const today = getToday();
+  const todayDay = today.getDate();
+  const currentYearMonth = toYearMonth(today);
+
+  // 각 카드의 결제 예정액 계산 (오늘 기준)
   const cardPayments = calculateAllCardsPayment(cards, records, installments);
 
   for (const card of linkedCards) {
     try {
-      const monthsToProcess = getMonthsToProcess(card.paymentDay, lastDeduction[card.id]);
-
-      if (monthsToProcess.length === 0) {
+      // ① 이번 달 결제일이 아직 안 왔으면 스킵
+      const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+      const effectivePayDay = Math.min(card.paymentDay, lastDay);
+      if (todayDay < effectivePayDay) {
         continue;
       }
 
-      for (const { yearMonth } of monthsToProcess) {
-        // 이미 처리 확인 (이전 반복에서 갱신됐을 수 있음)
-        if (lastDeduction[card.id] === yearMonth) {
-          result.skipped++;
-          console.log(`[AutoDeduction] 카드 ${card.name}: ${yearMonth} 이미 처리됨`);
-          continue;
-        }
-
-        // 결제 예정액 찾기
-        const paymentEntry = cardPayments.find((p) => p.current.cardId === card.id);
-        const payment = paymentEntry?.current;
-        if (!payment || payment.totalPayment <= 0) {
-          console.log(`[AutoDeduction] 카드 ${card.name}: 결제 예정액 없음`);
-          lastDeduction[card.id] = yearMonth;
-          continue;
-        }
-
-        // 자산에서 차감
-        const balanceResult = await adjustAssetBalance(
-          card.linkedAssetId,
-          -payment.totalPayment,
-          encryptionKey
-        );
-        if (balanceResult.clamped) {
-          result.warnings.push({ assetName: balanceResult.assetName, requested: balanceResult.requested, actual: balanceResult.actual });
-        }
-
-        // 처리 기록 즉시 저장 (Race Condition 방지)
-        lastDeduction[card.id] = yearMonth;
-        await AsyncStorage.setItem(
-          STORAGE_KEYS.LAST_CARD_DEDUCTION,
-          JSON.stringify(lastDeduction)
-        );
-        result.processed++;
-
-        console.log(
-          `[AutoDeduction] 카드 ${card.name}: ${payment.totalPayment.toLocaleString()}원 차감 완료 (${yearMonth})`
-        );
+      // ② 이미 이번 달 처리했으면 스킵
+      if (lastDeduction[card.id] === currentYearMonth) {
+        result.skipped++;
+        continue;
       }
+
+      // ③ 카드 생성일이 이번 달 이후면 스킵 (미래 카드 방지)
+      const cardCreated = new Date(card.createdAt);
+      if (toYearMonth(cardCreated) > currentYearMonth) {
+        continue;
+      }
+
+      // ④ 결제 예정액 찾기
+      const paymentEntry = cardPayments.find((p) => p.current.cardId === card.id);
+      const payment = paymentEntry?.current;
+      if (!payment || payment.totalPayment <= 0) {
+        console.log(`[AutoDeduction] 카드 ${card.name}: 결제 예정액 없음`);
+        lastDeduction[card.id] = currentYearMonth;
+        await AsyncStorage.setItem(STORAGE_KEYS.LAST_CARD_DEDUCTION, JSON.stringify(lastDeduction));
+        continue;
+      }
+
+      // ⑤ 자산에서 차감
+      const balanceResult = await adjustAssetBalance(
+        card.linkedAssetId,
+        -payment.totalPayment,
+        encryptionKey
+      );
+      if (balanceResult.clamped) {
+        result.warnings.push({ assetName: balanceResult.assetName, requested: balanceResult.requested, actual: balanceResult.actual });
+      }
+
+      // ⑥ 처리 기록 저장
+      lastDeduction[card.id] = currentYearMonth;
+      await AsyncStorage.setItem(STORAGE_KEYS.LAST_CARD_DEDUCTION, JSON.stringify(lastDeduction));
+      result.processed++;
+
+      console.log(
+        `[AutoDeduction] 카드 ${card.name}: ${payment.totalPayment.toLocaleString()}원 차감 완료 (${currentYearMonth})`
+      );
     } catch (error) {
       const errorMsg = `카드 ${card.name} 차감 실패: ${error}`;
       result.errors.push(errorMsg);
@@ -174,8 +177,13 @@ export async function processCardPayments(): Promise<{
   return result;
 }
 
+// ─── 대출 상환일 자동 차감 ──────────────────────────────────────
+
 /**
  * 대출 상환일 자동 차감 처리
+ *
+ * paidMonths + startDate 기반으로 다음 상환일 판단.
+ * 밀린 회차가 있으면 순차적으로 처리 (paidMonths가 진실의 원천).
  */
 export async function processLoanRepayments(): Promise<{
   processed: number;
@@ -194,7 +202,7 @@ export async function processLoanRepayments(): Promise<{
   const { loans, updateLoan } = useDebtStore.getState();
   const { adjustAssetBalance } = useAssetStore.getState();
 
-  // 마지막 차감 기록 로드
+  // AsyncStorage: 이중 실행 방지 보조 안전장치
   const lastDeductionStr = await AsyncStorage.getItem(STORAGE_KEYS.LAST_LOAN_DEDUCTION);
   const lastDeduction: Record<string, string> = lastDeductionStr
     ? JSON.parse(lastDeductionStr)
@@ -206,33 +214,31 @@ export async function processLoanRepayments(): Promise<{
       !!loan.linkedAssetId && loan.status === 'active'
   );
 
+  const today = getToday();
+
   for (const loan of linkedLoans) {
     let currentPaidMonths = loan.paidMonths;
     let currentRemainingPrincipal = loan.remainingPrincipal;
 
     try {
-      // 상환일 계산 (repaymentDay가 없으면 시작일 기준)
+      // 상환일 (repaymentDay가 없으면 시작일의 일(day) 사용)
       const repaymentDay = loan.repaymentDay ?? parseInt(loan.startDate.split('-')[2]);
 
-      const monthsToProcess = getMonthsToProcess(repaymentDay, lastDeduction[loan.id]);
+      // paidMonths 기반으로 밀린 회차를 순차 처리
+      while (currentPaidMonths < loan.termMonths) {
+        // 다음 상환일 계산: startDate + (paidMonths + 1)개월의 repaymentDay일
+        const nextPaymentDate = getNextPaymentDate(loan.startDate, currentPaidMonths, repaymentDay);
 
-      if (monthsToProcess.length === 0) {
-        continue;
-      }
-
-      for (const { yearMonth } of monthsToProcess) {
-        // 이미 처리 확인
-        if (lastDeduction[loan.id] === yearMonth) {
-          result.skipped++;
-          console.log(`[AutoDeduction] 대출 ${loan.name}: ${yearMonth} 이미 처리됨`);
-          continue;
+        // 아직 상환일이 안 왔으면 중단
+        if (today < nextPaymentDate) {
+          break;
         }
 
-        // 이미 완납했는지 확인
-        if (currentPaidMonths >= loan.termMonths) {
-          console.log(`[AutoDeduction] 대출 ${loan.name}: 이미 완납됨`);
-          lastDeduction[loan.id] = yearMonth;
-          continue;
+        // AsyncStorage 이중 실행 방지
+        const yearMonth = toYearMonth(nextPaymentDate);
+        if (lastDeduction[loan.id] === yearMonth) {
+          result.skipped++;
+          break;
         }
 
         // 자산에서 차감
@@ -245,7 +251,7 @@ export async function processLoanRepayments(): Promise<{
           result.warnings.push({ assetName: balanceResult.assetName, requested: balanceResult.requested, actual: balanceResult.actual });
         }
 
-        // 기록탭에 지출 자동 기록 (원화 기준)
+        // 기록탭에 지출 자동 기록
         const recordData = createLoanRepaymentRecordData({
           ...loan,
           paidMonths: currentPaidMonths,
@@ -297,11 +303,11 @@ export async function processLoanRepayments(): Promise<{
           encryptionKey
         );
 
-        // 로컬 추적 변수 갱신 (다음 반복에서 올바른 값 사용)
+        // 로컬 추적 변수 갱신
         currentPaidMonths = newPaidMonths;
         currentRemainingPrincipal = Math.round(newRemainingPrincipal);
 
-        // 처리 기록 즉시 저장 (Race Condition 방지)
+        // AsyncStorage 보조 기록 저장
         lastDeduction[loan.id] = yearMonth;
         await AsyncStorage.setItem(
           STORAGE_KEYS.LAST_LOAN_DEDUCTION,
@@ -323,11 +329,14 @@ export async function processLoanRepayments(): Promise<{
   return result;
 }
 
+// ─── 할부 결제일 상태 업데이트 ──────────────────────────────────
+
 /**
  * 할부 결제일 상태 업데이트
- * - 카드 결제일에 해당 카드의 활성 할부 paidMonths/remainingAmount 업데이트
- * - 은행 차감은 processCardPayments()에서 처리 (installmentPayments 포함)
- * - 지출 기록은 구매 시점에 이미 전액 기록됨 (이중 계상 방지)
+ *
+ * paidMonths + startDate 기반으로 다음 결제일 판단.
+ * 은행 차감은 processCardPayments()에서 처리 (installmentPayments 포함).
+ * 지출 기록은 구매 시점에 이미 전액 기록됨 (이중 계상 방지).
  */
 export async function processInstallmentPayments(): Promise<{
   processed: number;
@@ -345,7 +354,7 @@ export async function processInstallmentPayments(): Promise<{
   const { cards } = useCardStore.getState();
   const { installments, updateInstallment } = useDebtStore.getState();
 
-  // 마지막 처리 기록 로드
+  // AsyncStorage: 이중 실행 방지 보조 안전장치
   const lastDeductionStr = await AsyncStorage.getItem(STORAGE_KEYS.LAST_INSTALLMENT_DEDUCTION);
   const lastDeduction: Record<string, string> = lastDeductionStr
     ? JSON.parse(lastDeductionStr)
@@ -353,6 +362,7 @@ export async function processInstallmentPayments(): Promise<{
 
   // 활성 할부만 필터링
   const activeInstallments = installments.filter((i) => i.status === 'active');
+  const today = getToday();
 
   for (const installment of activeInstallments) {
     let currentPaidMonths = installment.paidMonths;
@@ -365,33 +375,24 @@ export async function processInstallmentPayments(): Promise<{
         continue;
       }
 
-      const monthsToProcess = getMonthsToProcess(card.paymentDay, lastDeduction[installment.id]);
+      // paidMonths 기반으로 밀린 회차를 순차 처리
+      while (currentPaidMonths < installment.months) {
+        // 다음 결제일 계산: startDate + (paidMonths + 1)개월의 카드 paymentDay일
+        const nextPaymentDate = getNextPaymentDate(installment.startDate, currentPaidMonths, card.paymentDay);
 
-      if (monthsToProcess.length === 0) {
-        continue;
-      }
+        // 아직 결제일이 안 왔으면 중단
+        if (today < nextPaymentDate) {
+          break;
+        }
 
-      for (const { yearMonth, dateStr } of monthsToProcess) {
-        // 이미 처리 확인
+        // AsyncStorage 이중 실행 방지
+        const yearMonth = toYearMonth(nextPaymentDate);
         if (lastDeduction[installment.id] === yearMonth) {
           result.skipped++;
-          console.log(`[AutoDeduction] 할부 ${installment.storeName}: ${yearMonth} 이미 처리됨`);
-          continue;
+          break;
         }
 
-        // 이미 완납했는지 확인
-        if (currentPaidMonths >= installment.months) {
-          console.log(`[AutoDeduction] 할부 ${installment.storeName}: 이미 완납됨`);
-          lastDeduction[installment.id] = yearMonth;
-          continue;
-        }
-
-        // NOTE: 지출 기록은 생성하지 않음!
-        // 소비 기록은 구매 시점에 이미 전액 기록됨 (addExpense in add-expense.tsx)
-        // 은행 계좌 차감은 processCardPayments()에서 카드 결제일에 일괄 처리됨
-        // 여기서는 할부 상태(paidMonths, remainingAmount)만 업데이트
-
-        // 할부 상태 업데이트
+        // 할부 상태 업데이트 (은행 차감은 processCardPayments에서 처리)
         const newPaidMonths = currentPaidMonths + 1;
         const isCompleted = newPaidMonths >= installment.months;
         const newRemainingAmount = Math.max(0, currentRemainingAmount - installment.monthlyPayment);
@@ -406,11 +407,11 @@ export async function processInstallmentPayments(): Promise<{
           encryptionKey
         );
 
-        // 로컬 추적 변수 갱신 (다음 반복에서 올바른 값 사용)
+        // 로컬 추적 변수 갱신
         currentPaidMonths = newPaidMonths;
         currentRemainingAmount = Math.round(newRemainingAmount);
 
-        // 처리 기록 즉시 저장 (Race Condition 방지)
+        // AsyncStorage 보조 기록 저장
         lastDeduction[installment.id] = yearMonth;
         await AsyncStorage.setItem(
           STORAGE_KEYS.LAST_INSTALLMENT_DEDUCTION,
@@ -419,7 +420,7 @@ export async function processInstallmentPayments(): Promise<{
         result.processed++;
 
         console.log(
-          `[AutoDeduction] 할부 ${installment.storeName}: ${installment.monthlyPayment.toLocaleString()}원 지출 기록 생성 (${newPaidMonths}/${installment.months}회차, ${yearMonth})`
+          `[AutoDeduction] 할부 ${installment.storeName}: 상태 업데이트 (${newPaidMonths}/${installment.months}회차, ${yearMonth})`
         );
       }
     } catch (error) {
