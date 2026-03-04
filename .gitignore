@@ -54,4 +54,13 @@ AUDIT_*.md
 PENDING_CHANGES.md
 SECURITY_ASSESSMENT.md
 SYBA_Admin_Guide*.docx
+PLAN.md
 claude.md
+
+# EAS (로컬 빌드만 사용)
+.eas/
+eas.json
+
+# 자동 생성 파일
+app.d.ts
+nativewind-env.d.ts
