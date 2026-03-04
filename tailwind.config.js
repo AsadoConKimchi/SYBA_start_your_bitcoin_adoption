@@ -1,4 +1,8 @@
-/** @type {import('tailwindcss').Config} */
+/**
+ * Tailwind CSS / NativeWind 설정
+ * 브랜드 컬러: primary(#F7931A), bitcoin(#F7931A), lightning(#792DE4)
+ * @type {import('tailwindcss').Config}
+ */
 module.exports = {
   content: [
     "./app/**/*.{js,jsx,ts,tsx}",

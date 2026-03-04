@@ -1,3 +1,4 @@
+/* NativeWind 글로벌 스타일 진입점 (metro.config.js에서 참조) */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

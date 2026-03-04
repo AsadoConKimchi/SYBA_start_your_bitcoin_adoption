@@ -1,3 +1,9 @@
+/**
+ * Babel 설정
+ * - NativeWind JSX 변환 (jsxImportSource: 'nativewind')
+ * - Reanimated 플러그인 (애니메이션)
+ * - 프로덕션 빌드 시 console.log 자동 제거
+ */
 module.exports = function (api) {
   api.cache(true);
 
