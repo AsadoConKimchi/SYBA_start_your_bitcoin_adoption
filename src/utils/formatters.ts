@@ -7,7 +7,7 @@ const LOCALE_MAP: Record<string, string> = {
   ja: 'ja-JP',
 };
 
-function getLocale(): string {
+export function getLocale(): string {
   return LOCALE_MAP[i18n.language] || 'ko-KR';
 }
 

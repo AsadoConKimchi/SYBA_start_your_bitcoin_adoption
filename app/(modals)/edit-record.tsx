@@ -21,7 +21,7 @@ import { useCardStore } from '../../src/stores/cardStore';
 import { usePriceStore } from '../../src/stores/priceStore';
 import { useAssetStore } from '../../src/stores/assetStore';
 import { DEFAULT_EXPENSE_CATEGORIES, DEFAULT_INCOME_CATEGORIES } from '../../src/constants/categories';
-import { formatKrw, formatSats } from '../../src/utils/formatters';
+import { formatKrw, formatSats, getLocale } from '../../src/utils/formatters';
 import { krwToSats, satsToKrw } from '../../src/utils/calculations';
 import { isFiatAsset, isBitcoinAsset } from '../../src/types/asset';
 import { LedgerRecord, isExpense, isTransfer } from '../../src/types/ledger';
@@ -180,7 +180,7 @@ export default function EditRecordScreen() {
   };
 
   const handleSave = async () => {
-    if (!amountNumber) {
+    if (!amountNumber || amountNumber <= 0) {
       Alert.alert(t('common.error'), t('editRecord.amountRequired'));
       return;
     }
@@ -321,7 +321,7 @@ export default function EditRecordScreen() {
                 display={Platform.OS === 'ios' ? 'inline' : 'default'}
                 onChange={handleDateChange}
                 maximumDate={new Date()}
-                locale="ko-KR"
+                locale={getLocale()}
                 themeVariant={isDark ? 'dark' : 'light'}
               />
             )}

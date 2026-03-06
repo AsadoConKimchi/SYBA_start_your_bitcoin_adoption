@@ -19,7 +19,7 @@ import { useTheme } from '../../src/hooks/useTheme';
 import { useDebtStore } from '../../src/stores/debtStore';
 import { useAuthStore } from '../../src/stores/authStore';
 import { useAssetStore } from '../../src/stores/assetStore';
-import { formatKrw } from '../../src/utils/formatters';
+import { formatKrw, getLocale } from '../../src/utils/formatters';
 import { isFiatAsset } from '../../src/types/asset';
 import { calculateLoanPayment, calculatePaidMonths } from '../../src/utils/debtCalculator';
 import {
@@ -760,7 +760,7 @@ export default function AddLoanScreen() {
                       setPaidMonthsEdited(false);
                     }
                   }}
-                  locale="ko-KR"
+                  locale={getLocale()}
                   themeVariant={isDark ? 'dark' : 'light'}
                 />
                 <TouchableOpacity
@@ -792,7 +792,7 @@ export default function AddLoanScreen() {
                 setPaidMonthsEdited(false);
               }
             }}
-            locale="ko-KR"
+            locale={getLocale()}
             themeVariant={isDark ? 'dark' : 'light'}
           />
         )

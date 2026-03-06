@@ -94,7 +94,7 @@ export default function HomeScreen() {
             SYBA
           </Text>
           <Text style={{ fontSize: 14, color: theme.textSecondary, marginTop: 2 }}>
-            Start Your Bitcoin Adoption
+            {t('app.tagline')}
           </Text>
           <Text style={{ fontSize: 13, color: theme.textSecondary, marginTop: 4 }}>
             {formatDateWithDay(getTodayString())}

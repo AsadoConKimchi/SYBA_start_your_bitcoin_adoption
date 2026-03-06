@@ -15,6 +15,7 @@ import { useAssetStore } from '../../src/stores/assetStore';
 import { useAuthStore } from '../../src/stores/authStore';
 import { useCategoryStore } from '../../src/stores/categoryStore';
 import { isFiatAsset } from '../../src/types/asset';
+import { getLocale } from '../../src/utils/formatters';
 
 type PaymentMethod = 'card' | 'bank' | 'cash';
 
@@ -67,7 +68,7 @@ export default function AddRecurringScreen() {
       Alert.alert(t('common.error'), t('recurring.nameRequired'));
       return;
     }
-    if (!amountNumber) {
+    if (!amountNumber || amountNumber <= 0) {
       Alert.alert(t('common.error'), t('expense.amountRequired'));
       return;
     }
@@ -299,7 +300,7 @@ export default function AddRecurringScreen() {
                 mode="date"
                 display={Platform.OS === 'ios' ? 'inline' : 'default'}
                 onChange={(_, date) => { setShowDatePicker(Platform.OS === 'ios'); if (date) setStartDate(date); }}
-                locale="ko-KR"
+                locale={getLocale()}
                 themeVariant={isDark ? 'dark' : 'light'}
               />
             )}

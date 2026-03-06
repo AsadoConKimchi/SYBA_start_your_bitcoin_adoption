@@ -133,7 +133,7 @@ export default function SetupScreen() {
         // Old format without salt header - can't restore cross-device
         Alert.alert(
           t('common.error'),
-          '이 백업 파일은 이전 버전 형식입니다. 원래 기기에서 새 백업을 생성해주세요.'
+          t('auth.legacyBackupError')
         );
         return;
       }
@@ -209,7 +209,7 @@ export default function SetupScreen() {
         SYBA
       </Text>
       <Text style={{ fontSize: 12, color: theme.textMuted, marginTop: 4 }}>
-        Start Your Bitcoin Adoption
+        {t('app.tagline')}
       </Text>
     </View>
   );

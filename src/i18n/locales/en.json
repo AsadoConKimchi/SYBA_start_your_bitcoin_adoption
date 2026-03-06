@@ -1,4 +1,10 @@
 {
+  "app": {
+    "tagline": "Start Your Bitcoin Adoption"
+  },
+  "auth": {
+    "legacyBackupError": "This backup file is in an older format. Please create a new backup on the original device."
+  },
   "common": {
     "cancel": "Cancel",
     "confirm": "OK",
@@ -440,7 +446,19 @@
     "editFailed": "Failed to update asset.",
     "deleteConfirm": "Delete Asset",
     "deleteMessage": "Delete \"{{name}}\"?",
-    "deleteFailed": "Failed to delete asset."
+    "deleteFailed": "Failed to delete asset.",
+    "editTitle": "Edit Asset",
+    "detailInfo": "Details",
+    "registrationDate": "Registered",
+    "lastUpdate": "Last Updated",
+    "currentRate": "Current Rate",
+    "estimatedInterestLabel": "Est. Interest This Month",
+    "rateBasedOn": "Based on {{rate}}% annual",
+    "editEstimatedInterest": "Edit Est. Interest",
+    "editEstimatedInterestHint": "Edit manually if actual interest differs",
+    "autoCalcLabel": "Auto: {{amount}} ({{rate}}% annual)",
+    "revertToAutoCalc": "Revert to Auto Calculation",
+    "saveFailed": "Failed to save."
   },
   "loan": {
     "addTitle": "Add Loan",

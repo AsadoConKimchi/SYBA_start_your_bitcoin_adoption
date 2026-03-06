@@ -20,7 +20,7 @@ import { useDebtStore } from '../../src/stores/debtStore';
 import { useAuthStore } from '../../src/stores/authStore';
 import { useAssetStore } from '../../src/stores/assetStore';
 import { isFiatAsset } from '../../src/types/asset';
-import { formatKrw, formatKrwPlain } from '../../src/utils/formatters';
+import { formatKrw, formatKrwPlain, getLocale } from '../../src/utils/formatters';
 import { calculateLoanPayment, generateRepaymentSchedule } from '../../src/utils/debtCalculator';
 import {
   RepaymentType,
@@ -1091,7 +1091,7 @@ export default function LoanDetailScreen() {
                   }
                   if (date) setStartDate(date);
                 }}
-                locale="ko-KR"
+                locale={getLocale()}
                 themeVariant={isDark ? 'dark' : 'light'}
               />
               {Platform.OS === 'ios' && (

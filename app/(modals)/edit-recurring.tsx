@@ -92,7 +92,7 @@ export default function EditRecurringScreen() {
   const handleSave = async () => {
     if (!recurringId || !recurring) return;
     if (!name.trim()) { Alert.alert(t('common.error'), t('recurring.nameRequired')); return; }
-    if (!amountNumber) { Alert.alert(t('common.error'), t('expense.amountRequired')); return; }
+    if (!amountNumber || amountNumber <= 0) { Alert.alert(t('common.error'), t('expense.amountRequired')); return; }
     const finalCategory = showCustomCategory ? customCategory : category;
     if (!finalCategory) { Alert.alert(t('common.error'), t('expense.categoryRequired')); return; }
 

@@ -1,4 +1,10 @@
 {
+  "app": {
+    "tagline": "ビットコイン家計簿を始めよう"
+  },
+  "auth": {
+    "legacyBackupError": "このバックアップファイルは旧バージョンの形式です。元のデバイスで新しいバックアップを作成してください。"
+  },
   "common": {
     "cancel": "キャンセル",
     "confirm": "確認",
@@ -440,7 +446,19 @@
     "editFailed": "資産の更新に失敗しました。",
     "deleteConfirm": "資産を削除",
     "deleteMessage": "「{{name}}」を削除しますか？",
-    "deleteFailed": "資産の削除に失敗しました。"
+    "deleteFailed": "資産の削除に失敗しました。",
+    "editTitle": "資産を編集",
+    "detailInfo": "詳細情報",
+    "registrationDate": "登録日",
+    "lastUpdate": "最終更新",
+    "currentRate": "現在のレート",
+    "estimatedInterestLabel": "今月の予想利息",
+    "rateBasedOn": "年{{rate}}%基準",
+    "editEstimatedInterest": "予想利息を編集",
+    "editEstimatedInterestHint": "実際の利息と異なる場合は手動で編集してください",
+    "autoCalcLabel": "自動計算: {{amount}} (年{{rate}}%基準)",
+    "revertToAutoCalc": "自動計算に戻す",
+    "saveFailed": "保存に失敗しました。"
   },
   "loan": {
     "addTitle": "ローンを追加",
