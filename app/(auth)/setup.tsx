@@ -22,9 +22,11 @@ import {
   generateSalt,
   hashPassword,
   deriveKey,
+  deriveKeySHA1,
   deriveKeySync,
   saveSecure,
   SECURE_KEYS,
+  CRYPTO_V2,
 } from '../../src/utils/encryption';
 
 export default function SetupScreen() {
@@ -138,31 +140,45 @@ export default function SetupScreen() {
         return;
       }
 
-      // Derive encryption key — try new async method first, fallback to old sync method
+      // Derive encryption key — try v2 (SHA-256) first, then v1 (SHA-1), then legacy sync
       let encryptionKey: string;
       let hasDeductionRecords = false;
+      const v2Key = await deriveKey(backupPassword, salt);
+
       try {
-        encryptionKey = await deriveKey(backupPassword, salt);
-        const restoreResult = await restoreBackup(fileUri, encryptionKey);
+        // Try v2 (SHA-256) key — backups from v1.2.0+
+        const restoreResult = await restoreBackup(fileUri, v2Key);
         hasDeductionRecords = restoreResult.hasDeductionRecords;
+        encryptionKey = v2Key;
       } catch {
-        // Fallback: pre-v0.1.10 backups used CryptoJS.PBKDF2 (sync) which produces different keys
-        const fallbackKey = deriveKeySync(backupPassword, salt);
-        const restoreResult = await restoreBackup(fileUri, fallbackKey);
-        hasDeductionRecords = restoreResult.hasDeductionRecords;
-        // Fallback succeeded — re-derive with new method for future consistency
-        encryptionKey = await deriveKey(backupPassword, salt);
-        // Re-encrypt all restored files with the new key
-        const { reEncryptAllData } = await import('../../src/utils/storage');
-        await reEncryptAllData(fallbackKey, encryptionKey);
+        try {
+          // Try v1 (SHA-1) key — backups from v0.1.10~v1.1.x
+          const v1Key = await deriveKeySHA1(backupPassword, salt);
+          const restoreResult = await restoreBackup(fileUri, v1Key);
+          hasDeductionRecords = restoreResult.hasDeductionRecords;
+          // Re-encrypt with v2 key
+          const { reEncryptAllData } = await import('../../src/utils/storage');
+          await reEncryptAllData(v1Key, v2Key);
+          encryptionKey = v2Key;
+        } catch {
+          // Try legacy sync key — backups from pre-v0.1.10
+          const fallbackKey = deriveKeySync(backupPassword, salt);
+          const restoreResult = await restoreBackup(fileUri, fallbackKey);
+          hasDeductionRecords = restoreResult.hasDeductionRecords;
+          // Re-encrypt with v2 key
+          const { reEncryptAllData } = await import('../../src/utils/storage');
+          await reEncryptAllData(fallbackKey, v2Key);
+          encryptionKey = v2Key;
+        }
       }
 
-      // Save credentials to SecureStore
+      // Save credentials to SecureStore (always v2)
       const hash = hashPassword(backupPassword, salt);
       await Promise.all([
         saveSecure(SECURE_KEYS.ENCRYPTION_SALT, salt),
         saveSecure(SECURE_KEYS.PASSWORD_HASH, hash),
         saveSecure(SECURE_KEYS.ENCRYPTION_KEY, encryptionKey),
+        saveSecure(SECURE_KEYS.CRYPTO_VERSION, CRYPTO_V2),
       ]);
 
       // 자동차감 기록 초기화 — 백업에 차감 기록이 포함되지 않은 경우만
