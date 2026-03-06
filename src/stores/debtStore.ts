@@ -6,6 +6,7 @@ import {
   calculateLoanPayment,
   calculateEndDate,
   calculatePaidMonths,
+  isDueThisMonth,
 } from '../utils/debtCalculator';
 import { loadEncrypted, saveEncrypted, FILE_PATHS } from '../utils/storage';
 
@@ -293,26 +294,14 @@ export const useDebtStore = create<DebtState & DebtActions>((set, get) => ({
 
   // 이번 달 납부 예정
   getThisMonthDue: () => {
-    const now = new Date();
-    const thisMonth = now.getMonth();
-    const thisYear = now.getFullYear();
-
     const installments = get().installments.filter((item) => {
       if (item.status !== 'active') return false;
-      const start = new Date(item.startDate);
-      const nextPaymentMonth = (start.getMonth() + item.paidMonths + 1) % 12;
-      const nextPaymentYear =
-        start.getFullYear() + Math.floor((start.getMonth() + item.paidMonths + 1) / 12);
-      return nextPaymentMonth === thisMonth && nextPaymentYear === thisYear;
+      return isDueThisMonth(item.startDate, item.paidMonths);
     });
 
     const loans = get().loans.filter((item) => {
       if (item.status !== 'active') return false;
-      const start = new Date(item.startDate);
-      const nextPaymentMonth = (start.getMonth() + item.paidMonths + 1) % 12;
-      const nextPaymentYear =
-        start.getFullYear() + Math.floor((start.getMonth() + item.paidMonths + 1) / 12);
-      return nextPaymentMonth === thisMonth && nextPaymentYear === thisYear;
+      return isDueThisMonth(item.startDate, item.paidMonths);
     });
 
     return { installments, loans };

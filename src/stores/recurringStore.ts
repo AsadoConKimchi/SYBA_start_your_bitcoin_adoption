@@ -173,18 +173,26 @@ function getOverdueDates(recurring: RecurringExpense, today: Date): string[] {
 
   if (recurring.frequency === 'monthly') {
     // startDate부터 오늘까지 매월 dayOfMonth에 해당하는 날짜
-    let cursor = new Date(startDate.getFullYear(), startDate.getMonth(), recurring.dayOfMonth);
+    // cursor는 항상 1일 기준으로 이동하여 월말(29/30/31) 건너뜀 방지
+    let cursorYear = startDate.getFullYear();
+    let cursorMonth = startDate.getMonth();
 
     // lastExecutedDate 이후부터 시작
     if (lastExecuted) {
-      cursor = new Date(lastExecuted.getFullYear(), lastExecuted.getMonth() + 1, recurring.dayOfMonth);
+      cursorYear = lastExecuted.getFullYear();
+      cursorMonth = lastExecuted.getMonth() + 1;
     }
 
-    while (cursor <= today) {
-      const year = cursor.getFullYear();
-      const month = cursor.getMonth();
-      const lastDay = new Date(year, month + 1, 0).getDate();
+    while (true) {
+      // 해당 월의 실제 일수를 확인하여 dayOfMonth 조정
+      const lastDay = new Date(cursorYear, cursorMonth + 1, 0).getDate();
       const day = Math.min(recurring.dayOfMonth, lastDay);
+      const cursorDate = new Date(cursorYear, cursorMonth, day);
+
+      if (cursorDate > today) break;
+
+      const year = cursorDate.getFullYear();
+      const month = cursorDate.getMonth();
       const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
       // startDate 이전은 건너뜀
@@ -195,7 +203,12 @@ function getOverdueDates(recurring: RecurringExpense, today: Date): string[] {
         }
       }
 
-      cursor = new Date(year, month + 1, recurring.dayOfMonth);
+      // 다음 달로 이동 (1일 기준으로 이동하여 월 건너뜀 방지)
+      cursorMonth++;
+      if (cursorMonth > 11) {
+        cursorMonth = 0;
+        cursorYear++;
+      }
     }
   } else if (recurring.frequency === 'yearly') {
     const monthOfYear = (recurring.monthOfYear ?? 1) - 1; // 0-based
