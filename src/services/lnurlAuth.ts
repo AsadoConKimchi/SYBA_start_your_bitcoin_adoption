@@ -124,6 +124,10 @@ export async function createLnurlAuthSession(): Promise<{
     }
 
     // 세션 생성
+    if (!supabase) {
+      lastLnurlError = 'Supabase not configured';
+      return null;
+    }
     const { data, error } = await supabase
       .from('lnurl_auth_sessions')
       .insert({

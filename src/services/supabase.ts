@@ -70,6 +70,19 @@ export interface Payment {
 export async function getSubscriptionPrices(): Promise<SubscriptionPrice[]> {
   const fallbackMultipliers: Record<string, number> = { monthly: 1, annual: 10, lifetime: 60 };
 
+  if (!supabase) {
+    return Object.entries(CONFIG.SUBSCRIPTION_TIERS).map(([tier, info]) => ({
+      id: tier,
+      tier: tier as SubscriptionTier,
+      price_sats: info.price,
+      duration_days: info.durationDays,
+      max_quantity: tier === 'lifetime' ? 50 : -1,
+      current_sold: 0,
+      is_active: true,
+      base_multiplier: fallbackMultipliers[tier] ?? 1,
+    }));
+  }
+
   try {
     const { data, error } = await supabase
       .from('subscription_prices')
@@ -130,6 +143,8 @@ export async function validateDiscountCode(
   code: string,
   tier: SubscriptionTier
 ): Promise<{ valid: boolean; discount?: DiscountCode; reason?: string }> {
+  if (!supabase) return { valid: false, reason: 'Supabase not configured' };
+
   try {
     const { data, error } = await supabase
       .from('discount_codes')

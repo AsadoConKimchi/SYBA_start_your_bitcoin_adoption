@@ -120,7 +120,7 @@ export const useSubscriptionStore = create<SubscriptionState & SubscriptionActio
   initialize: async () => {
     try {
       const savedUserId = await getSecure('SYBA_USER_ID');
-      if (savedUserId) {
+      if (savedUserId && supabase) {
         const { data: user } = await supabase
           .from('users')
           .select('*')
@@ -331,13 +331,15 @@ export const useSubscriptionStore = create<SubscriptionState & SubscriptionActio
       );
       if (!payment) return null;
 
-      await supabase
-        .from('payments')
-        .update({
-          lightning_invoice: invoice.paymentRequest,
-          payment_hash: invoice.paymentHash,
-        })
-        .eq('id', payment.id);
+      if (supabase) {
+        await supabase
+          .from('payments')
+          .update({
+            lightning_invoice: invoice.paymentRequest,
+            payment_hash: invoice.paymentHash,
+          })
+          .eq('id', payment.id);
+      }
 
       set({
         pendingPayment: { ...payment, payment_hash: invoice.paymentHash },
