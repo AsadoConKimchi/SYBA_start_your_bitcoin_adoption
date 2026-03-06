@@ -116,8 +116,9 @@ export const useRecurringStore = create<RecurringState & RecurringActions>((set,
 
     for (const recurring of activeRecurrings) {
       try {
-        // endDate 체크
+        // endDate 체크 — 만료된 건은 비활성 처리
         if (recurring.endDate && recurring.endDate < todayStr) {
+          await get().updateRecurring(recurring.id, { isActive: false }, encryptionKey);
           continue;
         }
 

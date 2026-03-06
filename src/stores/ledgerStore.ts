@@ -619,10 +619,7 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
     await get().saveRecords();
   },
 
-  // 오프라인 기록 시세 동기화
-  // TODO: 현재 어디서도 호출 안 함 (dead code). 오프라인 기록의 satsEquivalent가 null로 방치됨.
-  // 해결책: 앱 포그라운드 복귀 시 (AppState 'active') 호출 추가 필요.
-  // Kimchi 결정: 2026-02-24 일단 보류
+  // 오프라인 기록 시세 동기화 — 앱 포그라운드 복귀 시 호출됨
   syncPendingPrices: async () => {
     const { records, updateRecord } = get();
     const pendingRecords = records.filter(r => r.type !== 'transfer' && r.needsPriceSync);

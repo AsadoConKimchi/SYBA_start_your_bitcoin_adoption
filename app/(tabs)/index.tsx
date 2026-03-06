@@ -1,5 +1,5 @@
-import { View, Text, ScrollView, TouchableOpacity, RefreshControl, LayoutAnimation, Platform, UIManager } from 'react-native';
-import { useState, useCallback, useMemo } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, RefreshControl, LayoutAnimation, Platform, UIManager, AppState } from 'react-native';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -35,7 +35,7 @@ export default function HomeScreen() {
   const { t } = useTranslation();
   const { theme } = useTheme();
 
-  const { records, getMonthlyTotal, getTodayTotal, loadRecords } = useLedgerStore();
+  const { records, getMonthlyTotal, getTodayTotal, loadRecords, syncPendingPrices } = useLedgerStore();
   const { btcKrw, fetchPrices, lastUpdated, isOffline, kimchiPremium } = usePriceStore();
   const { settings } = useSettingsStore();
   const { cards } = useCardStore();
@@ -45,6 +45,18 @@ export default function HomeScreen() {
   const today = new Date();
   const year = today.getFullYear();
   const month = today.getMonth() + 1;
+
+  // AppState 포그라운드 복귀 시 오프라인 기록 시세 동기화
+  const appState = useRef(AppState.currentState);
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (nextState) => {
+      if (appState.current.match(/inactive|background/) && nextState === 'active') {
+        syncPendingPrices();
+      }
+      appState.current = nextState;
+    });
+    return () => sub.remove();
+  }, []);
 
   const [expandedNextCards, setExpandedNextCards] = useState<Record<string, boolean>>({});
 

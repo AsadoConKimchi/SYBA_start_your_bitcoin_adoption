@@ -37,7 +37,15 @@ export default function CardListScreen() {
         {
           text: t('common.delete'),
           style: 'destructive',
-          onPress: () => deleteCard(card.id),
+          onPress: async () => {
+            try {
+              await deleteCard(card.id);
+            } catch (e: any) {
+              if (e?.message === 'ACTIVE_INSTALLMENTS') {
+                Alert.alert(t('common.error'), t('card.hasActiveInstallments'));
+              }
+            }
+          },
         },
       ]
     );
