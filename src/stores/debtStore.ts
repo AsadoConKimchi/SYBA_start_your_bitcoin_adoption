@@ -156,8 +156,8 @@ export const useDebtStore = create<DebtState & DebtActions>((set, get) => ({
 
       const updated = { ...item, ...data, updatedAt: new Date().toISOString() };
 
-      // 금액/개월 변경 시 재계산
-      if (data.totalAmount !== undefined || data.months !== undefined || data.isInterestFree !== undefined) {
+      // 금액/개월/납부회차 변경 시 재계산
+      if (data.totalAmount !== undefined || data.months !== undefined || data.isInterestFree !== undefined || data.paidMonths !== undefined) {
         const { monthlyPayment, totalInterest } = calculateInstallmentPayment(
           updated.totalAmount,
           updated.months,

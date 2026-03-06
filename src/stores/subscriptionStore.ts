@@ -9,6 +9,8 @@ import {
   getSubscriptionPrices,
   calculatePrice,
   validateDiscountCode,
+  updateUserEmail,
+  getPaymentHistory,
   Subscription,
   Payment,
 } from '../services/supabase';
@@ -37,6 +39,7 @@ const PENDING_INVOICE_KEY = 'SYBA_PENDING_INVOICE';
 interface User {
   id: string;
   linking_key: string;
+  email?: string;
   created_at: string;
 }
 
@@ -61,6 +64,7 @@ interface SubscriptionState {
   discountCode: string;
   priceCalculation: PriceCalculation | null;
   isCalculatingPrice: boolean;
+  paymentHistory: Payment[];
 }
 
 interface SubscriptionActions {
@@ -87,6 +91,8 @@ interface SubscriptionActions {
   setDiscountCode: (code: string) => void;
   applyDiscountCode: () => Promise<{ valid: boolean; reason?: string }>;
   recalculatePrice: () => Promise<void>;
+  updateEmail: (email: string) => Promise<boolean>;
+  loadPaymentHistory: () => Promise<void>;
 }
 
 export const useSubscriptionStore = create<SubscriptionState & SubscriptionActions>((set, get) => ({
@@ -108,6 +114,7 @@ export const useSubscriptionStore = create<SubscriptionState & SubscriptionActio
   discountCode: '',
   priceCalculation: null,
   isCalculatingPrice: false,
+  paymentHistory: [],
 
   // 초기화
   initialize: async () => {
@@ -461,6 +468,17 @@ export const useSubscriptionStore = create<SubscriptionState & SubscriptionActio
     return result;
   },
 
+  // Update user email
+  updateEmail: async (email: string) => {
+    const { user } = get();
+    if (!user) return false;
+    const success = await updateUserEmail(user.id, email);
+    if (success) {
+      set({ user: { ...user, email } });
+    }
+    return success;
+  },
+
   // 가격 재계산
   recalculatePrice: async () => {
     const { selectedTier, discountCode } = get();
@@ -475,5 +493,12 @@ export const useSubscriptionStore = create<SubscriptionState & SubscriptionActio
     } catch {
       set({ isCalculatingPrice: false });
     }
+  },
+
+  loadPaymentHistory: async () => {
+    const { user } = get();
+    if (!user) return;
+    const history = await getPaymentHistory(user.id);
+    set({ paymentHistory: history });
   },
 }));

@@ -48,7 +48,7 @@ export default function AssetsScreen() {
       return () => {
         unsubscribeRealTimePrice();
       };
-    }, [])
+    }, [subscribeRealTimePrice, unsubscribeRealTimePrice])
   );
   const { settings } = useSettingsStore();
 

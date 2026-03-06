@@ -312,14 +312,10 @@ export async function restoreBackup(
   return { salt: embeddedSalt ?? backupData.salt, hasDeductionRecords: !!backupData.deductionRecords };
 }
 
-// 모든 데이터를 새 키로 재암호화 (비밀번호 변경 시 사용)
 export async function reEncryptAllData(
   oldKey: string,
   newKey: string
 ): Promise<void> {
-  console.log('[DEBUG] reEncryptAllData 시작');
-
-  // 모든 파일 경로
   const filePaths = [
     { path: FILE_PATHS.LEDGER, default: [] },
     { path: FILE_PATHS.CARDS, default: [] },
@@ -332,29 +328,31 @@ export async function reEncryptAllData(
     { path: FILE_PATHS.RECURRING, default: [] },
   ];
 
-  for (const { path, default: defaultValue } of filePaths) {
-    try {
+  // Phase 1: Decrypt all and write to temp files
+  const tempFiles: string[] = [];
+  try {
+    for (const { path } of filePaths) {
       const fileInfo = await FileSystem.getInfoAsync(path);
-      if (!fileInfo.exists) {
-        console.log('[DEBUG] 파일 없음, 스킵:', path);
-        continue;
-      }
+      if (!fileInfo.exists) continue;
 
-      // 구 키로 복호화
       const encrypted = await FileSystem.readAsStringAsync(path);
       const data = decrypt(encrypted, oldKey);
-      console.log('[DEBUG] 복호화 완료:', path);
-
-      // 새 키로 재암호화
       const reEncrypted = await encrypt(data, newKey);
-      await FileSystem.writeAsStringAsync(path, reEncrypted);
-      console.log('[DEBUG] 재암호화 완료:', path);
-    } catch (error) {
-      console.error('[DEBUG] 재암호화 실패:', path, error);
-      // 파일이 존재하지만 복호화 실패 시 에러 던지기
-      throw new Error(`파일 재암호화 실패: ${path}`);
+      const tempPath = path + '.tmp';
+      await FileSystem.writeAsStringAsync(tempPath, reEncrypted);
+      tempFiles.push(tempPath);
     }
-  }
 
-  console.log('[DEBUG] 모든 데이터 재암호화 완료');
+    // Phase 2: Rename all temp files to final paths (fast, near-atomic)
+    for (const tempPath of tempFiles) {
+      const finalPath = tempPath.replace(/\.tmp$/, '');
+      await FileSystem.moveAsync({ from: tempPath, to: finalPath });
+    }
+  } catch (error) {
+    // Cleanup temp files on failure
+    for (const tempPath of tempFiles) {
+      await FileSystem.deleteAsync(tempPath, { idempotent: true }).catch(() => {});
+    }
+    throw error;
+  }
 }

@@ -18,7 +18,17 @@ export const supabase = createSafeClient();
 export interface User {
   id: string;
   linking_key: string;
+  email?: string;
   created_at: string;
+}
+
+export async function updateUserEmail(userId: string, email: string): Promise<boolean> {
+  if (!supabase) return false;
+  const { error } = await supabase
+    .from('users')
+    .update({ email })
+    .eq('id', userId);
+  return !error;
 }
 
 export interface Subscription {
@@ -283,6 +293,21 @@ export async function updatePaymentStatus(
     .eq('id', paymentId);
 
   return !error;
+}
+
+// Payment history for receipts
+export async function getPaymentHistory(userId: string): Promise<Payment[]> {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('payments')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('status', 'paid')
+    .order('paid_at', { ascending: false })
+    .limit(20);
+
+  if (error || !data) return [];
+  return data;
 }
 
 // ============================================================

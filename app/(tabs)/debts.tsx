@@ -52,7 +52,7 @@ export default function DebtsScreen() {
       return () => {
         unsubscribeRealTimePrice();
       };
-    }, [])
+    }, [subscribeRealTimePrice, unsubscribeRealTimePrice])
   );
 
   useEffect(() => {

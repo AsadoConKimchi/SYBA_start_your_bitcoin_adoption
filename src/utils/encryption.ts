@@ -59,7 +59,7 @@ async function deriveKeyWithHasher(
   const iterations = CONFIG.PBKDF2_ITERATIONS;
   const keySize = 256 / 32; // 8 words = 32 bytes
   const blockCount = Math.ceil(keySize / hLen);
-  const chunkSize = 1000;
+  const chunkSize = 5000;
 
   onProgress?.(0);
   await new Promise(resolve => setTimeout(resolve, 0));
@@ -112,6 +112,7 @@ export function deriveKeySync(password: string, salt: string): string {
   const key = CryptoJS.PBKDF2(password, salt, {
     keySize: 256 / 32,
     iterations: CONFIG.PBKDF2_ITERATIONS,
+    hasher: CryptoJS.algo.SHA1,
   });
   return key.toString();
 }

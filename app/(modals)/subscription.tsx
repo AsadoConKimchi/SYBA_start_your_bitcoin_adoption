@@ -57,6 +57,10 @@ export default function SubscriptionScreen() {
     selectTier,
     setDiscountCode,
     applyDiscountCode,
+    // email & payment history
+    updateEmail,
+    loadPaymentHistory,
+    paymentHistory,
   } = useSubscriptionStore();
 
   const [isStartingAuth, setIsStartingAuth] = useState(false);
@@ -67,6 +71,9 @@ export default function SubscriptionScreen() {
   // subscriptionPrice state 제거 — availableTiers에서 직접 읽음
   const [discountMessage, setDiscountMessage] = useState<string>('');
   const [discountApplied, setDiscountApplied] = useState(false);
+  const [emailInput, setEmailInput] = useState('');
+  const [emailSaving, setEmailSaving] = useState(false);
+  const [emailSaved, setEmailSaved] = useState(false);
   const webPaymentPollingRef = useRef<NodeJS.Timeout | null>(null);
 
   // 결제 모달 상태
@@ -95,6 +102,16 @@ export default function SubscriptionScreen() {
     initialize();
     loadTierPrices();
   }, []);
+
+  // Load payment history and email when user is subscribed
+  useEffect(() => {
+    if (user && isSubscribed) {
+      loadPaymentHistory();
+      if (user.email) {
+        setEmailInput(user.email);
+      }
+    }
+  }, [user, isSubscribed]);
 
   // LNURL-auth 폴링
   useEffect(() => {
@@ -154,6 +171,17 @@ export default function SubscriptionScreen() {
         onPress: logout,
       },
     ]);
+  };
+
+  const handleSaveEmail = async () => {
+    if (!emailInput.trim()) return;
+    setEmailSaving(true);
+    const success = await updateEmail(emailInput.trim());
+    setEmailSaving(false);
+    if (success) {
+      setEmailSaved(true);
+      setTimeout(() => setEmailSaved(false), 2000);
+    }
   };
 
   const handleApplyDiscount = async () => {
@@ -720,7 +748,97 @@ export default function SubscriptionScreen() {
                     </Text>
                   )}
                 </View>
-              ) : (
+              ) : null}
+
+              {/* Email input (optional, for CS) */}
+              {isSubscribed && (
+                <View style={{ marginTop: 12 }}>
+                  <Text style={{ fontSize: 13, color: theme.textSecondary, marginBottom: 6 }}>
+                    {t('settings.emailOptional')}
+                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <TextInput
+                      style={{
+                        flex: 1,
+                        borderWidth: 1,
+                        borderColor: emailSaved ? theme.success : theme.border,
+                        borderRadius: 8,
+                        padding: 12,
+                        fontSize: 14,
+                        color: theme.text,
+                        backgroundColor: theme.backgroundSecondary,
+                        marginRight: 8,
+                      }}
+                      placeholder={t('settings.emailPlaceholder')}
+                      placeholderTextColor={theme.textMuted}
+                      value={emailInput}
+                      onChangeText={setEmailInput}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                    />
+                    <TouchableOpacity
+                      style={{
+                        backgroundColor: theme.primary,
+                        borderRadius: 8,
+                        paddingHorizontal: 16,
+                        paddingVertical: 12,
+                        opacity: emailSaving ? 0.7 : 1,
+                      }}
+                      onPress={handleSaveEmail}
+                      disabled={emailSaving}
+                    >
+                      {emailSaving ? (
+                        <ActivityIndicator size="small" color="#FFFFFF" />
+                      ) : (
+                        <Text style={{ color: '#FFFFFF', fontWeight: '600' }}>
+                          {emailSaved ? t('settings.emailSaved') : t('common.save')}
+                        </Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+
+              {/* Payment History */}
+              {isSubscribed && paymentHistory.length > 0 && (
+                <View style={{ marginTop: 16 }}>
+                  <Text style={{ fontSize: 14, fontWeight: '600', color: theme.text, marginBottom: 8 }}>
+                    {t('settings.paymentHistory')}
+                  </Text>
+                  {paymentHistory.map((payment) => (
+                    <View
+                      key={payment.id}
+                      style={{
+                        backgroundColor: theme.backgroundSecondary,
+                        borderRadius: 8,
+                        padding: 12,
+                        marginBottom: 6,
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <View>
+                        <Text style={{ fontSize: 13, fontWeight: '500', color: theme.text }}>
+                          {payment.tier === 'monthly' ? t('subscription.tierMonthly')
+                            : payment.tier === 'annual' ? t('subscription.tierAnnual')
+                            : t('subscription.tierLifetime')}
+                        </Text>
+                        {payment.paid_at && (
+                          <Text style={{ fontSize: 11, color: theme.textMuted }}>
+                            {format(new Date(payment.paid_at), 'PPP', { locale: ko })}
+                          </Text>
+                        )}
+                      </View>
+                      <Text style={{ fontSize: 14, fontWeight: '600', color: theme.primary }}>
+                        {payment.amount_sats.toLocaleString()} sats
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              {!isSubscribed && (
                 <TouchableOpacity
                   style={{
                     backgroundColor: theme.primary,

@@ -83,6 +83,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
           deleteSecure(SECURE_KEYS.ENCRYPTION_KEY),
           deleteSecure(SECURE_KEYS.BIOMETRIC_ENABLED),
           deleteSecure(SECURE_KEYS.USER_ID),
+          deleteSecure(SECURE_KEYS.CRYPTO_VERSION),
         ]);
         await initializeStorage(); // 디렉토리 생성은 정상 진행
         set({
@@ -283,7 +284,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       getSecure(SECURE_KEYS.CRYPTO_VERSION),
     ]);
 
-    if (!salt || !storedHash || !oldKey) {
+    if (!salt || !storedHash) {
       return false;
     }
 
@@ -296,6 +297,16 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       return false;
     }
 
+    // Derive oldKey if not stored (v1.1.1 users)
+    let resolvedOldKey = oldKey;
+    if (!resolvedOldKey) {
+      if (isV1) {
+        resolvedOldKey = await deriveKeySHA1(currentPassword, salt);
+      } else {
+        resolvedOldKey = await deriveKey(currentPassword, salt);
+      }
+    }
+
     // 새 비밀번호로 v2 키 생성
     const newSalt = await generateSalt();
     const newHash = hashPassword(newPassword, newSalt);
@@ -303,7 +314,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
 
     // 모든 데이터를 새 키로 재암호화
     try {
-      await reEncryptAllData(oldKey, newKey);
+      await reEncryptAllData(resolvedOldKey, newKey);
     } catch (error) {
       console.error('데이터 재암호화 실패:', error);
       return false;

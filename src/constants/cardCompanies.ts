@@ -57,12 +57,50 @@ const DEFAULT_INSTALLMENT_RATES: Record<string, Record<number, number>> = {
 };
 const FALLBACK_RATE = 15.0;
 
+// Remote rates fetched from Supabase (overrides local defaults)
+let _remoteRates: Record<string, Record<number, number>> | null = null;
+let _remoteRatesFetchedAt = 0;
+const REMOTE_RATES_CACHE_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+/**
+ * Fetch installment rates from Supabase and cache locally.
+ * Called on app startup; falls back to bundled defaults if unavailable.
+ */
+export async function fetchRemoteInstallmentRates(): Promise<void> {
+  // Skip if recently fetched
+  if (_remoteRates && Date.now() - _remoteRatesFetchedAt < REMOTE_RATES_CACHE_MS) return;
+
+  try {
+    const { supabase } = await import('../services/supabase');
+    if (!supabase) return;
+
+    const { data, error } = await supabase
+      .from('installment_rates')
+      .select('company_id, months, rate')
+      .eq('is_active', true);
+
+    if (error || !data || data.length === 0) return;
+
+    const rates: Record<string, Record<number, number>> = {};
+    for (const row of data) {
+      if (!rates[row.company_id]) rates[row.company_id] = {};
+      rates[row.company_id][row.months] = row.rate;
+    }
+
+    _remoteRates = rates;
+    _remoteRatesFetchedAt = Date.now();
+  } catch {
+    // Silently fall back to bundled defaults
+  }
+}
+
 /**
  * Get default installment rate for a card company and number of months.
- * Finds the closest matching tier (rounds up to next available tier).
+ * Uses remote rates if available, otherwise falls back to bundled defaults.
  */
 export function getDefaultInstallmentRate(companyId: string, months: number): number {
-  const rates = DEFAULT_INSTALLMENT_RATES[companyId];
+  const source = _remoteRates ?? DEFAULT_INSTALLMENT_RATES;
+  const rates = source[companyId];
   if (!rates) return FALLBACK_RATE;
 
   // Exact match

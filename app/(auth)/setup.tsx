@@ -143,7 +143,7 @@ export default function SetupScreen() {
       // Derive encryption key — try v2 (SHA-256) first, then v1 (SHA-1), then legacy sync
       let encryptionKey: string;
       let hasDeductionRecords = false;
-      const v2Key = await deriveKey(backupPassword, salt);
+      const v2Key = await deriveKey(backupPassword, salt, (p) => setProgress(p * 0.3));
 
       try {
         // Try v2 (SHA-256) key — backups from v1.2.0+
@@ -153,12 +153,13 @@ export default function SetupScreen() {
       } catch {
         try {
           // Try v1 (SHA-1) key — backups from v0.1.10~v1.1.x
-          const v1Key = await deriveKeySHA1(backupPassword, salt);
+          const v1Key = await deriveKeySHA1(backupPassword, salt, (p) => setProgress(0.3 + p * 0.3));
           const restoreResult = await restoreBackup(fileUri, v1Key);
           hasDeductionRecords = restoreResult.hasDeductionRecords;
           // Re-encrypt with v2 key
           const { reEncryptAllData } = await import('../../src/utils/storage');
           await reEncryptAllData(v1Key, v2Key);
+          setProgress(0.8);
           encryptionKey = v2Key;
         } catch {
           // Try legacy sync key — backups from pre-v0.1.10
@@ -168,10 +169,12 @@ export default function SetupScreen() {
           // Re-encrypt with v2 key
           const { reEncryptAllData } = await import('../../src/utils/storage');
           await reEncryptAllData(fallbackKey, v2Key);
+          setProgress(0.8);
           encryptionKey = v2Key;
         }
       }
 
+      setProgress(0.9);
       // Save credentials to SecureStore (always v2)
       const hash = hashPassword(backupPassword, salt);
       await Promise.all([
@@ -181,13 +184,16 @@ export default function SetupScreen() {
         saveSecure(SECURE_KEYS.CRYPTO_VERSION, CRYPTO_V2),
       ]);
 
-      // 자동차감 기록 초기화 — 백업에 차감 기록이 포함되지 않은 경우만
-      // 백업의 자산 잔액에 이미 반영되어 있으므로 이 기록이 없으면 앱 시작 시 이중 차감 발생
+      // Legacy backups without deduction records: set current month as already processed
+      // to prevent auto-deduction from re-processing transactions already reflected in balances
       if (!hasDeductionRecords) {
-        await AsyncStorage.multiRemove([
-          'lastCardDeduction',
-          'lastLoanDeduction',
-          'lastInstallmentDeduction',
+        const now = new Date();
+        const currentYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        const sentinel = JSON.stringify({ __restored: currentYM });
+        await AsyncStorage.multiSet([
+          ['lastCardDeduction', sentinel],
+          ['lastLoanDeduction', sentinel],
+          ['lastInstallmentDeduction', sentinel],
         ]);
       }
 
