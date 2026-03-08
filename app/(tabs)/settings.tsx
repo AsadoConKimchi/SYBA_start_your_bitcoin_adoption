@@ -808,6 +808,21 @@ export default function SettingsScreen() {
                 borderBottomWidth: 1,
                 borderBottomColor: theme.border,
               }}
+              onPress={() => router.push('/(modals)/recurring-transfer-list')}
+            >
+              <Ionicons name="swap-horizontal" size={24} color={theme.textSecondary} style={{ marginRight: 12 }} />
+              <Text style={{ flex: 1, fontSize: 16, color: theme.text }}>{t('settings.recurringTransferManagement')}</Text>
+              <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                padding: 16,
+                borderBottomWidth: 1,
+                borderBottomColor: theme.border,
+              }}
               onPress={handleBackup}
               disabled={isBackingUp}
             >
@@ -962,6 +977,28 @@ export default function SettingsScreen() {
               {t('settings.billingInfoDetail')}
             </Text>
           </View>
+
+          <TouchableOpacity
+            style={{
+              backgroundColor: theme.backgroundSecondary,
+              borderRadius: 12,
+              padding: 16,
+              marginTop: 12,
+            }}
+            onPress={() => {
+              Alert.alert(
+                t('settings.refundPolicy'),
+                t('settings.refundPolicyDetail'),
+              );
+            }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Ionicons name="document-text-outline" size={20} color={theme.textSecondary} style={{ marginRight: 8 }} />
+              <Text style={{ fontSize: 14, color: theme.text }}>{t('settings.refundPolicy')}</Text>
+              <View style={{ flex: 1 }} />
+              <Ionicons name="chevron-forward" size={16} color={theme.textMuted} />
+            </View>
+          </TouchableOpacity>
         </View>
 
         {/* Dev tools */}

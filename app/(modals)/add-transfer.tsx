@@ -19,7 +19,7 @@ import { useLedgerStore } from '../../src/stores/ledgerStore';
 import { useAssetStore } from '../../src/stores/assetStore';
 import { useCardStore } from '../../src/stores/cardStore';
 import { isFiatAsset } from '../../src/types/asset';
-import { formatKrw } from '../../src/utils/formatters';
+import { formatKrw, getLocale } from '../../src/utils/formatters';
 
 type TabMode = 'transfer' | 'topup';
 
@@ -68,7 +68,7 @@ export default function AddTransferScreen() {
   };
 
   const handleSubmit = async () => {
-    if (!amountNumber) {
+    if (!amountNumber || amountNumber <= 0) {
       Alert.alert(t('common.error'), t('transfer.enterAmount'));
       return;
     }
@@ -229,7 +229,7 @@ export default function AddTransferScreen() {
                 display={Platform.OS === 'ios' ? 'inline' : 'default'}
                 onChange={handleDateChange}
                 maximumDate={new Date()}
-                locale="ko-KR"
+                locale={getLocale()}
                 themeVariant={isDark ? 'dark' : 'light'}
               />
             )}

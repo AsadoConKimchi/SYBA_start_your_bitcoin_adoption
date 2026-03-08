@@ -48,7 +48,8 @@ interface AssetActions {
   adjustAssetBalance: (
     id: string,
     amount: number, // 양수: 증가, 음수: 감소
-    encryptionKey: string
+    encryptionKey: string,
+    currency?: 'KRW' | 'SATS' // v1.2.0+: 통화 타입 검증용 (optional for backward compat)
   ) => Promise<{ clamped: boolean; requested: number; actual: number; assetName: string }>;
 
   // ID로 자산 조회
@@ -183,11 +184,23 @@ export const useAssetStore = create<AssetState & AssetActions>((set, get) => ({
   },
 
   // 잔액 조정 (지출/수입 연동용)
-  adjustAssetBalance: async (id, amount, encryptionKey) => {
+  // currency: optional — 전달 시 자산 타입과 불일치하면 경고 (v1.2.0+)
+  adjustAssetBalance: async (id, amount, encryptionKey, currency?: 'KRW' | 'SATS') => {
     const asset = get().assets.find((a) => a.id === id);
     if (!asset) {
       console.error('[adjustAssetBalance] 자산을 찾을 수 없음:', id);
       return { clamped: false, requested: 0, actual: 0, assetName: '' };
+    }
+
+    // 통화 타입 검증: fiat 자산에 SATS, bitcoin 자산에 KRW 차감 방지
+    if (currency) {
+      const isMismatch =
+        (isFiatAsset(asset) && currency === 'SATS') ||
+        (isBitcoinAsset(asset) && currency === 'KRW');
+      if (isMismatch) {
+        console.error(`[adjustAssetBalance] 통화 불일치: ${asset.name} (${asset.type}) ← ${currency} ${amount}`);
+        return { clamped: false, requested: Math.abs(amount), actual: 0, assetName: asset.name };
+      }
     }
 
     const originalNewBalance = asset.balance + amount;

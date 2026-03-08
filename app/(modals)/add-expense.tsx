@@ -23,10 +23,11 @@ import { useDebtStore } from '../../src/stores/debtStore';
 import { useAuthStore } from '../../src/stores/authStore';
 import { useAssetStore } from '../../src/stores/assetStore';
 import { useCategoryStore } from '../../src/stores/categoryStore';
-import { formatKrw, formatSats, getTodayString } from '../../src/utils/formatters';
+import { formatKrw, formatSats, getTodayString, getLocale } from '../../src/utils/formatters';
 import { krwToSats, satsToKrw } from '../../src/utils/calculations';
 import { isFiatAsset, isBitcoinAsset } from '../../src/types/asset';
 import { fetchHistoricalBtcPrice } from '../../src/services/api/upbit';
+import { getDefaultInstallmentRate } from '../../src/constants/cardCompanies';
 
 type PaymentMethod = 'cash' | 'card' | 'bank' | 'lightning' | 'onchain';
 type CurrencyMode = 'KRW' | 'SATS';
@@ -57,6 +58,7 @@ export default function AddExpenseScreen() {
   const [installmentMonths, setInstallmentMonths] = useState(1);
   const [customInstallment, setCustomInstallment] = useState('');
   const [isInterestFree, setIsInterestFree] = useState(true); // 무이자 여부
+  const [interestRate, setInterestRate] = useState(''); // 유이자 이율 (%, 빈값이면 카드사 기본 이율 적용)
   const [showInstallmentPicker, setShowInstallmentPicker] = useState(false);
   const [showCustomInstallmentInput, setShowCustomInstallmentInput] = useState(false);
   const [showInsufficientBalanceModal, setShowInsufficientBalanceModal] = useState(false);
@@ -76,6 +78,13 @@ export default function AddExpenseScreen() {
   const { getEncryptionKey } = useAuthStore();
   const encryptionKey = getEncryptionKey();
   const { assets } = useAssetStore();
+
+  // 선택된 카드의 기본 할부 이율
+  const selectedCard = cards.find(c => c.id === selectedCardId);
+  const defaultRate = selectedCard
+    ? getDefaultInstallmentRate(selectedCard.company, installmentMonths)
+    : 15;
+  const effectiveRate = parseFloat(interestRate) || defaultRate;
 
   // 결제수단별 자산 필터링
   const fiatAssets = assets.filter(isFiatAsset);
@@ -165,7 +174,7 @@ export default function AddExpenseScreen() {
     : previewBtcKrw ? krwToSats(amountNumber, previewBtcKrw) : 0;
 
   const handleSave = async () => {
-    if (!amountNumber) {
+    if (!amountNumber || amountNumber <= 0) {
       Alert.alert(t('common.error'), t('expense.amountRequired'));
       return;
     }
@@ -246,7 +255,7 @@ export default function AddExpenseScreen() {
             totalAmount: krwAmount,
             months: installmentMonths,
             isInterestFree: isInterestFree,
-            interestRate: isInterestFree ? 0 : 15, // 유이자 기본 15%
+            interestRate: isInterestFree ? 0 : effectiveRate,
             startDate: dateString,
             paidMonths: 0, // 새로 시작하는 할부이므로 0
             memo: memo || undefined,
@@ -326,7 +335,7 @@ export default function AddExpenseScreen() {
                 display={Platform.OS === 'ios' ? 'inline' : 'default'}
                 onChange={handleDateChange}
                 maximumDate={new Date()}
-                locale="ko-KR"
+                locale={getLocale()}
                 themeVariant={isDark ? 'dark' : 'light'}
               />
             )}
@@ -691,12 +700,38 @@ export default function AddExpenseScreen() {
                 </View>
               )}
 
+              {/* 유이자 이율 입력 */}
+              {installmentMonths > 1 && !isInterestFree && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 }}>
+                  <Text style={{ fontSize: 14, color: theme.textSecondary }}>{t('expense.annualRate')}</Text>
+                  <TextInput
+                    style={{
+                      borderWidth: 1,
+                      borderColor: theme.inputBorder,
+                      borderRadius: 8,
+                      paddingHorizontal: 12,
+                      paddingVertical: 8,
+                      fontSize: 16,
+                      color: theme.inputText,
+                      width: 80,
+                      textAlign: 'center',
+                    }}
+                    keyboardType="decimal-pad"
+                    value={interestRate}
+                    onChangeText={setInterestRate}
+                    placeholder={String(defaultRate)}
+                    placeholderTextColor={theme.placeholder}
+                  />
+                  <Text style={{ fontSize: 14, color: theme.textSecondary }}>%</Text>
+                </View>
+              )}
+
               {installmentMonths > 1 && krwAmount > 0 && (
                 <Text style={{ fontSize: 12, color: theme.textSecondary, marginTop: 8 }}>
                   {t('expense.installmentSummary', {
                     amount: formatKrw(Math.ceil(krwAmount / installmentMonths)),
                     months: installmentMonths,
-                    interest: isInterestFree ? `(${t('common.noInterest')})` : `(${t('common.withInterest')})`,
+                    interest: isInterestFree ? `(${t('common.noInterest')})` : `(${effectiveRate}%)`,
                   })}
                 </Text>
               )}

@@ -20,7 +20,7 @@ import { useLedgerStore } from '../../src/stores/ledgerStore';
 import { usePriceStore } from '../../src/stores/priceStore';
 import { useAssetStore } from '../../src/stores/assetStore';
 import { useCategoryStore } from '../../src/stores/categoryStore';
-import { formatKrw, formatSats, getTodayString } from '../../src/utils/formatters';
+import { formatKrw, formatSats, getTodayString, getLocale } from '../../src/utils/formatters';
 import { krwToSats, satsToKrw } from '../../src/utils/calculations';
 import { isFiatAsset, isBitcoinAsset } from '../../src/types/asset';
 import { fetchHistoricalBtcPrice } from '../../src/services/api/upbit';
@@ -119,7 +119,7 @@ export default function AddIncomeScreen() {
     : previewBtcKrw ? krwToSats(amountNumber, previewBtcKrw) : 0;
 
   const handleSave = async () => {
-    if (!amountNumber) {
+    if (!amountNumber || amountNumber <= 0) {
       Alert.alert(t('common.error'), t('income.amountRequired'));
       return;
     }
@@ -218,7 +218,7 @@ export default function AddIncomeScreen() {
                 display={Platform.OS === 'ios' ? 'inline' : 'default'}
                 onChange={handleDateChange}
                 maximumDate={new Date()}
-                locale="ko-KR"
+                locale={getLocale()}
                 themeVariant={isDark ? 'dark' : 'light'}
               />
             )}

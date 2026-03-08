@@ -25,6 +25,7 @@ const STORAGE_KEYS = {
   LAST_CARD_DEDUCTION: 'lastCardDeduction', // { cardId: 'YYYY-MM' }
   LAST_LOAN_DEDUCTION: 'lastLoanDeduction', // { loanId: 'YYYY-MM' }
   LAST_INSTALLMENT_DEDUCTION: 'lastInstallmentDeduction', // { installmentId: 'YYYY-MM' }
+  PENDING_LOAN_TX: 'pendingLoanTransaction', // { loanId, yearMonth, step, paidMonths, remainingPrincipal }
 };
 
 // ─── 유틸리티 함수 ────────────────────────────────────────────
@@ -208,6 +209,9 @@ export async function processLoanRepayments(): Promise<{
     ? JSON.parse(lastDeductionStr)
     : {};
 
+  // 미완료 트랜잭션 복구 (앱 크래시 복구용)
+  await recoverPendingLoanTransaction(encryptionKey, lastDeduction, result);
+
   // 연결 계좌가 있고 활성 상태인 대출만 필터링
   const linkedLoans = loans.filter(
     (loan): loan is Loan & { linkedAssetId: string } =>
@@ -241,7 +245,35 @@ export async function processLoanRepayments(): Promise<{
           break;
         }
 
-        // 자산에서 차감
+        // 잔여 원금 계산 (상환 방식에 따라 다름) — 상태 변경 전에 먼저 계산
+        const newPaidMonths = currentPaidMonths + 1;
+        const isCompleted = newPaidMonths >= loan.termMonths;
+        let newRemainingPrincipal = currentRemainingPrincipal;
+        if (loan.repaymentType === 'equalPrincipal') {
+          const monthlyPrincipal = loan.principal / loan.termMonths;
+          newRemainingPrincipal = Math.max(0, currentRemainingPrincipal - monthlyPrincipal);
+        } else if (loan.repaymentType === 'equalPrincipalAndInterest') {
+          const monthlyInterest = (currentRemainingPrincipal * loan.interestRate) / 100 / 12;
+          const monthlyPrincipal = loan.monthlyPayment - monthlyInterest;
+          newRemainingPrincipal = Math.max(0, currentRemainingPrincipal - monthlyPrincipal);
+        }
+        if (isCompleted && loan.repaymentType === 'bullet') {
+          newRemainingPrincipal = 0;
+        }
+
+        // Step 1: pending transaction 저장 (크래시 복구용)
+        await AsyncStorage.setItem(STORAGE_KEYS.PENDING_LOAN_TX, JSON.stringify({
+          loanId: loan.id,
+          yearMonth,
+          step: 'asset_deducted',
+          newPaidMonths,
+          newRemainingPrincipal: Math.round(newRemainingPrincipal),
+          isCompleted,
+          monthlyPayment: loan.monthlyPayment,
+          loanName: loan.name,
+        }));
+
+        // Step 2: 자산에서 차감
         const balanceResult = await adjustAssetBalance(
           loan.linkedAssetId,
           -loan.monthlyPayment,
@@ -251,7 +283,7 @@ export async function processLoanRepayments(): Promise<{
           result.warnings.push({ assetName: balanceResult.assetName, requested: balanceResult.requested, actual: balanceResult.actual });
         }
 
-        // 기록탭에 지출 자동 기록
+        // Step 3: 기록탭에 지출 자동 기록
         const recordData = createLoanRepaymentRecordData({
           ...loan,
           paidMonths: currentPaidMonths,
@@ -275,24 +307,7 @@ export async function processLoanRepayments(): Promise<{
           console.log(`[AutoDeduction] 대출 ${loan.name}: 기록탭에 지출 기록 추가됨`);
         }
 
-        // 대출 상환 상태 업데이트
-        const newPaidMonths = currentPaidMonths + 1;
-        const isCompleted = newPaidMonths >= loan.termMonths;
-
-        // 잔여 원금 계산 (상환 방식에 따라 다름)
-        let newRemainingPrincipal = currentRemainingPrincipal;
-        if (loan.repaymentType === 'equalPrincipal') {
-          const monthlyPrincipal = loan.principal / loan.termMonths;
-          newRemainingPrincipal = Math.max(0, currentRemainingPrincipal - monthlyPrincipal);
-        } else if (loan.repaymentType === 'equalPrincipalAndInterest') {
-          const monthlyInterest = (currentRemainingPrincipal * loan.interestRate) / 100 / 12;
-          const monthlyPrincipal = loan.monthlyPayment - monthlyInterest;
-          newRemainingPrincipal = Math.max(0, currentRemainingPrincipal - monthlyPrincipal);
-        }
-        if (isCompleted && loan.repaymentType === 'bullet') {
-          newRemainingPrincipal = 0;
-        }
-
+        // Step 4: 대출 상환 상태 업데이트
         await updateLoan(
           loan.id,
           {
@@ -302,6 +317,9 @@ export async function processLoanRepayments(): Promise<{
           },
           encryptionKey
         );
+
+        // Step 5: 트랜잭션 완료 — pending 제거 + 차감 기록 저장
+        await AsyncStorage.removeItem(STORAGE_KEYS.PENDING_LOAN_TX);
 
         // 로컬 추적 변수 갱신
         currentPaidMonths = newPaidMonths;
@@ -454,6 +472,80 @@ export async function processAllAutoDeductions(): Promise<{
   console.log('[AutoDeduction] 할부 결과:', installmentResult);
 
   return { cards: cardResult, loans: loanResult, installments: installmentResult };
+}
+
+/**
+ * 미완료 대출 트랜잭션 복구
+ * 앱 크래시로 인해 자산 차감은 됐지만 대출 상태가 미업데이트된 경우 복구
+ */
+async function recoverPendingLoanTransaction(
+  encryptionKey: string,
+  lastDeduction: Record<string, string>,
+  result: { processed: number; skipped: number; errors: string[]; warnings: Array<{ assetName: string; requested: number; actual: number }> }
+): Promise<void> {
+  try {
+    const pendingStr = await AsyncStorage.getItem(STORAGE_KEYS.PENDING_LOAN_TX);
+    if (!pendingStr) return;
+
+    const pending = JSON.parse(pendingStr) as {
+      loanId: string;
+      yearMonth: string;
+      step: string;
+      newPaidMonths: number;
+      newRemainingPrincipal: number;
+      isCompleted: boolean;
+      monthlyPayment?: number;
+      loanName?: string;
+    };
+
+    console.log(`[AutoDeduction] 미완료 대출 트랜잭션 복구: ${pending.loanId} (${pending.yearMonth}, step: ${pending.step})`);
+
+    // 누락된 기록탭 지출 기록 복구 (자산 차감은 이미 완료됨)
+    if (pending.step === 'asset_deducted' && pending.monthlyPayment) {
+      try {
+        const { addExpense } = useLedgerStore.getState();
+        await addExpense({
+          date: `${pending.yearMonth}-01`,
+          amount: pending.monthlyPayment,
+          currency: 'KRW',
+          category: i18n.t('categories.loanRepayment'),
+          paymentMethod: 'bank',
+          cardId: null,
+          installmentMonths: null,
+          isInterestFree: null,
+          installmentId: null,
+          memo: `[${i18n.t('recurring.auto')}] ${pending.loanName || pending.loanId}`,
+          linkedAssetId: null, // 이미 차감됨
+        });
+      } catch {
+        console.error('[AutoDeduction] 복구 중 기록 생성 실패 (무시하고 계속)');
+      }
+    }
+
+    // 대출 상태 업데이트
+    const { updateLoan } = useDebtStore.getState();
+    await updateLoan(
+      pending.loanId,
+      {
+        paidMonths: pending.newPaidMonths,
+        remainingPrincipal: pending.newRemainingPrincipal,
+        status: pending.isCompleted ? 'completed' : 'active',
+      },
+      encryptionKey
+    );
+
+    // 차감 기록 + pending 제거
+    lastDeduction[pending.loanId] = pending.yearMonth;
+    await AsyncStorage.setItem(STORAGE_KEYS.LAST_LOAN_DEDUCTION, JSON.stringify(lastDeduction));
+    await AsyncStorage.removeItem(STORAGE_KEYS.PENDING_LOAN_TX);
+
+    result.processed++;
+    console.log(`[AutoDeduction] 대출 트랜잭션 복구 완료: ${pending.loanId}`);
+  } catch (error) {
+    console.error('[AutoDeduction] 트랜잭션 복구 실패:', error);
+    // 복구 실패해도 pending은 제거하여 무한 재시도 방지
+    await AsyncStorage.removeItem(STORAGE_KEYS.PENDING_LOAN_TX);
+  }
 }
 
 /**

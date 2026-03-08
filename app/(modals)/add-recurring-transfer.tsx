@@ -9,45 +9,43 @@ import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../src/hooks/useTheme';
-import { useRecurringStore } from '../../src/stores/recurringStore';
+import { useRecurringTransferStore } from '../../src/stores/recurringTransferStore';
 import { useCardStore } from '../../src/stores/cardStore';
 import { useAssetStore } from '../../src/stores/assetStore';
 import { useAuthStore } from '../../src/stores/authStore';
-import { useCategoryStore } from '../../src/stores/categoryStore';
 import { isFiatAsset } from '../../src/types/asset';
 import { getLocale } from '../../src/utils/formatters';
 
-type PaymentMethod = 'card' | 'bank' | 'cash';
+type TransferType = 'account' | 'card';
 
-export default function AddRecurringScreen() {
+export default function AddRecurringTransferScreen() {
   const { t } = useTranslation();
   const { theme, isDark } = useTheme();
-  const { addRecurring } = useRecurringStore();
+  const { addRecurringTransfer } = useRecurringTransferStore();
   const { cards } = useCardStore();
   const { assets } = useAssetStore();
   const { getEncryptionKey } = useAuthStore();
-  const activeExpenseCategories = useCategoryStore(s => s.getActiveExpenseCategories)();
 
   const [name, setName] = useState('');
   const [amount, setAmount] = useState('');
-  const [category, setCategory] = useState('');
-  const [customCategory, setCustomCategory] = useState('');
-  const [showCustomCategory, setShowCustomCategory] = useState(false);
   const [frequency, setFrequency] = useState<'monthly' | 'yearly'>('monthly');
   const [dayOfMonth, setDayOfMonth] = useState(1);
   const [monthOfYear, setMonthOfYear] = useState(1);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('bank');
-  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
-  const [linkedAssetId, setLinkedAssetId] = useState<string | null>(null);
+  const [transferType, setTransferType] = useState<TransferType>('account');
+  const [fromAssetId, setFromAssetId] = useState<string | null>(null);
+  const [toAssetId, setToAssetId] = useState<string | null>(null);
+  const [toCardId, setToCardId] = useState<string | null>(null);
   const [startDate, setStartDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showDayPicker, setShowDayPicker] = useState(false);
   const [showMonthPicker, setShowMonthPicker] = useState(false);
-  const [showAssetPicker, setShowAssetPicker] = useState(false);
+  const [showFromPicker, setShowFromPicker] = useState(false);
+  const [showToPicker, setShowToPicker] = useState(false);
   const [memo, setMemo] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const fiatAssets = assets.filter(isFiatAsset);
+  const prepaidCards = cards.filter(c => c.type === 'prepaid');
   const amountNumber = parseInt(amount.replace(/[^0-9]/g, '')) || 0;
 
   const handleAmountChange = (text: string) => {
@@ -72,31 +70,38 @@ export default function AddRecurringScreen() {
       Alert.alert(t('common.error'), t('expense.amountRequired'));
       return;
     }
-    const finalCategory = showCustomCategory ? customCategory : category;
-    if (!finalCategory) {
-      Alert.alert(t('common.error'), t('expense.categoryRequired'));
+    if (!fromAssetId) {
+      Alert.alert(t('common.error'), t('recurringTransfer.selectFromAccount'));
       return;
     }
-    if (paymentMethod === 'card' && !selectedCardId) {
-      Alert.alert(t('common.error'), t('expense.cardRequired'));
+    if (transferType === 'account' && !toAssetId) {
+      Alert.alert(t('common.error'), t('recurringTransfer.selectToTarget'));
       return;
     }
+    if (transferType === 'card' && !toCardId) {
+      Alert.alert(t('common.error'), t('recurringTransfer.selectToTarget'));
+      return;
+    }
+    if (transferType === 'account' && fromAssetId === toAssetId) {
+      Alert.alert(t('common.error'), t('recurringTransfer.sameAccountError'));
+      return;
+    }
+
     const encryptionKey = getEncryptionKey();
     if (!encryptionKey) return;
 
     setIsLoading(true);
     try {
-      await addRecurring({
+      await addRecurringTransfer({
         name: name.trim(),
         amount: amountNumber,
         currency: 'KRW',
-        category: finalCategory,
         frequency,
         dayOfMonth,
         ...(frequency === 'yearly' ? { monthOfYear } : {}),
-        paymentMethod,
-        ...(paymentMethod === 'card' ? { cardId: selectedCardId! } : {}),
-        ...(paymentMethod === 'bank' && linkedAssetId ? { linkedAssetId } : {}),
+        fromAssetId,
+        ...(transferType === 'account' ? { toAssetId: toAssetId! } : {}),
+        ...(transferType === 'card' ? { toCardId: toCardId! } : {}),
         isActive: true,
         startDate: formatDateString(startDate),
         memo: memo || undefined,
@@ -114,7 +119,7 @@ export default function AddRecurringScreen() {
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         {/* Header */}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: theme.border }}>
-          <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>{t('recurring.addTitle')}</Text>
+          <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>{t('recurringTransfer.addTitle')}</Text>
           <TouchableOpacity onPress={() => router.back()}>
             <Ionicons name="close" size={24} color={theme.textSecondary} />
           </TouchableOpacity>
@@ -123,10 +128,10 @@ export default function AddRecurringScreen() {
         <ScrollView style={{ flex: 1, padding: 20 }} contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
           {/* Name */}
           <View style={{ marginBottom: 24 }}>
-            <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('recurring.name')}</Text>
+            <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('recurringTransfer.name')}</Text>
             <TextInput
               style={{ borderWidth: 1, borderColor: theme.inputBorder, borderRadius: 8, padding: 12, fontSize: 16, color: theme.inputText }}
-              placeholder={t('recurring.namePlaceholder')}
+              placeholder={t('recurringTransfer.namePlaceholder')}
               placeholderTextColor={theme.placeholder}
               value={name}
               onChangeText={setName}
@@ -149,38 +154,56 @@ export default function AddRecurringScreen() {
             </View>
           </View>
 
-          {/* Category */}
+          {/* Transfer type */}
           <View style={{ marginBottom: 24 }}>
-            <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('expense.category')}</Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              {activeExpenseCategories.map(cat => (
+            <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('recurringTransfer.transferType')}</Text>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              {([
+                { id: 'account' as const, label: t('recurringTransfer.accountToAccount') },
+                { id: 'card' as const, label: t('recurringTransfer.accountToCard') },
+              ]).map(tt => (
                 <TouchableOpacity
-                  key={cat.id}
-                  style={{ paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, backgroundColor: category === cat.name && !showCustomCategory ? cat.color : theme.backgroundTertiary }}
-                  onPress={() => { setShowCustomCategory(false); setCustomCategory(''); setCategory(cat.name); }}
+                  key={tt.id}
+                  style={{ flex: 1, paddingVertical: 12, borderRadius: 8, alignItems: 'center', backgroundColor: transferType === tt.id ? theme.primary : theme.backgroundTertiary }}
+                  onPress={() => { setTransferType(tt.id); setToAssetId(null); setToCardId(null); }}
                 >
-                  <Text style={{ fontSize: 14, color: category === cat.name && !showCustomCategory ? '#FFFFFF' : theme.textSecondary }}>
-                    {cat.icon} {t('categories.' + cat.id)}
-                  </Text>
+                  <Text style={{ fontSize: 14, color: transferType === tt.id ? '#FFFFFF' : theme.textSecondary }}>{tt.label}</Text>
                 </TouchableOpacity>
               ))}
-              <TouchableOpacity
-                style={{ paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, backgroundColor: showCustomCategory ? '#6B7280' : theme.backgroundTertiary }}
-                onPress={() => { setShowCustomCategory(true); setCategory(''); }}
-              >
-                <Text style={{ fontSize: 14, color: showCustomCategory ? '#FFFFFF' : theme.textSecondary }}>{t('expense.customCategory')}</Text>
-              </TouchableOpacity>
             </View>
-            {showCustomCategory && (
-              <TextInput
-                style={{ marginTop: 12, borderWidth: 1, borderColor: theme.inputBorder, borderRadius: 8, padding: 12, fontSize: 16, color: theme.inputText }}
-                placeholder={t('expense.customCategoryPlaceholder')}
-                placeholderTextColor={theme.placeholder}
-                value={customCategory}
-                onChangeText={setCustomCategory}
-                autoFocus
-              />
-            )}
+          </View>
+
+          {/* From account */}
+          <View style={{ marginBottom: 24 }}>
+            <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('recurringTransfer.fromAccount')}</Text>
+            <TouchableOpacity
+              style={{ borderWidth: 1, borderColor: theme.inputBorder, borderRadius: 8, padding: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
+              onPress={() => setShowFromPicker(true)}
+            >
+              <Text style={{ fontSize: 16, color: fromAssetId ? theme.text : theme.textMuted }}>
+                {fromAssetId ? fiatAssets.find(a => a.id === fromAssetId)?.name ?? '' : t('recurringTransfer.selectFromAccount')}
+              </Text>
+              <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
+            </TouchableOpacity>
+          </View>
+
+          {/* To account or card */}
+          <View style={{ marginBottom: 24 }}>
+            <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>
+              {transferType === 'account' ? t('recurringTransfer.toAccount') : t('recurringTransfer.toCard')}
+            </Text>
+            <TouchableOpacity
+              style={{ borderWidth: 1, borderColor: theme.inputBorder, borderRadius: 8, padding: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
+              onPress={() => setShowToPicker(true)}
+            >
+              <Text style={{ fontSize: 16, color: (toAssetId || toCardId) ? theme.text : theme.textMuted }}>
+                {transferType === 'account'
+                  ? (toAssetId ? fiatAssets.find(a => a.id === toAssetId)?.name ?? '' : t('recurringTransfer.selectToTarget'))
+                  : (toCardId ? cards.find(c => c.id === toCardId)?.name ?? '' : t('recurringTransfer.selectToTarget'))
+                }
+              </Text>
+              <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
+            </TouchableOpacity>
           </View>
 
           {/* Frequency */}
@@ -227,61 +250,6 @@ export default function AddRecurringScreen() {
             </View>
           )}
 
-          {/* Payment method */}
-          <View style={{ marginBottom: 24 }}>
-            <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('expense.paymentMethod')}</Text>
-            <View style={{ flexDirection: 'row', gap: 8 }}>
-              {([
-                { id: 'bank', label: t('expense.bankTransfer') },
-                { id: 'card', label: t('expense.card') },
-                { id: 'cash', label: t('expense.cash') },
-              ] as const).map(m => (
-                <TouchableOpacity
-                  key={m.id}
-                  style={{ flex: 1, paddingVertical: 12, borderRadius: 8, alignItems: 'center', backgroundColor: paymentMethod === m.id ? theme.primary : theme.backgroundTertiary }}
-                  onPress={() => { setPaymentMethod(m.id); setSelectedCardId(null); setLinkedAssetId(null); }}
-                >
-                  <Text style={{ fontSize: 14, color: paymentMethod === m.id ? '#FFFFFF' : theme.textSecondary }}>{m.label}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          {/* Card selector */}
-          {paymentMethod === 'card' && cards.length > 0 && (
-            <View style={{ marginBottom: 24 }}>
-              <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('expense.selectCard')}</Text>
-              <View style={{ gap: 8 }}>
-                {cards.map(card => (
-                  <TouchableOpacity
-                    key={card.id}
-                    style={{ padding: 12, borderRadius: 8, backgroundColor: selectedCardId === card.id ? card.color : theme.backgroundTertiary, flexDirection: 'row', alignItems: 'center' }}
-                    onPress={() => setSelectedCardId(card.id)}
-                  >
-                    <View style={{ width: 24, height: 16, borderRadius: 2, backgroundColor: selectedCardId === card.id ? '#FFFFFF' : card.color, marginRight: 8 }} />
-                    <Text style={{ color: selectedCardId === card.id ? '#FFFFFF' : theme.text }}>{card.name}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-          )}
-
-          {/* Account selector */}
-          {paymentMethod === 'bank' && fiatAssets.length > 0 && (
-            <View style={{ marginBottom: 24 }}>
-              <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('expense.selectAccount')}</Text>
-              <TouchableOpacity
-                style={{ borderWidth: 1, borderColor: theme.inputBorder, borderRadius: 8, padding: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
-                onPress={() => setShowAssetPicker(true)}
-              >
-                <Text style={{ fontSize: 16, color: linkedAssetId ? theme.text : theme.textMuted }}>
-                  {linkedAssetId ? fiatAssets.find(a => a.id === linkedAssetId)?.name ?? '' : t('expense.accountSelectHint')}
-                </Text>
-                <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
-              </TouchableOpacity>
-            </View>
-          )}
-
           {/* Start date */}
           <View style={{ marginBottom: 24 }}>
             <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('recurring.startDate')}</Text>
@@ -290,7 +258,7 @@ export default function AddRecurringScreen() {
               onPress={() => setShowDatePicker(true)}
             >
               <Text style={{ fontSize: 16, color: theme.text }}>
-                {startDate.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}
+                {startDate.toLocaleDateString(getLocale(), { year: 'numeric', month: 'long', day: 'numeric' })}
               </Text>
               <Ionicons name="calendar-outline" size={20} color={theme.textSecondary} />
             </TouchableOpacity>
@@ -383,13 +351,13 @@ export default function AddRecurringScreen() {
         </View>
       </Modal>
 
-      {/* Asset picker modal */}
-      <Modal visible={showAssetPicker} transparent animationType="slide">
+      {/* From account picker */}
+      <Modal visible={showFromPicker} transparent animationType="slide">
         <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: theme.modalOverlay }}>
           <View style={{ backgroundColor: theme.modalBackground, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, maxHeight: '60%' }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
-              <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>{t('expense.selectAccount')}</Text>
-              <TouchableOpacity onPress={() => setShowAssetPicker(false)}>
+              <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>{t('recurringTransfer.fromAccount')}</Text>
+              <TouchableOpacity onPress={() => setShowFromPicker(false)}>
                 <Ionicons name="close" size={24} color={theme.textSecondary} />
               </TouchableOpacity>
             </View>
@@ -397,21 +365,59 @@ export default function AddRecurringScreen() {
               {fiatAssets.map(asset => (
                 <TouchableOpacity
                   key={asset.id}
-                  style={{ flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: linkedAssetId === asset.id ? theme.warningBanner : theme.backgroundSecondary, borderRadius: 8, marginBottom: 8 }}
-                  onPress={() => { setLinkedAssetId(asset.id); setShowAssetPicker(false); }}
+                  style={{ flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: fromAssetId === asset.id ? theme.warningBanner : theme.backgroundSecondary, borderRadius: 8, marginBottom: 8 }}
+                  onPress={() => { setFromAssetId(asset.id); setShowFromPicker(false); }}
                 >
                   <Text style={{ fontSize: 18, marginRight: 12 }}>🏦</Text>
                   <Text style={{ flex: 1, fontSize: 16, color: theme.text }}>{asset.name}</Text>
-                  {linkedAssetId === asset.id && <Ionicons name="checkmark-circle" size={24} color={theme.primary} />}
+                  {fromAssetId === asset.id && <Ionicons name="checkmark-circle" size={24} color={theme.primary} />}
                 </TouchableOpacity>
               ))}
             </ScrollView>
-            <TouchableOpacity
-              style={{ padding: 16, backgroundColor: theme.backgroundTertiary, borderRadius: 8, alignItems: 'center', marginTop: 8 }}
-              onPress={() => { setLinkedAssetId(null); setShowAssetPicker(false); }}
-            >
-              <Text style={{ fontSize: 16, color: theme.textSecondary }}>{t('income.noSelection')}</Text>
-            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* To account/card picker */}
+      <Modal visible={showToPicker} transparent animationType="slide">
+        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: theme.modalOverlay }}>
+          <View style={{ backgroundColor: theme.modalBackground, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, maxHeight: '60%' }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
+              <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>
+                {transferType === 'account' ? t('recurringTransfer.toAccount') : t('recurringTransfer.toCard')}
+              </Text>
+              <TouchableOpacity onPress={() => setShowToPicker(false)}>
+                <Ionicons name="close" size={24} color={theme.textSecondary} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={{ maxHeight: 300 }}>
+              {transferType === 'account'
+                ? fiatAssets
+                    .filter(a => a.id !== fromAssetId)
+                    .map(asset => (
+                      <TouchableOpacity
+                        key={asset.id}
+                        style={{ flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: toAssetId === asset.id ? theme.warningBanner : theme.backgroundSecondary, borderRadius: 8, marginBottom: 8 }}
+                        onPress={() => { setToAssetId(asset.id); setShowToPicker(false); }}
+                      >
+                        <Text style={{ fontSize: 18, marginRight: 12 }}>🏦</Text>
+                        <Text style={{ flex: 1, fontSize: 16, color: theme.text }}>{asset.name}</Text>
+                        {toAssetId === asset.id && <Ionicons name="checkmark-circle" size={24} color={theme.primary} />}
+                      </TouchableOpacity>
+                    ))
+                : prepaidCards.map(card => (
+                    <TouchableOpacity
+                      key={card.id}
+                      style={{ flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: toCardId === card.id ? theme.warningBanner : theme.backgroundSecondary, borderRadius: 8, marginBottom: 8 }}
+                      onPress={() => { setToCardId(card.id); setShowToPicker(false); }}
+                    >
+                      <View style={{ width: 24, height: 16, borderRadius: 2, backgroundColor: card.color, marginRight: 12 }} />
+                      <Text style={{ flex: 1, fontSize: 16, color: theme.text }}>{card.name}</Text>
+                      {toCardId === card.id && <Ionicons name="checkmark-circle" size={24} color={theme.primary} />}
+                    </TouchableOpacity>
+                  ))
+              }
+            </ScrollView>
           </View>
         </View>
       </Modal>

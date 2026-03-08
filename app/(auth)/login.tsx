@@ -173,7 +173,7 @@ export default function LoginScreen() {
             SYBA
           </Text>
           <Text style={{ fontSize: 12, color: theme.textMuted, marginTop: 4, textAlign: 'center', flexShrink: 1 }} adjustsFontSizeToFit numberOfLines={2}>
-            Start Your Bitcoin Adoption
+            {t('app.tagline')}
           </Text>
         </View>
 

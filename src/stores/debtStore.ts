@@ -6,6 +6,7 @@ import {
   calculateLoanPayment,
   calculateEndDate,
   calculatePaidMonths,
+  isDueThisMonth,
 } from '../utils/debtCalculator';
 import { loadEncrypted, saveEncrypted, FILE_PATHS } from '../utils/storage';
 
@@ -155,8 +156,8 @@ export const useDebtStore = create<DebtState & DebtActions>((set, get) => ({
 
       const updated = { ...item, ...data, updatedAt: new Date().toISOString() };
 
-      // 금액/개월 변경 시 재계산
-      if (data.totalAmount !== undefined || data.months !== undefined || data.isInterestFree !== undefined) {
+      // 금액/개월/납부회차 변경 시 재계산
+      if (data.totalAmount !== undefined || data.months !== undefined || data.isInterestFree !== undefined || data.paidMonths !== undefined) {
         const { monthlyPayment, totalInterest } = calculateInstallmentPayment(
           updated.totalAmount,
           updated.months,
@@ -293,26 +294,14 @@ export const useDebtStore = create<DebtState & DebtActions>((set, get) => ({
 
   // 이번 달 납부 예정
   getThisMonthDue: () => {
-    const now = new Date();
-    const thisMonth = now.getMonth();
-    const thisYear = now.getFullYear();
-
     const installments = get().installments.filter((item) => {
       if (item.status !== 'active') return false;
-      const start = new Date(item.startDate);
-      const nextPaymentMonth = (start.getMonth() + item.paidMonths + 1) % 12;
-      const nextPaymentYear =
-        start.getFullYear() + Math.floor((start.getMonth() + item.paidMonths + 1) / 12);
-      return nextPaymentMonth === thisMonth && nextPaymentYear === thisYear;
+      return isDueThisMonth(item.startDate, item.paidMonths);
     });
 
     const loans = get().loans.filter((item) => {
       if (item.status !== 'active') return false;
-      const start = new Date(item.startDate);
-      const nextPaymentMonth = (start.getMonth() + item.paidMonths + 1) % 12;
-      const nextPaymentYear =
-        start.getFullYear() + Math.floor((start.getMonth() + item.paidMonths + 1) / 12);
-      return nextPaymentMonth === thisMonth && nextPaymentYear === thisYear;
+      return isDueThisMonth(item.startDate, item.paidMonths);
     });
 
     return { installments, loans };

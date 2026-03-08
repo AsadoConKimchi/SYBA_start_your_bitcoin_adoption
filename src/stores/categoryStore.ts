@@ -47,10 +47,42 @@ export const useCategoryStore = create<CategoryState & CategoryActions>((set, ge
         { groups: [], activeGroupId: 'default' }
       );
 
-      // Migration: old format was { expense: [], income: [] }
+      // Migration: v1.1.1 이전 포맷 { expense: [], income: [] } → 신규 그룹 포맷으로 변환
       if ('expense' in data && !('groups' in data)) {
-        if (__DEV__) console.log('[categoryStore] Migrating old format');
-        set({ groups: [], activeGroupId: 'default', isLoaded: true });
+        if (__DEV__) console.log('[categoryStore] Migrating old format → groups');
+        const oldData = data as { expense: unknown[]; income: unknown[] };
+        const hasCustomData =
+          (Array.isArray(oldData.expense) && oldData.expense.length > 0) ||
+          (Array.isArray(oldData.income) && oldData.income.length > 0);
+
+        if (hasCustomData) {
+          // 사용자 커스텀 카테고리를 "마이그레이션" 그룹으로 보존
+          const now = new Date().toISOString();
+          const migratedGroup: CategoryGroup = {
+            id: uuidv4(),
+            name: 'My Categories',
+            isDefault: false,
+            expenseCategories: Array.isArray(oldData.expense)
+              ? oldData.expense.filter((c): c is CustomCategory =>
+                  typeof c === 'object' && c !== null && 'id' in c && 'name' in c && 'icon' in c && 'color' in c
+                )
+              : [...DEFAULT_EXPENSE_CATEGORIES],
+            incomeCategories: Array.isArray(oldData.income)
+              ? oldData.income.filter((c): c is CustomCategory =>
+                  typeof c === 'object' && c !== null && 'id' in c && 'name' in c && 'icon' in c && 'color' in c
+                )
+              : [...DEFAULT_INCOME_CATEGORIES],
+            createdAt: now,
+            updatedAt: now,
+          };
+          const groups = [migratedGroup];
+          const activeGroupId = migratedGroup.id;
+          set({ groups, activeGroupId, isLoaded: true });
+          await saveEncrypted(FILE_PATHS.CATEGORIES, { groups, activeGroupId }, encryptionKey);
+          if (__DEV__) console.log('[categoryStore] Migrated old categories to group:', migratedGroup.id);
+        } else {
+          set({ groups: [], activeGroupId: 'default', isLoaded: true });
+        }
         return;
       }
 

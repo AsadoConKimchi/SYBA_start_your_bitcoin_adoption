@@ -20,7 +20,7 @@ import { useTheme } from '../../src/hooks/useTheme';
 import { useDebtStore } from '../../src/stores/debtStore';
 import { useCardStore } from '../../src/stores/cardStore';
 import { useAuthStore } from '../../src/stores/authStore';
-import { formatKrw } from '../../src/utils/formatters';
+import { formatKrw, getLocale } from '../../src/utils/formatters';
 import { calculateInstallmentPayment, calculatePaidMonths } from '../../src/utils/debtCalculator';
 
 const INSTALLMENT_MONTHS = [2, 3, 6, 12, 18, 24, 36];
@@ -561,7 +561,7 @@ export default function AddInstallmentScreen() {
                       setPaidMonthsEdited(false);
                     }
                   }}
-                  locale="ko-KR"
+                  locale={getLocale()}
                   themeVariant={isDark ? 'dark' : 'light'}
                 />
                 <TouchableOpacity
@@ -593,7 +593,7 @@ export default function AddInstallmentScreen() {
                 setPaidMonthsEdited(false);
               }
             }}
-            locale="ko-KR"
+            locale={getLocale()}
             themeVariant={isDark ? 'dark' : 'light'}
           />
         )

@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Card } from '../types/card';
 import { saveEncrypted, loadEncrypted, FILE_PATHS } from '../utils/storage';
 import { useAuthStore } from './authStore';
+import { useDebtStore } from './debtStore';
 
 interface CardState {
   cards: Card[];
@@ -94,6 +95,13 @@ export const useCardStore = create<CardState & CardActions>((set, get) => ({
   },
 
   deleteCard: async (id) => {
+    // 활성 할부가 있는 카드는 삭제 불가
+    const activeInstallments = useDebtStore.getState().installments
+      .filter(i => i.cardId === id && i.status === 'active');
+    if (activeInstallments.length > 0) {
+      throw new Error('ACTIVE_INSTALLMENTS');
+    }
+
     const { cards } = get();
     const deletedCard = cards.find(c => c.id === id);
     const remainingCards = cards.filter(c => c.id !== id);

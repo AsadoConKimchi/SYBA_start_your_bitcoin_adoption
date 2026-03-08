@@ -139,7 +139,7 @@ export const useSnapshotStore = create<SnapshotState & SnapshotActions>((set, ge
     if (!get().hasSnapshotForMonth(prevMonth)) {
       // 이전 달 데이터로 스냅샷 생성은 어려우므로 현재 상태로 대체 저장
       // (정확하지 않지만 없는 것보다 나음)
-      console.log(`[SnapshotStore] ${prevMonth} 스냅샷 누락됨, 현재 상태로 보완 저장`);
+      await savePreviousMonthSnapshot(get, set, prevMonth, encryptionKey);
     }
 
     // 이번 달 스냅샷 저장
@@ -155,3 +155,52 @@ export const useSnapshotStore = create<SnapshotState & SnapshotActions>((set, ge
       .slice(0, months);
   },
 }));
+
+/**
+ * 이전 달 스냅샷이 없을 때 현재 상태로 보완 저장
+ */
+async function savePreviousMonthSnapshot(
+  get: () => SnapshotState & SnapshotActions,
+  set: (partial: Partial<SnapshotState>) => void,
+  yearMonth: string,
+  encryptionKey: string
+) {
+  const assetStore = useAssetStore.getState();
+  const debtStore = useDebtStore.getState();
+  const priceStore = usePriceStore.getState();
+
+  const totalFiat = assetStore.getTotalFiat();
+  const totalBtcSats = assetStore.getTotalBitcoin();
+  const btcKrw = priceStore.btcKrw;
+
+  const activeInstallments = debtStore.getActiveInstallments();
+  const activeLoans = debtStore.getActiveLoans();
+  const totalInstallments = activeInstallments.reduce((sum, i) => sum + i.remainingAmount, 0);
+  const totalLoans = activeLoans.reduce((sum, l) => sum + l.remainingPrincipal, 0);
+  const totalDebt = totalInstallments + totalLoans;
+
+  const btcKrwValue = btcKrw ? totalBtcSats * (btcKrw / 100_000_000) : 0;
+  const totalAssetKrw = totalFiat + btcKrwValue;
+  const netWorthKrw = totalAssetKrw - totalDebt;
+  const netWorthBtc = btcKrw ? Math.round(netWorthKrw / (btcKrw / 100_000_000)) : 0;
+
+  const snapshot: MonthlySnapshot = {
+    id: uuidv4(),
+    yearMonth,
+    totalFiat,
+    totalBtcSats,
+    totalDebt,
+    totalInstallments,
+    totalLoans,
+    btcKrw,
+    totalAssetKrw,
+    netWorthKrw,
+    netWorthBtc,
+    createdAt: new Date().toISOString(),
+  };
+
+  const updatedSnapshots = [...get().snapshots, snapshot];
+  set({ snapshots: updatedSnapshots });
+  await saveEncrypted(FILE_PATHS.SNAPSHOTS, updatedSnapshots, encryptionKey);
+  if (__DEV__) console.log(`[SnapshotStore] ${yearMonth} supplementary snapshot saved`);
+}

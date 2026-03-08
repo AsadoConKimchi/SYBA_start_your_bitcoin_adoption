@@ -17,14 +17,16 @@ import * as DocumentPicker from 'expo-document-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useAuthStore } from '../../src/stores/authStore';
-import { restoreBackup } from '../../src/utils/storage';
+import { restoreBackup, loadEncrypted, FILE_PATHS } from '../../src/utils/storage';
 import {
   generateSalt,
   hashPassword,
   deriveKey,
+  deriveKeySHA1,
   deriveKeySync,
   saveSecure,
   SECURE_KEYS,
+  CRYPTO_V2,
 } from '../../src/utils/encryption';
 
 export default function SetupScreen() {
@@ -133,45 +135,81 @@ export default function SetupScreen() {
         // Old format without salt header - can't restore cross-device
         Alert.alert(
           t('common.error'),
-          '이 백업 파일은 이전 버전 형식입니다. 원래 기기에서 새 백업을 생성해주세요.'
+          t('auth.legacyBackupError')
         );
         return;
       }
 
-      // Derive encryption key — try new async method first, fallback to old sync method
+      // Derive encryption key — try v2 (SHA-256) first, then v1 (SHA-1), then legacy sync
       let encryptionKey: string;
       let hasDeductionRecords = false;
+      const v2Key = await deriveKey(backupPassword, salt, (p) => setProgress(p * 0.3));
+
       try {
-        encryptionKey = await deriveKey(backupPassword, salt);
-        const restoreResult = await restoreBackup(fileUri, encryptionKey);
+        // Try v2 (SHA-256) key — backups from v1.2.0+
+        const restoreResult = await restoreBackup(fileUri, v2Key);
         hasDeductionRecords = restoreResult.hasDeductionRecords;
+        encryptionKey = v2Key;
       } catch {
-        // Fallback: pre-v0.1.10 backups used CryptoJS.PBKDF2 (sync) which produces different keys
-        const fallbackKey = deriveKeySync(backupPassword, salt);
-        const restoreResult = await restoreBackup(fileUri, fallbackKey);
-        hasDeductionRecords = restoreResult.hasDeductionRecords;
-        // Fallback succeeded — re-derive with new method for future consistency
-        encryptionKey = await deriveKey(backupPassword, salt);
-        // Re-encrypt all restored files with the new key
-        const { reEncryptAllData } = await import('../../src/utils/storage');
-        await reEncryptAllData(fallbackKey, encryptionKey);
+        try {
+          // Try v1 (SHA-1) key — backups from v0.1.10~v1.1.x
+          const v1Key = await deriveKeySHA1(backupPassword, salt, (p) => setProgress(0.3 + p * 0.3));
+          const restoreResult = await restoreBackup(fileUri, v1Key);
+          hasDeductionRecords = restoreResult.hasDeductionRecords;
+          // Re-encrypt with v2 key
+          const { reEncryptAllData } = await import('../../src/utils/storage');
+          await reEncryptAllData(v1Key, v2Key);
+          setProgress(0.8);
+          encryptionKey = v2Key;
+        } catch {
+          // Try legacy sync key — backups from pre-v0.1.10
+          const fallbackKey = deriveKeySync(backupPassword, salt);
+          const restoreResult = await restoreBackup(fileUri, fallbackKey);
+          hasDeductionRecords = restoreResult.hasDeductionRecords;
+          // Re-encrypt with v2 key
+          const { reEncryptAllData } = await import('../../src/utils/storage');
+          await reEncryptAllData(fallbackKey, v2Key);
+          setProgress(0.8);
+          encryptionKey = v2Key;
+        }
       }
 
-      // Save credentials to SecureStore
+      setProgress(0.9);
+      // Save credentials to SecureStore (always v2)
       const hash = hashPassword(backupPassword, salt);
       await Promise.all([
         saveSecure(SECURE_KEYS.ENCRYPTION_SALT, salt),
         saveSecure(SECURE_KEYS.PASSWORD_HASH, hash),
         saveSecure(SECURE_KEYS.ENCRYPTION_KEY, encryptionKey),
+        saveSecure(SECURE_KEYS.CRYPTO_VERSION, CRYPTO_V2),
       ]);
 
-      // 자동차감 기록 초기화 — 백업에 차감 기록이 포함되지 않은 경우만
-      // 백업의 자산 잔액에 이미 반영되어 있으므로 이 기록이 없으면 앱 시작 시 이중 차감 발생
+      // Legacy backups without deduction records: mark all items as already processed
+      // to prevent auto-deduction from re-processing transactions already reflected in balances
       if (!hasDeductionRecords) {
-        await AsyncStorage.multiRemove([
-          'lastCardDeduction',
-          'lastLoanDeduction',
-          'lastInstallmentDeduction',
+        const now = new Date();
+        const currentYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+        // Read restored data to get actual IDs
+        const [cards, loans, installments] = await Promise.all([
+          loadEncrypted<Array<{ id: string }>>(FILE_PATHS.CARDS, encryptionKey, []),
+          loadEncrypted<Array<{ id: string }>>(FILE_PATHS.LOANS, encryptionKey, []),
+          loadEncrypted<Array<{ id: string }>>(FILE_PATHS.INSTALLMENTS, encryptionKey, []),
+        ]);
+
+        const cardSentinel: Record<string, string> = {};
+        cards.forEach(c => { cardSentinel[c.id] = currentYM; });
+
+        const loanSentinel: Record<string, string> = {};
+        loans.forEach(l => { loanSentinel[l.id] = currentYM; });
+
+        const installmentSentinel: Record<string, string> = {};
+        installments.forEach(i => { installmentSentinel[i.id] = currentYM; });
+
+        await AsyncStorage.multiSet([
+          ['lastCardDeduction', JSON.stringify(cardSentinel)],
+          ['lastLoanDeduction', JSON.stringify(loanSentinel)],
+          ['lastInstallmentDeduction', JSON.stringify(installmentSentinel)],
         ]);
       }
 
@@ -209,7 +247,7 @@ export default function SetupScreen() {
         SYBA
       </Text>
       <Text style={{ fontSize: 12, color: theme.textMuted, marginTop: 4 }}>
-        Start Your Bitcoin Adoption
+        {t('app.tagline')}
       </Text>
     </View>
   );

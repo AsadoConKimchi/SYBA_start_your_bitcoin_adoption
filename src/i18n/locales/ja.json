@@ -1,4 +1,10 @@
 {
+  "app": {
+    "tagline": "ビットコイン家計簿を始めよう"
+  },
+  "auth": {
+    "legacyBackupError": "このバックアップファイルは旧バージョンの形式です。元のデバイスで新しいバックアップを作成してください。"
+  },
   "common": {
     "cancel": "キャンセル",
     "confirm": "確認",
@@ -272,6 +278,17 @@
     "emailCopied": "メールアドレスをクリップボードにコピーしました。",
     "billingInfo": "カード会社別請求期間情報",
     "billingInfoDetail": "カード登録時に表示される請求期間は各カード会社の公式データに基づいています。相違がある場合はメールでお知らせください。",
+    "refundPolicy": "返金ポリシー",
+    "refundPolicyDetail": "Lightning Networkの決済特性上、返金は決済日から7日以内にリクエストできます。\n\n返金をリクエストする場合は、設定のSupport IDを含めて{{supportEmail}}までメールでお問い合わせください。\n\n返金はお客様が提供するLightningインボイスを通じて処理されます。",
+    "emailOptional": "メール（任意）",
+    "emailPlaceholder": "カスタマーサポート用メール",
+    "emailSaved": "メールが保存されました",
+    "emailInvalid": "メール形式が正しくありません",
+    "paymentHistory": "決済履歴",
+    "noPaymentHistory": "決済履歴がありません",
+    "receiptTier": "プラン",
+    "receiptAmount": "決済金額",
+    "receiptDate": "決済日",
     "devTools": "開発者ツール",
     "addDummyData": "テストデータを追加",
     "addDummyDataSub": "6ヶ月分のダミーデータを生成",
@@ -290,7 +307,8 @@
     "envMissing": "未設定",
     "language": "言語",
     "region": "地域",
-    "recurringManagement": "固定費管理"
+    "recurringManagement": "固定費管理",
+    "recurringTransferManagement": "定期振替管理"
   },
   "expense": {
     "title": "支出を追加",
@@ -316,6 +334,7 @@
     "installment": "分割払い",
     "monthsInput": "月数を入力",
     "installmentSummary": "月{{amount}} × {{months}}ヶ月 {{interest}}",
+    "annualRate": "年利率",
     "selectInstallment": "分割払いを選択",
     "amountRequired": "金額を入力してください。",
     "categoryRequired": "カテゴリを選択または入力してください。",
@@ -371,6 +390,7 @@
     "registerFailed": "カード登録に失敗しました。",
     "deleteConfirm": "カード削除",
     "deleteMessage": "「{{name}}」カードを削除しますか？",
+    "hasActiveInstallments": "このカードには進行中の分割払いがあるため削除できません。",
     "setDefault": "デフォルトカード設定",
     "setDefaultMessage": "「{{name}}」をデフォルトカードに設定しました。",
     "defaultBadge": "デフォルト",
@@ -440,7 +460,19 @@
     "editFailed": "資産の更新に失敗しました。",
     "deleteConfirm": "資産を削除",
     "deleteMessage": "「{{name}}」を削除しますか？",
-    "deleteFailed": "資産の削除に失敗しました。"
+    "deleteFailed": "資産の削除に失敗しました。",
+    "editTitle": "資産を編集",
+    "detailInfo": "詳細情報",
+    "registrationDate": "登録日",
+    "lastUpdate": "最終更新",
+    "currentRate": "現在のレート",
+    "estimatedInterestLabel": "今月の予想利息",
+    "rateBasedOn": "年{{rate}}%基準",
+    "editEstimatedInterest": "予想利息を編集",
+    "editEstimatedInterestHint": "実際の利息と異なる場合は手動で編集してください",
+    "autoCalcLabel": "自動計算: {{amount}} (年{{rate}}%基準)",
+    "revertToAutoCalc": "自動計算に戻す",
+    "saveFailed": "保存に失敗しました。"
   },
   "loan": {
     "addTitle": "ローンを追加",
@@ -945,6 +977,29 @@
     "editDone": "固定費を更新しました。",
     "nameRequired": "名称を入力してください。",
     "auto": "自動"
+  },
+  "recurringTransfer": {
+    "title": "定期振替",
+    "addTitle": "定期振替を追加",
+    "editTitle": "定期振替を編集",
+    "name": "名前",
+    "namePlaceholder": "例：家賃、積立",
+    "fromAccount": "引き落とし口座",
+    "toAccount": "振込先口座",
+    "toCard": "チャージ先カード",
+    "transferType": "振替タイプ",
+    "accountToAccount": "口座振替",
+    "accountToCard": "カードチャージ",
+    "monthlyTotal": "月間定期振替",
+    "activeCount": "{{count}}件アクティブ",
+    "noItems": "登録された定期振替がありません",
+    "addFirst": "定期振替を追加",
+    "deleteConfirm": "定期振替を削除",
+    "deleteMessage": "「{{name}}」を削除しますか？",
+    "editDone": "定期振替を更新しました。",
+    "selectFromAccount": "引き落とし口座を選択してください",
+    "selectToTarget": "振込先を選択してください",
+    "sameAccountError": "引き落とし先と振込先が同じです"
   },
   "autoDeduction": {
     "insufficientBalanceTitle": "残高不足のお知らせ",
