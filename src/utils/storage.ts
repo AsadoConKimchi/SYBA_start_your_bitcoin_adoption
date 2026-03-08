@@ -2,9 +2,9 @@ import * as FileSystem from 'expo-file-system/legacy';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { encrypt, decrypt, getSecure, deleteSecure, SECURE_KEYS } from './encryption';
 
-console.log('[DEBUG] FileSystem.documentDirectory:', FileSystem.documentDirectory);
+if (__DEV__) { console.log('[DEBUG] FileSystem.documentDirectory:', FileSystem.documentDirectory); }
 const DATA_DIR = FileSystem.documentDirectory + 'data/';
-console.log('[DEBUG] DATA_DIR:', DATA_DIR);
+if (__DEV__) { console.log('[DEBUG] DATA_DIR:', DATA_DIR); }
 
 // 파일 손상 에러 클래스
 export class FileCorruptionError extends Error {
@@ -42,19 +42,19 @@ export const FILE_PATHS = {
 
 // 디렉토리 초기화
 export async function initializeStorage(): Promise<void> {
-  console.log('[DEBUG] initializeStorage 시작, DATA_DIR:', DATA_DIR);
+  if (__DEV__) { console.log('[DEBUG] initializeStorage 시작, DATA_DIR:', DATA_DIR); }
   try {
     const dirInfo = await FileSystem.getInfoAsync(DATA_DIR);
-    console.log('[DEBUG] dirInfo:', dirInfo);
+    if (__DEV__) { console.log('[DEBUG] dirInfo:', dirInfo); }
     if (!dirInfo.exists) {
-      console.log('[DEBUG] 디렉토리 생성 시도');
+      if (__DEV__) { console.log('[DEBUG] 디렉토리 생성 시도'); }
       await FileSystem.makeDirectoryAsync(DATA_DIR, { intermediates: true });
-      console.log('[DEBUG] 디렉토리 생성 완료');
+      if (__DEV__) { console.log('[DEBUG] 디렉토리 생성 완료'); }
     } else {
-      console.log('[DEBUG] 디렉토리 이미 존재');
+      if (__DEV__) { console.log('[DEBUG] 디렉토리 이미 존재'); }
     }
   } catch (error) {
-    console.log('[DEBUG] initializeStorage 에러:', error);
+    if (__DEV__) { console.log('[DEBUG] initializeStorage 에러:', error); }
     throw error;
   }
 }
@@ -65,16 +65,16 @@ export async function saveEncrypted<T>(
   data: T,
   encryptionKey: string
 ): Promise<void> {
-  console.log('[DEBUG] saveEncrypted 시작, path:', path);
+  if (__DEV__) { console.log('[DEBUG] saveEncrypted 시작, path:', path); }
   try {
     await initializeStorage();
-    console.log('[DEBUG] initializeStorage 완료');
+    if (__DEV__) { console.log('[DEBUG] initializeStorage 완료'); }
     const encrypted = await encrypt(data, encryptionKey);
-    console.log('[DEBUG] 암호화 완료, 길이:', encrypted.length);
+    if (__DEV__) { console.log('[DEBUG] 암호화 완료, 길이:', encrypted.length); }
     await FileSystem.writeAsStringAsync(path, encrypted);
-    console.log('[DEBUG] 파일 쓰기 완료');
+    if (__DEV__) { console.log('[DEBUG] 파일 쓰기 완료'); }
   } catch (error) {
-    console.log('[DEBUG] saveEncrypted 에러:', error);
+    if (__DEV__) { console.log('[DEBUG] saveEncrypted 에러:', error); }
     throw error;
   }
 }
@@ -258,11 +258,11 @@ export async function restoreBackup(
   backupFilePath: string,
   encryptionKey: string
 ): Promise<{ salt?: string; hasDeductionRecords: boolean }> {
-  console.log('[DEBUG] restoreBackup 시작, path:', backupFilePath);
+  if (__DEV__) { console.log('[DEBUG] restoreBackup 시작, path:', backupFilePath); }
 
   // 백업 파일 읽기
   const fileContent = await FileSystem.readAsStringAsync(backupFilePath);
-  console.log('[DEBUG] 백업 파일 읽기 완료');
+  if (__DEV__) { console.log('[DEBUG] 백업 파일 읽기 완료'); }
 
   // 헤더에서 솔트 추출 (새 포맷: SYBA_BACKUP:<salt>\n<encrypted>)
   let encrypted: string;
@@ -272,7 +272,7 @@ export async function restoreBackup(
     const newlineIdx = fileContent.indexOf('\n');
     embeddedSalt = fileContent.substring('SYBA_BACKUP:'.length, newlineIdx);
     encrypted = fileContent.substring(newlineIdx + 1);
-    console.log('[DEBUG] 백업 헤더에서 솔트 추출됨');
+    if (__DEV__) { console.log('[DEBUG] 백업 헤더에서 솔트 추출됨'); }
   } else {
     // 기존 포맷 (헤더 없음)
     encrypted = fileContent;
@@ -280,7 +280,7 @@ export async function restoreBackup(
 
   // 복호화
   const backupData = decrypt<BackupData>(encrypted, encryptionKey);
-  console.log('[DEBUG] 복호화 완료, version:', backupData.version);
+  if (__DEV__) { console.log('[DEBUG] 복호화 완료, version:', backupData.version); }
 
   // 각 데이터를 개별 파일에 저장
   await initializeStorage();
@@ -308,7 +308,7 @@ export async function restoreBackup(
     if (pairs.length > 0) await AsyncStorage.multiSet(pairs);
   }
 
-  console.log('[DEBUG] 모든 데이터 복원 완료');
+  if (__DEV__) { console.log('[DEBUG] 모든 데이터 복원 완료'); }
 
   return { salt: embeddedSalt ?? backupData.salt, hasDeductionRecords: !!backupData.deductionRecords };
 }

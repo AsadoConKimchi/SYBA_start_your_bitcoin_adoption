@@ -13,7 +13,12 @@
     "preset": "jest-expo/node",
     "testMatch": [
       "**/__tests__/**/*.test.ts"
-    ]
+    ],
+    "moduleNameMapper": {
+      "^expo-localization$": "<rootDir>/src/__mocks__/expo-localization.js",
+      "^expo-crypto$": "<rootDir>/src/__mocks__/expo-crypto.js",
+      "^expo-secure-store$": "<rootDir>/src/__mocks__/expo-secure-store.js"
+    }
   },
   "dependencies": {
     "@expo/ngrok": "^4.1.3",
