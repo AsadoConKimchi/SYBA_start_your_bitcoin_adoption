@@ -1023,5 +1023,9 @@
     "invalidFile": "Invalid CSV file",
     "noRows": "No data to import",
     "importing": "Importing..."
+  },
+  "delete": {
+    "deleteRecords": "Delete Records Too",
+    "keepRecords": "Keep Records"
   }
 }

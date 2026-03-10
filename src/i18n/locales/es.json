@@ -1023,5 +1023,9 @@
     "invalidFile": "Archivo CSV no válido",
     "noRows": "No hay datos para importar",
     "importing": "Importando..."
+  },
+  "delete": {
+    "deleteRecords": "Eliminar registros también",
+    "keepRecords": "Mantener registros"
   }
 }

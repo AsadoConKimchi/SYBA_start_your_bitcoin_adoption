@@ -1023,5 +1023,9 @@
     "invalidFile": "無効なCSVファイルです",
     "noRows": "インポートするデータがありません",
     "importing": "インポート中..."
+  },
+  "delete": {
+    "deleteRecords": "記録も削除",
+    "keepRecords": "記録を残す"
   }
 }
