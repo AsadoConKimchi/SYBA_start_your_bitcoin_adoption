@@ -37,6 +37,9 @@ export function calculateInstallmentPayment(
   isInterestFree: boolean,
   annualRate: number = 0
 ): { monthlyPayment: number; totalInterest: number } {
+  if (months <= 0) {
+    return { monthlyPayment: 0, totalInterest: 0 };
+  }
   if (isInterestFree || annualRate === 0) {
     // 무이자: 정확한 나눗셈 (반올림으로 오차 최소화)
     const monthlyPayment = Math.round(totalAmount / months);
@@ -75,6 +78,9 @@ export function calculateLoanPayment(
   months: number,
   type: RepaymentType
 ): { monthlyPayment: number; totalInterest: number } {
+  if (months <= 0) {
+    return { monthlyPayment: 0, totalInterest: 0 };
+  }
   const monthlyRate = annualRate / 100 / 12;
 
   switch (type) {
@@ -146,6 +152,7 @@ export function generateRepaymentSchedule(
   type: RepaymentType,
   startDate: string
 ): RepaymentSchedule[] {
+  if (months <= 0) return [];
   const monthlyRate = annualRate / 100 / 12;
   const schedule: RepaymentSchedule[] = [];
   let remaining = principal;

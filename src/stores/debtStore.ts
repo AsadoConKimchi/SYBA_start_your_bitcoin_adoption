@@ -8,6 +8,7 @@ import {
   calculateEndDate,
   calculatePaidMonths,
   isDueThisMonth,
+  generateRepaymentSchedule,
 } from '../utils/debtCalculator';
 import { loadEncrypted, saveEncrypted, FILE_PATHS } from '../utils/storage';
 import { generateRepaymentRecords } from '../utils/repaymentRecords';
@@ -227,11 +228,22 @@ export const useDebtStore = create<DebtState & DebtActions>((set, get) => ({
 
     const paidMonths = data.paidMonths ?? calculatePaidMonths(data.startDate);
 
-    // 잔여 원금 계산 (원금균등/원리금균등의 경우)
+    // 잔여 원금 계산 (상환 방식에 따라 다름)
     let remainingPrincipal = data.principal;
     if (data.repaymentType !== 'bullet' && paidMonths > 0) {
-      const monthlyPrincipal = data.principal / data.termMonths;
-      remainingPrincipal = Math.max(0, data.principal - monthlyPrincipal * paidMonths);
+      if (data.repaymentType === 'equalPrincipalAndInterest') {
+        // 원리금균등: 스케줄에서 정확한 잔여원금 추출
+        const schedule = generateRepaymentSchedule(
+          data.principal, data.interestRate, data.termMonths,
+          data.repaymentType, data.startDate
+        );
+        const targetEntry = schedule[Math.min(paidMonths, schedule.length) - 1];
+        remainingPrincipal = targetEntry ? targetEntry.remainingPrincipal : 0;
+      } else {
+        // 원금균등: 단순 비례 계산
+        const monthlyPrincipal = data.principal / data.termMonths;
+        remainingPrincipal = Math.max(0, data.principal - monthlyPrincipal * paidMonths);
+      }
     }
 
     const newLoan: Loan = {
@@ -277,23 +289,26 @@ export const useDebtStore = create<DebtState & DebtActions>((set, get) => ({
     const existingLoan = get().loans.find((item) => item.id === id);
     if (!existingLoan) return;
 
+    // 호출자 객체 변이 방지를 위해 복사본 사용
+    const safeData = { ...data };
+
     // 상환 방식 변경 차단 (삭제 후 재생성으로만 가능)
-    if (data.repaymentType && data.repaymentType !== existingLoan.repaymentType) {
-      delete data.repaymentType;
+    if (safeData.repaymentType && safeData.repaymentType !== existingLoan.repaymentType) {
+      delete safeData.repaymentType;
     }
 
     // 스케줄에 영향을 주는 필드 변경 감지
     const scheduleAffected =
-      (data.principal !== undefined && data.principal !== existingLoan.principal) ||
-      (data.interestRate !== undefined && data.interestRate !== existingLoan.interestRate) ||
-      (data.termMonths !== undefined && data.termMonths !== existingLoan.termMonths) ||
-      (data.startDate !== undefined && data.startDate !== existingLoan.startDate) ||
-      (data.paidMonths !== undefined && data.paidMonths !== existingLoan.paidMonths);
+      (safeData.principal !== undefined && safeData.principal !== existingLoan.principal) ||
+      (safeData.interestRate !== undefined && safeData.interestRate !== existingLoan.interestRate) ||
+      (safeData.termMonths !== undefined && safeData.termMonths !== existingLoan.termMonths) ||
+      (safeData.startDate !== undefined && safeData.startDate !== existingLoan.startDate) ||
+      (safeData.paidMonths !== undefined && safeData.paidMonths !== existingLoan.paidMonths);
 
     const loans = get().loans.map((item) => {
       if (item.id !== id) return item;
 
-      const updated = { ...item, ...data, updatedAt: new Date().toISOString() };
+      const updated = { ...item, ...safeData, updatedAt: new Date().toISOString() };
 
       // 조건 변경 시 재계산
       if (
@@ -372,13 +387,29 @@ export const useDebtStore = create<DebtState & DebtActions>((set, get) => ({
       }
     }
 
-    const loans = get().loans.filter((item) => item.id !== id);
-    const repaymentRecords = get().repaymentRecords.filter((r) => r.loanId !== id);
-    set({ loans, repaymentRecords });
-    await Promise.all([
-      saveEncrypted(FILE_PATHS.LOANS, loans, encryptionKey),
-      saveEncrypted(FILE_PATHS.REPAYMENT_RECORDS, repaymentRecords, encryptionKey),
-    ]);
+    try {
+      const loans = get().loans.filter((item) => item.id !== id);
+      const repaymentRecords = get().repaymentRecords.filter((r) => r.loanId !== id);
+      set({ loans, repaymentRecords });
+      await Promise.all([
+        saveEncrypted(FILE_PATHS.LOANS, loans, encryptionKey),
+        saveEncrypted(FILE_PATHS.REPAYMENT_RECORDS, repaymentRecords, encryptionKey),
+      ]);
+    } catch (error) {
+      // 삭제 실패 시 롤백한 금액을 다시 차감하여 원복
+      if (rollbackToAsset && loan?.linkedAssetId) {
+        const { total } = get().getAutoDeductedTotal(id);
+        if (total > 0) {
+          const { useAssetStore } = require('./assetStore');
+          await useAssetStore.getState().adjustAssetBalance(
+            loan.linkedAssetId,
+            -total, // 음수: 롤백 취소 (재차감)
+            encryptionKey
+          ).catch(() => {});
+        }
+      }
+      throw error;
+    }
   },
 
   // 특정 대출의 상환 기록 조회

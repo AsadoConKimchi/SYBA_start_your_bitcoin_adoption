@@ -219,7 +219,9 @@ function getOverdueDates(recurring: RecurringExpense, today: Date): string[] {
       year = lastExecuted.getFullYear() + 1;
     }
 
-    while (true) {
+    const MAX_YEARS = 120;
+    let iterations = 0;
+    while (iterations++ < MAX_YEARS) {
       const cursor = new Date(year, monthOfYear, recurring.dayOfMonth);
       if (cursor > today) break;
 

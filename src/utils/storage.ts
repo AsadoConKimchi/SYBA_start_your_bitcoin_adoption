@@ -107,12 +107,17 @@ export async function loadEncryptedSafe<T>(
 }
 
 // 암호화된 데이터 로드 (기존 호환용)
+// 파일 없음 → defaultValue 반환 (정상)
+// 복호화 실패 → throw (빈 데이터로 덮어쓰기 방지)
 export async function loadEncrypted<T>(
   path: string,
   encryptionKey: string,
   defaultValue: T
 ): Promise<T> {
   const result = await loadEncryptedSafe(path, encryptionKey, defaultValue);
+  if (!result.success && result.error) {
+    throw result.error;
+  }
   return result.data;
 }
 

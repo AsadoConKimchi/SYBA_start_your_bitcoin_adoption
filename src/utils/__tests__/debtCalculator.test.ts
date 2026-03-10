@@ -19,6 +19,18 @@ describe('calculateInstallmentPayment', () => {
     expect(result.monthlyPayment).toBeGreaterThan(0);
     expect(result.totalInterest).toBeGreaterThan(0);
   });
+
+  it('months=0일 때 안전하게 0 반환', () => {
+    const result = calculateInstallmentPayment(100000, 0, true);
+    expect(result.monthlyPayment).toBe(0);
+    expect(result.totalInterest).toBe(0);
+  });
+
+  it('months 음수일 때 안전하게 0 반환', () => {
+    const result = calculateInstallmentPayment(100000, -1, false, 5);
+    expect(result.monthlyPayment).toBe(0);
+    expect(result.totalInterest).toBe(0);
+  });
 });
 
 describe('calculateLoanPayment', () => {
@@ -39,6 +51,19 @@ describe('calculateLoanPayment', () => {
     const result = calculateLoanPayment(10000000, 5, 12, 'equalPrincipal');
     expect(result.monthlyPayment).toBeGreaterThan(0);
     expect(result.totalInterest).toBeGreaterThan(0);
+  });
+
+  it('months=0일 때 안전하게 0 반환', () => {
+    const result = calculateLoanPayment(10000000, 5, 0, 'equalPrincipalAndInterest');
+    expect(result.monthlyPayment).toBe(0);
+    expect(result.totalInterest).toBe(0);
+  });
+});
+
+describe('generateRepaymentSchedule - months 가드', () => {
+  it('months=0일 때 빈 배열 반환', () => {
+    const schedule = generateRepaymentSchedule(10000000, 5, 0, 'equalPrincipal', '2026-01-01');
+    expect(schedule).toEqual([]);
   });
 });
 
