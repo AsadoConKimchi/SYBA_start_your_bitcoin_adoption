@@ -73,10 +73,11 @@ interface DebtActions {
     encryptionKey: string
   ) => Promise<void>;
 
-  deleteLoan: (id: string, encryptionKey: string) => Promise<void>;
+  deleteLoan: (id: string, encryptionKey: string, rollbackToAsset?: boolean) => Promise<void>;
 
   // 상환 기록
   getRecordsForLoan: (loanId: string) => RepaymentRecord[];
+  getAutoDeductedTotal: (loanId: string) => { total: number; count: number };
   markRecordAsPaid: (recordId: string, encryptionKey: string) => Promise<void>;
 
   // 헬퍼
@@ -273,6 +274,22 @@ export const useDebtStore = create<DebtState & DebtActions>((set, get) => ({
 
   // 대출 수정
   updateLoan: async (id, data, encryptionKey) => {
+    const existingLoan = get().loans.find((item) => item.id === id);
+    if (!existingLoan) return;
+
+    // 상환 방식 변경 차단 (삭제 후 재생성으로만 가능)
+    if (data.repaymentType && data.repaymentType !== existingLoan.repaymentType) {
+      delete data.repaymentType;
+    }
+
+    // 스케줄에 영향을 주는 필드 변경 감지
+    const scheduleAffected =
+      (data.principal !== undefined && data.principal !== existingLoan.principal) ||
+      (data.interestRate !== undefined && data.interestRate !== existingLoan.interestRate) ||
+      (data.termMonths !== undefined && data.termMonths !== existingLoan.termMonths) ||
+      (data.startDate !== undefined && data.startDate !== existingLoan.startDate) ||
+      (data.paidMonths !== undefined && data.paidMonths !== existingLoan.paidMonths);
+
     const loans = get().loans.map((item) => {
       if (item.id !== id) return item;
 
@@ -282,8 +299,7 @@ export const useDebtStore = create<DebtState & DebtActions>((set, get) => ({
       if (
         data.principal !== undefined ||
         data.interestRate !== undefined ||
-        data.termMonths !== undefined ||
-        data.repaymentType !== undefined
+        data.termMonths !== undefined
       ) {
         const { monthlyPayment, totalInterest } = calculateLoanPayment(
           updated.principal,
@@ -299,12 +315,63 @@ export const useDebtStore = create<DebtState & DebtActions>((set, get) => ({
       return updated;
     });
 
-    set({ loans });
-    await saveEncrypted(FILE_PATHS.LOANS, loans, encryptionKey);
+    const updatedLoan = loans.find((l) => l.id === id)!;
+
+    // 스케줄 영향 필드가 변경되면 상환 기록 재생성
+    let repaymentRecords = get().repaymentRecords;
+    if (scheduleAffected) {
+      // 기존 기록에서 실제 납부(paidAt 있는) 기록 보존
+      const existingRecords = repaymentRecords.filter((r) => r.loanId === id);
+      const paidAtMap = new Map<number, string>();
+      existingRecords.forEach((r) => {
+        if (r.paidAt) paidAtMap.set(r.month, r.paidAt);
+      });
+
+      // 새 스케줄 생성
+      const newRecords = generateRepaymentRecords(updatedLoan);
+
+      // 실제 납부 기록의 paidAt 복원
+      newRecords.forEach((r) => {
+        const existingPaidAt = paidAtMap.get(r.month);
+        if (existingPaidAt) {
+          r.status = 'paid';
+          r.paidAt = existingPaidAt;
+        }
+      });
+
+      // 다른 대출의 기록은 유지, 현재 대출만 교체
+      repaymentRecords = [
+        ...repaymentRecords.filter((r) => r.loanId !== id),
+        ...newRecords,
+      ];
+    }
+
+    set({ loans, repaymentRecords });
+    await Promise.all([
+      saveEncrypted(FILE_PATHS.LOANS, loans, encryptionKey),
+      ...(scheduleAffected
+        ? [saveEncrypted(FILE_PATHS.REPAYMENT_RECORDS, repaymentRecords, encryptionKey)]
+        : []),
+    ]);
   },
 
-  // 대출 삭제
-  deleteLoan: async (id, encryptionKey) => {
+  // 대출 삭제 (롤백 옵션 포함)
+  deleteLoan: async (id, encryptionKey, rollbackToAsset) => {
+    const loan = get().loans.find((item) => item.id === id);
+
+    // 롤백: 자동차감 금액을 연결 계좌에 복원
+    if (rollbackToAsset && loan?.linkedAssetId) {
+      const { total } = get().getAutoDeductedTotal(id);
+      if (total > 0) {
+        const { useAssetStore } = require('./assetStore');
+        await useAssetStore.getState().adjustAssetBalance(
+          loan.linkedAssetId,
+          total, // 양수: 잔액 증가 (복원)
+          encryptionKey
+        );
+      }
+    }
+
     const loans = get().loans.filter((item) => item.id !== id);
     const repaymentRecords = get().repaymentRecords.filter((r) => r.loanId !== id);
     set({ loans, repaymentRecords });
@@ -317,6 +384,17 @@ export const useDebtStore = create<DebtState & DebtActions>((set, get) => ({
   // 특정 대출의 상환 기록 조회
   getRecordsForLoan: (loanId: string) => {
     return get().repaymentRecords.filter((r) => r.loanId === loanId);
+  },
+
+  // 자동차감된 총액 조회 (paidAt이 설정된 기록 = 실제 자산 차감 발생)
+  getAutoDeductedTotal: (loanId: string) => {
+    const records = get().repaymentRecords.filter(
+      (r) => r.loanId === loanId && r.paidAt !== undefined
+    );
+    return {
+      total: records.reduce((sum, r) => sum + r.total, 0),
+      count: records.length,
+    };
   },
 
   // 상환 기록 납부 완료 처리

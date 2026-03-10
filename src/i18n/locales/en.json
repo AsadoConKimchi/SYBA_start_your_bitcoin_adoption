@@ -539,7 +539,11 @@
     "interestPaymentDayFormat": "{{day}}th of each month",
     "selectInterestPaymentDay": "Select Interest Payment Day",
     "interestPaymentDayHint": "Interest payment day for bullet/overdraft loans",
-    "interestPaymentDayDefault": "Not set (based on repayment day)"
+    "interestPaymentDayDefault": "Not set (based on repayment day)",
+    "repaymentTypeChangeHint": "To change the repayment type, delete the loan and add a new one.",
+    "deleteWithRollbackMessage": "Delete \"{{name}}\" loan.\n\nAuto-deducted: {{count}} time(s), total {{amount}}\n\nRestore to {{account}}?",
+    "deleteWithRollback": "Delete + Restore",
+    "deleteWithoutRollback": "Delete Only"
   },
   "installment": {
     "addTitle": "Add Installment",

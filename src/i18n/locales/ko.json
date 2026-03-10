@@ -539,7 +539,11 @@
     "interestPaymentDayFormat": "매월 {{day}}일",
     "selectInterestPaymentDay": "이자 납부일 선택",
     "interestPaymentDayHint": "만기일시상환/마이너스통장의 이자 납부일",
-    "interestPaymentDayDefault": "설정 안 함 (상환일 기준)"
+    "interestPaymentDayDefault": "설정 안 함 (상환일 기준)",
+    "repaymentTypeChangeHint": "상환 방식을 변경하려면 대출을 삭제 후 새로 추가하세요.",
+    "deleteWithRollbackMessage": "\"{{name}}\" 대출을 삭제합니다.\n\n자동 차감 이력: {{count}}회, 총 {{amount}}\n\n{{account}} 계좌에 복원하시겠습니까?",
+    "deleteWithRollback": "삭제 + 복원",
+    "deleteWithoutRollback": "삭제만"
   },
   "installment": {
     "addTitle": "할부 추가",

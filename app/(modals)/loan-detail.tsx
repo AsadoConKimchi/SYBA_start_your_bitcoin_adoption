@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -37,7 +37,7 @@ export default function LoanDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { getEncryptionKey } = useAuthStore();
   const encryptionKey = getEncryptionKey();
-  const { loans, updateLoan, deleteLoan, getRecordsForLoan } = useDebtStore();
+  const { loans, repaymentRecords: allRecords, updateLoan, deleteLoan, getAutoDeductedTotal } = useDebtStore();
   const { assets } = useAssetStore();
   const region = getCurrentRegion();
 
@@ -115,8 +115,11 @@ export default function LoanDetailScreen() {
   const progress = loan.paidMonths / loan.termMonths;
   const remainingMonths = loan.termMonths - loan.paidMonths;
 
-  // 상환 기록 조회
-  const repaymentRecords = getRecordsForLoan(loan.id);
+  // 상환 기록 조회 (메모이제이션)
+  const repaymentRecords = useMemo(
+    () => allRecords.filter((r) => r.loanId === loan.id),
+    [allRecords, loan.id]
+  );
 
   const formatTermLabel = (months: number): string => {
     return t('installment.monthsFormat', { count: months });
@@ -157,7 +160,6 @@ export default function LoanDetailScreen() {
           institution: institution.trim(),
           principal: amount,
           interestRate: rate,
-          repaymentType,
           termMonths: actualTerm,
           startDate: startDate.toISOString().split('T')[0],
           paidMonths: parseInt(paidMonths) || 0,
@@ -179,27 +181,76 @@ export default function LoanDetailScreen() {
   };
 
   const handleDelete = () => {
-    Alert.alert(
-      t('loan.deleteConfirm'),
-      t('loan.deleteMessage', { name: loan.name }),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('common.delete'),
-          style: 'destructive',
-          onPress: async () => {
-            if (!encryptionKey) return;
-            try {
-              await deleteLoan(loan.id, encryptionKey);
-              router.back();
-            } catch (error) {
-              console.error('대출 삭제 실패:', error);
-              Alert.alert(t('common.error'), t('loan.deleteFailed'));
-            }
+    if (!encryptionKey) return;
+
+    const { total, count } = getAutoDeductedTotal(loan.id);
+    const linkedAsset = loan.linkedAssetId
+      ? fiatAssets.find((a) => a.id === loan.linkedAssetId)
+      : null;
+
+    // 자동차감 이력이 있고 연결 계좌가 있으면 롤백 옵션 제공
+    if (count > 0 && linkedAsset) {
+      const formattedAmount = formatKrw(total);
+      Alert.alert(
+        t('loan.deleteConfirm'),
+        t('loan.deleteWithRollbackMessage', {
+          name: loan.name,
+          count,
+          amount: formattedAmount,
+          account: linkedAsset.name,
+        }),
+        [
+          { text: t('common.cancel'), style: 'cancel' },
+          {
+            text: t('loan.deleteWithRollback'),
+            onPress: async () => {
+              try {
+                await deleteLoan(loan.id, encryptionKey, true);
+                router.back();
+              } catch (error) {
+                console.error('대출 삭제(롤백) 실패:', error);
+                Alert.alert(t('common.error'), t('loan.deleteFailed'));
+              }
+            },
           },
-        },
-      ]
-    );
+          {
+            text: t('loan.deleteWithoutRollback'),
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                await deleteLoan(loan.id, encryptionKey, false);
+                router.back();
+              } catch (error) {
+                console.error('대출 삭제 실패:', error);
+                Alert.alert(t('common.error'), t('loan.deleteFailed'));
+              }
+            },
+          },
+        ]
+      );
+    } else {
+      // 자동차감 이력 없음 — 기존 2-button Alert
+      Alert.alert(
+        t('loan.deleteConfirm'),
+        t('loan.deleteMessage', { name: loan.name }),
+        [
+          { text: t('common.cancel'), style: 'cancel' },
+          {
+            text: t('common.delete'),
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                await deleteLoan(loan.id, encryptionKey);
+                router.back();
+              } catch (error) {
+                console.error('대출 삭제 실패:', error);
+                Alert.alert(t('common.error'), t('loan.deleteFailed'));
+              }
+            },
+          },
+        ]
+      );
+    }
   };
 
   // 보기 모드
@@ -403,7 +454,7 @@ export default function LoanDetailScreen() {
           {/* 삭제 버튼 */}
           <TouchableOpacity
             style={{
-              backgroundColor: '#FEE2E2',
+              backgroundColor: theme.errorBanner,
               borderRadius: 12,
               padding: 16,
               alignItems: 'center',
@@ -477,7 +528,7 @@ export default function LoanDetailScreen() {
                     : item.status === 'overdue' ? theme.error
                     : theme.text;
                   const bgColor = item.status === 'paid' ? theme.incomeButtonBg
-                    : item.status === 'overdue' ? '#FEE2E2'
+                    : item.status === 'overdue' ? theme.errorBanner
                     : theme.modalBackground;
                   return (
                     <View
@@ -673,27 +724,24 @@ export default function LoanDetailScreen() {
             />
           </View>
 
-          {/* 상환 방식 */}
+          {/* 상환 방식 (수정 불가 — 삭제 후 재생성으로만 변경) */}
           <View style={{ marginBottom: 20 }}>
-            <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('loan.repaymentType')} *</Text>
-            <TouchableOpacity
+            <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('loan.repaymentType')}</Text>
+            <View
               style={{
                 backgroundColor: theme.backgroundSecondary,
                 borderRadius: 8,
                 padding: 16,
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
+                opacity: 0.6,
               }}
-              onPress={() => setShowTypePicker(true)}
             >
-              <View>
-                <Text style={{ fontSize: 16, color: theme.text }}>
-                  {REPAYMENT_TYPE_LABELS[repaymentType]}
-                </Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
-            </TouchableOpacity>
+              <Text style={{ fontSize: 16, color: theme.textMuted }}>
+                {REPAYMENT_TYPE_LABELS[repaymentType]}
+              </Text>
+            </View>
+            <Text style={{ fontSize: 12, color: theme.textMuted, marginTop: 6 }}>
+              {t('loan.repaymentTypeChangeHint')}
+            </Text>
           </View>
 
           {/* 대출 기간 */}

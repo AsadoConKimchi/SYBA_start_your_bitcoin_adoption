@@ -539,7 +539,11 @@
     "interestPaymentDayFormat": "毎月{{day}}日",
     "selectInterestPaymentDay": "利息支払日を選択",
     "interestPaymentDayHint": "一括返済/当座貸越の利息支払日",
-    "interestPaymentDayDefault": "未設定（返済日基準）"
+    "interestPaymentDayDefault": "未設定（返済日基準）",
+    "repaymentTypeChangeHint": "返済方式を変更するには、ローンを削除して新しく追加してください。",
+    "deleteWithRollbackMessage": "「{{name}}」ローンを削除します。\n\n自動引き落とし履歴: {{count}}回、合計 {{amount}}\n\n{{account}}に復元しますか？",
+    "deleteWithRollback": "削除 + 復元",
+    "deleteWithoutRollback": "削除のみ"
   },
   "installment": {
     "addTitle": "分割払いを追加",

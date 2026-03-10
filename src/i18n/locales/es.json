@@ -539,7 +539,11 @@
     "interestPaymentDayFormat": "Día {{day}} de cada mes",
     "selectInterestPaymentDay": "Seleccionar día de pago de intereses",
     "interestPaymentDayHint": "Día de pago de intereses para préstamos bullet/sobregiro",
-    "interestPaymentDayDefault": "Sin configurar (basado en día de pago)"
+    "interestPaymentDayDefault": "Sin configurar (basado en día de pago)",
+    "repaymentTypeChangeHint": "Para cambiar el tipo de amortización, eliminá el préstamo y agregá uno nuevo.",
+    "deleteWithRollbackMessage": "Eliminar préstamo \"{{name}}\".\n\nDeducciones automáticas: {{count}} vez/veces, total {{amount}}\n\n¿Restaurar en la cuenta {{account}}?",
+    "deleteWithRollback": "Eliminar + Restaurar",
+    "deleteWithoutRollback": "Solo eliminar"
   },
   "installment": {
     "addTitle": "Agregar Cuotas",
@@ -657,7 +661,7 @@
     "wrongCurrent": "La contraseña actual es incorrecta.",
     "failed": "Error al cambiar la contraseña.",
     "reEncrypting": "Reencriptando datos...",
-    "doNotCloseWarning": "No cierre la aplicación. Puede ocurrir pérdida de datos."
+    "doNotCloseWarning": "No cierres la aplicación. Puede ocurrir pérdida de datos."
   },
   "editRecord": {
     "title": "Editar Registro",
