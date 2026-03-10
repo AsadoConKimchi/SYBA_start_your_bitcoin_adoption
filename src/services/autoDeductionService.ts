@@ -261,17 +261,18 @@ export async function processLoanRepayments(): Promise<{
           newRemainingPrincipal = Math.max(0, Math.round(currentRemainingPrincipal - monthlyPrincipal));
         }
 
-        // Step 1: pending transaction 저장 (크래시 복구용)
-        await AsyncStorage.setItem(STORAGE_KEYS.PENDING_LOAN_TX, JSON.stringify({
+        // Step 1: pending transaction 저장 (차감 전 — 크래시 시 무시됨)
+        const pendingData = {
           loanId: loan.id,
           yearMonth,
-          step: 'asset_deducted',
+          step: 'pre_deduction',
           newPaidMonths,
           newRemainingPrincipal: Math.round(newRemainingPrincipal),
           isCompleted,
           monthlyPayment: loan.monthlyPayment,
           loanName: loan.name,
-        }));
+        };
+        await AsyncStorage.setItem(STORAGE_KEYS.PENDING_LOAN_TX, JSON.stringify(pendingData));
 
         // Step 2: 자산에서 차감
         const balanceResult = await adjustAssetBalance(
@@ -283,7 +284,11 @@ export async function processLoanRepayments(): Promise<{
           result.warnings.push({ assetName: balanceResult.assetName, requested: balanceResult.requested, actual: balanceResult.actual });
         }
 
-        // Step 3: 기록탭에 지출 자동 기록
+        // Step 3: pending을 'asset_deducted'로 업데이트 (차감 완료 확인)
+        pendingData.step = 'asset_deducted';
+        await AsyncStorage.setItem(STORAGE_KEYS.PENDING_LOAN_TX, JSON.stringify(pendingData));
+
+        // Step 4: 기록탭에 지출 자동 기록
         const recordData = createLoanRepaymentRecordData({
           ...loan,
           paidMonths: currentPaidMonths,
@@ -307,7 +312,7 @@ export async function processLoanRepayments(): Promise<{
           console.log(`[AutoDeduction] 대출 ${loan.name}: 기록탭에 지출 기록 추가됨`);
         }
 
-        // Step 4: 대출 상환 상태 업데이트
+        // Step 5: 대출 상환 상태 업데이트
         await updateLoan(
           loan.id,
           {
@@ -318,7 +323,14 @@ export async function processLoanRepayments(): Promise<{
           encryptionKey
         );
 
-        // Step 5: 트랜잭션 완료 — pending 제거 + 차감 기록 저장
+        // Step 5-1: 상환 기록 납부 완료 마킹
+        const { getRecordsForLoan, markRecordAsPaid } = useDebtStore.getState();
+        const record = getRecordsForLoan(loan.id).find((r) => r.month === newPaidMonths);
+        if (record) {
+          await markRecordAsPaid(record.id, encryptionKey);
+        }
+
+        // Step 6: 트랜잭션 완료 — pending 제거 + 차감 기록 저장
         await AsyncStorage.removeItem(STORAGE_KEYS.PENDING_LOAN_TX);
 
         // 로컬 추적 변수 갱신
@@ -500,7 +512,14 @@ async function recoverPendingLoanTransaction(
 
     console.log(`[AutoDeduction] 미완료 대출 트랜잭션 복구: ${pending.loanId} (${pending.yearMonth}, step: ${pending.step})`);
 
-    // 누락된 기록탭 지출 기록 복구 (자산 차감은 이미 완료됨)
+    // pre_deduction: 자산 차감 전에 크래시 → 아무것도 안 했으므로 pending만 삭제
+    if (pending.step === 'pre_deduction') {
+      console.log('[AutoDeduction] pre_deduction 상태 — 자산 미차감, pending 삭제');
+      await AsyncStorage.removeItem(STORAGE_KEYS.PENDING_LOAN_TX);
+      return;
+    }
+
+    // asset_deducted: 자산은 차감됐지만 기록/상태 미업데이트 → 나머지 완료
     if (pending.step === 'asset_deducted' && pending.monthlyPayment) {
       try {
         const { addExpense } = useLedgerStore.getState();
@@ -523,7 +542,7 @@ async function recoverPendingLoanTransaction(
     }
 
     // 대출 상태 업데이트
-    const { updateLoan } = useDebtStore.getState();
+    const { updateLoan, getRecordsForLoan, markRecordAsPaid } = useDebtStore.getState();
     await updateLoan(
       pending.loanId,
       {
@@ -533,6 +552,12 @@ async function recoverPendingLoanTransaction(
       },
       encryptionKey
     );
+
+    // 상환 기록 납부 완료 마킹
+    const record = getRecordsForLoan(pending.loanId).find((r) => r.month === pending.newPaidMonths);
+    if (record) {
+      await markRecordAsPaid(record.id, encryptionKey);
+    }
 
     // 차감 기록 + pending 제거
     lastDeduction[pending.loanId] = pending.yearMonth;
