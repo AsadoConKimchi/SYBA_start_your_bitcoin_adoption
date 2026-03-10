@@ -16,6 +16,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.syba.finance",
+      "buildNumber": "5",
       "infoPlist": {
         "NSFaceIDUsageDescription": "생체 인증으로 앱에 로그인합니다"
       }
