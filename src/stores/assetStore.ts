@@ -221,22 +221,27 @@ export const useAssetStore = create<AssetState & AssetActions>((set, get) => ({
       }
     }
 
+    // 법정화폐는 원 단위 반올림, 비트코인은 sat 단위(정수)
+    const finalBalance = isBitcoinAsset(asset)
+      ? Math.round(newBalance)
+      : Math.round(newBalance);
+
     const assets = get().assets.map((a) => {
       if (a.id !== id) return a;
       return {
         ...a,
-        balance: newBalance,
+        balance: finalBalance,
         updatedAt: new Date().toISOString(),
       } as Asset;
     });
 
     set({ assets });
     await saveEncrypted(FILE_PATHS.ASSETS, assets, encryptionKey);
-    if (__DEV__) { console.log(`[adjustAssetBalance] ${asset.name}: ${asset.balance} → ${newBalance} (${amount >= 0 ? '+' : ''}${amount})`); }
+    if (__DEV__) { console.log(`[adjustAssetBalance] ${asset.name}: ${asset.balance} → ${finalBalance} (${amount >= 0 ? '+' : ''}${amount})`); }
 
-    const actualChange = newBalance - asset.balance;
+    const actualChange = finalBalance - asset.balance;
     return {
-      clamped: originalNewBalance !== newBalance,
+      clamped: originalNewBalance !== finalBalance,
       requested: Math.abs(amount),
       actual: Math.abs(actualChange),
       assetName: asset.name,

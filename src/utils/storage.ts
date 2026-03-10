@@ -2,9 +2,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { encrypt, decrypt, getSecure, deleteSecure, SECURE_KEYS } from './encryption';
 
-if (__DEV__) { console.log('[DEBUG] FileSystem.documentDirectory:', FileSystem.documentDirectory); }
 const DATA_DIR = FileSystem.documentDirectory + 'data/';
-if (__DEV__) { console.log('[DEBUG] DATA_DIR:', DATA_DIR); }
 
 // 파일 손상 에러 클래스
 export class FileCorruptionError extends Error {
@@ -135,6 +133,7 @@ export async function checkDataIntegrity(
     FILE_PATHS.CATEGORIES,
     FILE_PATHS.SNAPSHOTS,
     FILE_PATHS.RECURRING,
+    FILE_PATHS.RECURRING_TRANSFERS,
   ];
 
   for (const path of filesToCheck) {
@@ -215,13 +214,14 @@ export async function createBackup(
     }),
     snapshots: await loadEncrypted(FILE_PATHS.SNAPSHOTS, encryptionKey, []),
     recurring: await loadEncrypted(FILE_PATHS.RECURRING, encryptionKey, []),
+    recurringTransfers: await loadEncrypted(FILE_PATHS.RECURRING_TRANSFERS, encryptionKey, []),
     deductionRecords: {
       lastCardDeduction: lastCardDeduction ? JSON.parse(lastCardDeduction) : null,
       lastLoanDeduction: lastLoanDeduction ? JSON.parse(lastLoanDeduction) : null,
       lastInstallmentDeduction: lastInstallmentDeduction ? JSON.parse(lastInstallmentDeduction) : null,
     },
     exportedAt: new Date().toISOString(),
-    version: '1.0.0',
+    version: '1.1.0',
     salt,
   };
 
@@ -243,6 +243,7 @@ interface BackupData {
   categories: { expense: unknown[]; income: unknown[] };
   snapshots?: unknown[]; // 선택적 (기존 백업 호환)
   recurring?: unknown[]; // 선택적 (기존 백업 호환)
+  recurringTransfers?: unknown[]; // 선택적 (v1.1.0+ 백업)
   deductionRecords?: {
     lastCardDeduction: Record<string, string> | null;
     lastLoanDeduction: Record<string, string> | null;
@@ -296,6 +297,8 @@ export async function restoreBackup(
     ...(backupData.snapshots ? [saveEncrypted(FILE_PATHS.SNAPSHOTS, backupData.snapshots, encryptionKey)] : []),
     // 고정비용이 있으면 복원 (기존 백업 호환)
     ...(backupData.recurring ? [saveEncrypted(FILE_PATHS.RECURRING, backupData.recurring, encryptionKey)] : []),
+    // 정기이체가 있으면 복원 (v1.1.0+ 백업)
+    ...(backupData.recurringTransfers ? [saveEncrypted(FILE_PATHS.RECURRING_TRANSFERS, backupData.recurringTransfers, encryptionKey)] : []),
   ]);
 
   // 자동차감 기록 복원

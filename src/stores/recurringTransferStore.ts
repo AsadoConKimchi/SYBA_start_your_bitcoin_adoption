@@ -108,7 +108,8 @@ export const useRecurringTransferStore = create<RecurringTransferState & Recurri
     const executed: Array<{ name: string; amount: number; date: string }> = [];
     const errors: string[] = [];
 
-    const activeItems = get().getActiveRecurringTransfers();
+    // 스냅샷 캡처: 루프 중 상태 변경으로 인한 인덱스 밀림 방지
+    const activeItems = [...get().getActiveRecurringTransfers()];
 
     for (const item of activeItems) {
       try {
@@ -155,32 +156,49 @@ export const useRecurringTransferStore = create<RecurringTransferState & Recurri
   },
 }));
 
+/**
+ * YYYY-MM-DD 포맷 문자열 생성 (날짜 포맷 일관성 보장)
+ */
+function formatDateStr(year: number, month: number, day: number): string {
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
+/**
+ * lastExecutedDate 문자열에서 연/월 파싱 (timezone 이슈 방지를 위해 문자열 직접 파싱)
+ */
+function parseYearMonth(dateStr: string): { year: number; month: number } {
+  const [y, m] = dateStr.split('-').map(Number);
+  return { year: y, month: m };
+}
+
 function getOverdueDates(item: RecurringTransfer, today: Date): string[] {
   const dates: string[] = [];
-  const startDate = new Date(item.startDate);
-  const lastExecuted = item.lastExecutedDate ? new Date(item.lastExecutedDate) : null;
+  const startParsed = parseYearMonth(item.startDate);
+  let cursorYear = startParsed.year;
+  let cursorMonth = startParsed.month; // 1-based
 
   if (item.frequency === 'monthly') {
-    let cursorYear = startDate.getFullYear();
-    let cursorMonth = startDate.getMonth();
-
-    if (lastExecuted) {
-      cursorYear = lastExecuted.getFullYear();
-      cursorMonth = lastExecuted.getMonth() + 1;
+    if (item.lastExecutedDate) {
+      const last = parseYearMonth(item.lastExecutedDate);
+      cursorYear = last.year;
+      cursorMonth = last.month + 1; // 다음 달부터
+      if (cursorMonth > 12) {
+        cursorMonth = 1;
+        cursorYear++;
+      }
     }
 
+    const dayOfMonth = Math.max(item.dayOfMonth, 1);
     const MAX_ITERATIONS = 120;
     let iterations = 0;
     while (iterations++ < MAX_ITERATIONS) {
-      const lastDay = new Date(cursorYear, cursorMonth + 1, 0).getDate();
-      const day = Math.min(Math.max(item.dayOfMonth, 1), lastDay);
-      const cursorDate = new Date(cursorYear, cursorMonth, day);
+      const lastDay = new Date(cursorYear, cursorMonth, 0).getDate(); // cursorMonth is 1-based
+      const day = Math.min(dayOfMonth, lastDay);
+      const cursorDate = new Date(cursorYear, cursorMonth - 1, day);
 
       if (cursorDate > today) break;
 
-      const year = cursorDate.getFullYear();
-      const month = cursorDate.getMonth();
-      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      const dateStr = formatDateStr(cursorYear, cursorMonth, day);
 
       if (dateStr >= item.startDate) {
         if (!item.endDate || dateStr <= item.endDate) {
@@ -189,26 +207,29 @@ function getOverdueDates(item: RecurringTransfer, today: Date): string[] {
       }
 
       cursorMonth++;
-      if (cursorMonth > 11) {
-        cursorMonth = 0;
+      if (cursorMonth > 12) {
+        cursorMonth = 1;
         cursorYear++;
       }
     }
   } else if (item.frequency === 'yearly') {
-    const monthOfYear = (item.monthOfYear ?? 1) - 1;
-    let year = startDate.getFullYear();
+    const monthOfYear = Math.max(1, Math.min(12, item.monthOfYear ?? 1));
+    let year = startParsed.year;
 
-    if (lastExecuted) {
-      year = lastExecuted.getFullYear() + 1;
+    if (item.lastExecutedDate) {
+      const last = parseYearMonth(item.lastExecutedDate);
+      year = last.year + 1;
     }
 
-    while (true) {
-      const cursor = new Date(year, monthOfYear, item.dayOfMonth);
+    const MAX_YEARS = 120;
+    let iterations = 0;
+    while (iterations++ < MAX_YEARS) {
+      const lastDay = new Date(year, monthOfYear, 0).getDate();
+      const day = Math.min(item.dayOfMonth, lastDay);
+      const cursor = new Date(year, monthOfYear - 1, day);
       if (cursor > today) break;
 
-      const lastDay = new Date(year, monthOfYear + 1, 0).getDate();
-      const day = Math.min(item.dayOfMonth, lastDay);
-      const dateStr = `${year}-${String(monthOfYear + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      const dateStr = formatDateStr(year, monthOfYear, day);
 
       if (dateStr >= item.startDate) {
         if (!item.endDate || dateStr <= item.endDate) {
@@ -217,7 +238,6 @@ function getOverdueDates(item: RecurringTransfer, today: Date): string[] {
       }
 
       year++;
-      if (year > today.getFullYear() + 10) break; // Safety
     }
   }
 

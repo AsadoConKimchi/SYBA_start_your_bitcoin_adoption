@@ -249,16 +249,16 @@ export async function processLoanRepayments(): Promise<{
         const newPaidMonths = currentPaidMonths + 1;
         const isCompleted = newPaidMonths >= loan.termMonths;
         let newRemainingPrincipal = currentRemainingPrincipal;
-        if (loan.repaymentType === 'equalPrincipal') {
+        if (isCompleted) {
+          // 마지막 회차: 잔여금 0으로 확정 (부동소수점 오차 누적 방지)
+          newRemainingPrincipal = 0;
+        } else if (loan.repaymentType === 'equalPrincipal') {
           const monthlyPrincipal = loan.principal / loan.termMonths;
-          newRemainingPrincipal = Math.max(0, currentRemainingPrincipal - monthlyPrincipal);
+          newRemainingPrincipal = Math.max(0, Math.round(currentRemainingPrincipal - monthlyPrincipal));
         } else if (loan.repaymentType === 'equalPrincipalAndInterest') {
           const monthlyInterest = (currentRemainingPrincipal * loan.interestRate) / 100 / 12;
           const monthlyPrincipal = loan.monthlyPayment - monthlyInterest;
-          newRemainingPrincipal = Math.max(0, currentRemainingPrincipal - monthlyPrincipal);
-        }
-        if (isCompleted && loan.repaymentType === 'bullet') {
-          newRemainingPrincipal = 0;
+          newRemainingPrincipal = Math.max(0, Math.round(currentRemainingPrincipal - monthlyPrincipal));
         }
 
         // Step 1: pending transaction 저장 (크래시 복구용)

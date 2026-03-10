@@ -107,7 +107,7 @@ async function deriveKeyWithHasher(
   return derivedKey.toString();
 }
 
-// 동기 버전 — SHA-1 (CryptoJS default), backup restore 전용
+// 동기 버전 — SHA-1 (레거시 pre-v0.1.10 백업 복원 전용, 신규 사용 금지)
 export function deriveKeySync(password: string, salt: string): string {
   const key = CryptoJS.PBKDF2(password, salt, {
     keySize: 256 / 32,
@@ -138,7 +138,7 @@ export async function encrypt(data: unknown, key: string): Promise<string> {
 
   // expo-crypto로 안전한 IV 생성
   const ivBytes = await Crypto.getRandomBytesAsync(16);
-  const iv = CryptoJS.lib.WordArray.create(ivBytes as unknown as number[]);
+  const iv = CryptoJS.lib.WordArray.create(Array.from(ivBytes) as number[]);
 
   const keyWordArray = CryptoJS.enc.Hex.parse(key);
   const encrypted = CryptoJS.AES.encrypt(jsonString, keyWordArray, {
@@ -172,11 +172,22 @@ export function decrypt<T>(encryptedString: string, key: string): T {
     }
     return JSON.parse(jsonString) as T;
   } else {
-    // 기존 포맷 (호환성)
+    // 기존 포맷 (호환성) — passphrase 모드로 암호화된 레거시 데이터용
+    // CryptoJS passphrase 모드: 문자열 키를 내부 OpenSSL KDF로 처리
     const decrypted = CryptoJS.AES.decrypt(encryptedString, key);
     const jsonString = decrypted.toString(CryptoJS.enc.Utf8);
     if (!jsonString) {
-      throw new Error('Decryption failed: incorrect password');
+      // Passphrase 모드 실패 시 hex key로 재시도
+      const keyWordArray = CryptoJS.enc.Hex.parse(key);
+      const retryDecrypted = CryptoJS.AES.decrypt(encryptedString, keyWordArray, {
+        mode: CryptoJS.mode.CBC,
+        padding: CryptoJS.pad.Pkcs7,
+      });
+      const retryJson = retryDecrypted.toString(CryptoJS.enc.Utf8);
+      if (!retryJson) {
+        throw new Error('Decryption failed: incorrect password');
+      }
+      return JSON.parse(retryJson) as T;
     }
     return JSON.parse(jsonString) as T;
   }

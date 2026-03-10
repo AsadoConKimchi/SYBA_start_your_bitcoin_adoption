@@ -279,17 +279,21 @@ export default function SubscriptionScreen() {
   };
 
   // 결제 모달이 열리면 폴링 시작
+  const paymentSessionIdRef = useRef(0);
+
   useEffect(() => {
     if (!showPaymentModal || !lightningInvoice) return;
 
-    console.log('[Subscription] 결제 폴링 시작');
+    // 고유 세션 ID로 이전 실행과 분리 (race condition 방지)
+    const sessionId = ++paymentSessionIdRef.current;
+    console.log('[Subscription] 결제 폴링 시작, session:', sessionId);
     paymentCancelledRef.current = false;
 
     const checkPayment = async () => {
       const paid = await waitForPaymentWs(
         lightningInvoice,
         (status: PaymentStatus) => {
-          if (paymentCancelledRef.current) return;
+          if (paymentSessionIdRef.current !== sessionId) return;
           console.log('[Subscription] 결제 상태:', status);
 
           if (status === 'PENDING') {
@@ -301,12 +305,15 @@ export default function SubscriptionScreen() {
         10 * 60 * 1000 // 10분
       );
 
-      if (paymentCancelledRef.current) return;
+      // 세션 불일치 시 무시 (이전 세션의 콜백)
+      if (paymentSessionIdRef.current !== sessionId) return;
 
       if (paid) {
         setPaymentStatus('checking');
 
         const confirmed = await confirmPayment();
+        if (paymentSessionIdRef.current !== sessionId) return;
+
         if (confirmed) {
           setPaymentStatus('success');
           await refreshSubscription();
@@ -323,7 +330,7 @@ export default function SubscriptionScreen() {
           );
         }
       } else {
-        if (!paymentCancelledRef.current) {
+        if (paymentSessionIdRef.current === sessionId) {
           setPaymentStatus('expired');
           Alert.alert(t('subscription.expired'), t('subscription.invoiceExpired'), [
             { text: t('common.confirm'), onPress: handleClosePaymentModal },
@@ -335,7 +342,7 @@ export default function SubscriptionScreen() {
     checkPayment();
 
     return () => {
-      console.log('[Subscription] 결제 폴링 취소');
+      console.log('[Subscription] 결제 폴링 취소, session:', sessionId);
       paymentCancelledRef.current = true;
     };
   }, [showPaymentModal, lightningInvoice]);
@@ -424,13 +431,13 @@ export default function SubscriptionScreen() {
             <Text style={{ fontSize: 16, fontWeight: '600', color: theme.text, marginBottom: 12 }}>
               {t('subscription.benefits')}
             </Text>
-            {[
-              { icon: 'card', text: t('subscription.unlimitedCards') },
-              { icon: 'analytics', text: t('subscription.detailedStats') },
-              { icon: 'notifications', text: t('subscription.premiumAlert') },
-              { icon: 'cloud-upload', text: t('subscription.cloudBackup') },
-              { icon: 'color-palette', text: t('subscription.customTheme') },
-            ].map((item, index) => (
+            {([
+              { icon: 'card' as const, text: t('subscription.unlimitedCards') },
+              { icon: 'analytics' as const, text: t('subscription.detailedStats') },
+              { icon: 'notifications' as const, text: t('subscription.premiumAlert') },
+              { icon: 'cloud-upload' as const, text: t('subscription.cloudBackup') },
+              { icon: 'color-palette' as const, text: t('subscription.customTheme') },
+            ] as const).map((item, index) => (
               <View
                 key={index}
                 style={{
@@ -450,7 +457,7 @@ export default function SubscriptionScreen() {
                     marginRight: 12,
                   }}
                 >
-                  <Ionicons name={item.icon as any} size={16} color={theme.success} />
+                  <Ionicons name={item.icon} size={16} color={theme.success} />
                 </View>
                 <Text style={{ fontSize: 14, color: theme.text }}>{item.text}</Text>
               </View>
