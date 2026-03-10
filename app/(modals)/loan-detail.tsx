@@ -187,7 +187,7 @@ export default function LoanDetailScreen() {
       ? fiatAssets.find((a) => a.id === loan.linkedAssetId)
       : null;
 
-    // 자동차감 이력이 있고 연결 계좌가 있으면 롤백 옵션 제공
+    // 연결 계좌가 있고 자동차감 이력이 있는 경우
     if (count > 0 && linkedAsset) {
       const formattedAmount = formatKrw(total);
       Alert.alert(
@@ -201,26 +201,32 @@ export default function LoanDetailScreen() {
         [
           { text: t('common.cancel'), style: 'cancel' },
           {
-            text: t('loan.deleteWithRollback'),
+            text: t('delete.deleteRecords'),
             onPress: async () => {
               try {
-                await deleteLoan(loan.id, encryptionKey, true);
+                await deleteLoan(loan.id, encryptionKey, {
+                  rollbackAsset: true,
+                  deleteRecords: true,
+                });
                 router.back();
               } catch (error) {
-                console.error('대출 삭제(롤백) 실패:', error);
+                console.error('대출 삭제(기록삭제+롤백) 실패:', error);
                 Alert.alert(t('common.error'), t('loan.deleteFailed'));
               }
             },
           },
           {
-            text: t('loan.deleteWithoutRollback'),
+            text: t('delete.keepRecords'),
             style: 'destructive',
             onPress: async () => {
               try {
-                await deleteLoan(loan.id, encryptionKey, false);
+                await deleteLoan(loan.id, encryptionKey, {
+                  rollbackAsset: false,
+                  deleteRecords: false,
+                });
                 router.back();
               } catch (error) {
-                console.error('대출 삭제 실패:', error);
+                console.error('대출 삭제(기록유지) 실패:', error);
                 Alert.alert(t('common.error'), t('loan.deleteFailed'));
               }
             },
@@ -228,21 +234,33 @@ export default function LoanDetailScreen() {
         ]
       );
     } else {
-      // 자동차감 이력 없음 — 기존 2-button Alert
+      // 연결 계좌 없는 경우 — 기록 삭제/유지 선택
       Alert.alert(
         t('loan.deleteConfirm'),
         t('loan.deleteMessage', { name: loan.name }),
         [
           { text: t('common.cancel'), style: 'cancel' },
           {
-            text: t('common.delete'),
+            text: t('delete.deleteRecords'),
             style: 'destructive',
             onPress: async () => {
               try {
-                await deleteLoan(loan.id, encryptionKey);
+                await deleteLoan(loan.id, encryptionKey, { deleteRecords: true });
                 router.back();
               } catch (error) {
-                console.error('대출 삭제 실패:', error);
+                console.error('대출 삭제(기록삭제) 실패:', error);
+                Alert.alert(t('common.error'), t('loan.deleteFailed'));
+              }
+            },
+          },
+          {
+            text: t('delete.keepRecords'),
+            onPress: async () => {
+              try {
+                await deleteLoan(loan.id, encryptionKey, { deleteRecords: false });
+                router.back();
+              } catch (error) {
+                console.error('대출 삭제(기록유지) 실패:', error);
                 Alert.alert(t('common.error'), t('loan.deleteFailed'));
               }
             },

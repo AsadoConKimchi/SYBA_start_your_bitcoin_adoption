@@ -25,7 +25,9 @@ interface RecurringActions {
     updates: Partial<RecurringExpense>,
     encryptionKey: string
   ) => Promise<void>;
-  deleteRecurring: (id: string, encryptionKey: string) => Promise<void>;
+  deleteRecurring: (id: string, encryptionKey: string, options?: {
+    deleteRecords?: boolean;
+  }) => Promise<void>;
   getActiveRecurrings: () => RecurringExpense[];
   getMonthlyTotal: () => number;
   executeOverdueRecurrings: () => Promise<{
@@ -82,7 +84,37 @@ export const useRecurringStore = create<RecurringState & RecurringActions>((set,
     await get().saveRecurrings(encryptionKey);
   },
 
-  deleteRecurring: async (id, encryptionKey) => {
+  deleteRecurring: async (id, encryptionKey, options) => {
+    const { deleteRecords = false } = options ?? {};
+
+    // cascade: 연관 자동생성 지출 기록 삭제 + 자산 잔고 복원
+    if (deleteRecords) {
+      const recurring = get().recurrings.find(r => r.id === id);
+      if (recurring) {
+        const { records, deleteRecord } = useLedgerStore.getState();
+        const autoPrefix = `[${i18n.t('recurring.auto')}]`;
+        const matchingRecords = records.filter(
+          (r) =>
+            r.type === 'expense' &&
+            r.memo?.startsWith(autoPrefix) &&
+            (r.memo?.includes(recurring.name) || (recurring.memo && r.memo?.includes(recurring.memo)))
+        );
+
+        for (const record of matchingRecords) {
+          // 자산 잔고 복원 (linkedAssetId가 있는 기록만)
+          if ('linkedAssetId' in record && record.linkedAssetId) {
+            const { useAssetStore } = require('./assetStore');
+            await useAssetStore.getState().adjustAssetBalance(
+              record.linkedAssetId,
+              record.amount, // 양수: 잔액 복원
+              encryptionKey
+            );
+          }
+          await deleteRecord(record.id);
+        }
+      }
+    }
+
     set(state => ({
       recurrings: state.recurrings.filter(r => r.id !== id),
     }));

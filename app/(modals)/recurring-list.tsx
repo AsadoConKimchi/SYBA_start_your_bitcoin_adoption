@@ -35,11 +35,18 @@ export default function RecurringListScreen() {
       [
         { text: t('common.cancel'), style: 'cancel' },
         {
-          text: t('common.delete'),
+          text: t('delete.deleteRecords'),
           style: 'destructive',
           onPress: async () => {
             const encryptionKey = getEncryptionKey();
-            if (encryptionKey) await deleteRecurring(recurring.id, encryptionKey);
+            if (encryptionKey) await deleteRecurring(recurring.id, encryptionKey, { deleteRecords: true });
+          },
+        },
+        {
+          text: t('delete.keepRecords'),
+          onPress: async () => {
+            const encryptionKey = getEncryptionKey();
+            if (encryptionKey) await deleteRecurring(recurring.id, encryptionKey, { deleteRecords: false });
           },
         },
       ]

@@ -35,11 +35,18 @@ export default function RecurringTransferListScreen() {
       [
         { text: t('common.cancel'), style: 'cancel' },
         {
-          text: t('common.delete'),
+          text: t('delete.deleteRecords'),
           style: 'destructive',
           onPress: async () => {
             const encryptionKey = getEncryptionKey();
-            if (encryptionKey) await deleteRecurringTransfer(item.id, encryptionKey);
+            if (encryptionKey) await deleteRecurringTransfer(item.id, encryptionKey, { deleteRecords: true });
+          },
+        },
+        {
+          text: t('delete.keepRecords'),
+          onPress: async () => {
+            const encryptionKey = getEncryptionKey();
+            if (encryptionKey) await deleteRecurringTransfer(item.id, encryptionKey, { deleteRecords: false });
           },
         },
       ]

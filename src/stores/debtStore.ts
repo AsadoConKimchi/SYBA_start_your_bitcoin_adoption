@@ -74,7 +74,10 @@ interface DebtActions {
     encryptionKey: string
   ) => Promise<void>;
 
-  deleteLoan: (id: string, encryptionKey: string, rollbackToAsset?: boolean) => Promise<void>;
+  deleteLoan: (id: string, encryptionKey: string, options?: {
+    rollbackAsset?: boolean;
+    deleteRecords?: boolean;
+  }) => Promise<void>;
 
   // 상환 기록
   getRecordsForLoan: (loanId: string) => RepaymentRecord[];
@@ -370,12 +373,13 @@ export const useDebtStore = create<DebtState & DebtActions>((set, get) => ({
     ]);
   },
 
-  // 대출 삭제 (롤백 옵션 포함)
-  deleteLoan: async (id, encryptionKey, rollbackToAsset) => {
+  // 대출 삭제 (cascade 옵션 포함)
+  deleteLoan: async (id, encryptionKey, options) => {
     const loan = get().loans.find((item) => item.id === id);
+    const { rollbackAsset = false, deleteRecords = false } = options ?? {};
 
     // 롤백: 자동차감 금액을 연결 계좌에 복원
-    if (rollbackToAsset && loan?.linkedAssetId) {
+    if (rollbackAsset && loan?.linkedAssetId) {
       const { total } = get().getAutoDeductedTotal(id);
       if (total > 0) {
         const { useAssetStore } = require('./assetStore');
@@ -384,6 +388,19 @@ export const useDebtStore = create<DebtState & DebtActions>((set, get) => ({
           total, // 양수: 잔액 증가 (복원)
           encryptionKey
         );
+      }
+    }
+
+    // cascade: linkedLoanId로 연관 지출 기록 삭제
+    if (deleteRecords) {
+      const { useLedgerStore } = require('./ledgerStore');
+      const { records, deleteRecord } = useLedgerStore.getState();
+      const loanExpenses = records.filter(
+        (r: { type: string; linkedLoanId?: string | null }) =>
+          r.type === 'expense' && r.linkedLoanId === id
+      );
+      for (const record of loanExpenses) {
+        await deleteRecord(record.id);
       }
     }
 
@@ -397,7 +414,7 @@ export const useDebtStore = create<DebtState & DebtActions>((set, get) => ({
       ]);
     } catch (error) {
       // 삭제 실패 시 롤백한 금액을 다시 차감하여 원복
-      if (rollbackToAsset && loan?.linkedAssetId) {
+      if (rollbackAsset && loan?.linkedAssetId) {
         const { total } = get().getAutoDeductedTotal(id);
         if (total > 0) {
           const { useAssetStore } = require('./assetStore');

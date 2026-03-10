@@ -25,7 +25,9 @@ interface RecurringTransferActions {
     updates: Partial<RecurringTransfer>,
     encryptionKey: string
   ) => Promise<void>;
-  deleteRecurringTransfer: (id: string, encryptionKey: string) => Promise<void>;
+  deleteRecurringTransfer: (id: string, encryptionKey: string, options?: {
+    deleteRecords?: boolean;
+  }) => Promise<void>;
   getActiveRecurringTransfers: () => RecurringTransfer[];
   getMonthlyTotal: () => number;
   executeOverdueRecurringTransfers: () => Promise<{
@@ -82,7 +84,45 @@ export const useRecurringTransferStore = create<RecurringTransferState & Recurri
     await get().saveRecurringTransfers(encryptionKey);
   },
 
-  deleteRecurringTransfer: async (id, encryptionKey) => {
+  deleteRecurringTransfer: async (id, encryptionKey, options) => {
+    const { deleteRecords = false } = options ?? {};
+
+    // cascade: 연관 자동생성 이체 기록 삭제 + 자산 잔고 되돌리기
+    if (deleteRecords) {
+      const transfer = get().recurringTransfers.find(r => r.id === id);
+      if (transfer) {
+        const { records, deleteRecord } = useLedgerStore.getState();
+        const autoPrefix = `[${i18n.t('recurring.auto')}]`;
+        const matchingRecords = records.filter(
+          (r) =>
+            r.type === 'transfer' &&
+            r.memo?.startsWith(autoPrefix) &&
+            (r.memo?.includes(transfer.name) || (transfer.memo && r.memo?.includes(transfer.memo)))
+        );
+
+        const { useAssetStore } = require('./assetStore');
+
+        for (const record of matchingRecords) {
+          // 이체 되돌리기: fromAssetId에 금액 복원, toAssetId에서 금액 차감
+          if ('fromAssetId' in record && record.fromAssetId) {
+            await useAssetStore.getState().adjustAssetBalance(
+              record.fromAssetId,
+              record.amount, // 양수: 잔액 복원
+              encryptionKey
+            );
+          }
+          if ('toAssetId' in record && record.toAssetId) {
+            await useAssetStore.getState().adjustAssetBalance(
+              record.toAssetId,
+              -record.amount, // 음수: 잔액 차감
+              encryptionKey
+            );
+          }
+          await deleteRecord(record.id);
+        }
+      }
+    }
+
     set(state => ({
       recurringTransfers: state.recurringTransfers.filter(r => r.id !== id),
     }));
