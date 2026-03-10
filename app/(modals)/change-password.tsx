@@ -190,7 +190,7 @@ export default function ChangePasswordScreen() {
               ] as const).map(([key, label]) => {
                 const met = passwordChecks[key as keyof typeof passwordChecks];
                 return (
-                  <Text key={key} style={{ fontSize: 13, color: met ? '#22C55E' : '#EF4444' }}>
+                  <Text key={key} style={{ fontSize: 13, color: met ? theme.success : theme.error }}>
                     {met ? '✅' : '❌'}{label}
                   </Text>
                 );
@@ -263,7 +263,7 @@ export default function ChangePasswordScreen() {
                 top: 0,
                 bottom: 0,
                 width: `${Math.round(progress * 100)}%`,
-                backgroundColor: '#F7931A',
+                backgroundColor: theme.primary,
                 borderRadius: 8,
               }} />
               <Text style={{

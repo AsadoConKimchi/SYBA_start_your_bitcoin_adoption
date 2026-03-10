@@ -176,7 +176,7 @@ export default function AddLoanScreen() {
             style={{
               fontSize: 16,
               fontWeight: '600',
-              color: isSubmitting ? theme.textMuted : '#3B82F6',
+              color: isSubmitting ? theme.textMuted : theme.info,
             }}
           >
             {t('common.save')}
@@ -235,7 +235,7 @@ export default function AddLoanScreen() {
                 padding: 16,
                 fontSize: 24,
                 fontWeight: 'bold',
-                color: '#3B82F6',
+                color: theme.info,
                 textAlign: 'right',
               }}
               placeholder="0"
@@ -540,7 +540,7 @@ export default function AddLoanScreen() {
                   borderRadius: 8,
                   marginBottom: 8,
                   borderWidth: repaymentType === type ? 1 : 0,
-                  borderColor: '#3B82F6',
+                  borderColor: theme.info,
                 }}
                 onPress={() => {
                   setRepaymentType(type);
@@ -557,7 +557,7 @@ export default function AddLoanScreen() {
                     </Text>
                   </View>
                   {repaymentType === type && (
-                    <Ionicons name="checkmark-circle" size={24} color="#3B82F6" />
+                    <Ionicons name="checkmark-circle" size={24} color={theme.info} />
                   )}
                 </View>
               </TouchableOpacity>
@@ -591,7 +591,7 @@ export default function AddLoanScreen() {
                   style={{
                     width: '30%',
                     padding: 12,
-                    backgroundColor: termMonths === m && !customTerm ? '#3B82F6' : theme.backgroundTertiary,
+                    backgroundColor: termMonths === m && !customTerm ? theme.info : theme.backgroundTertiary,
                     borderRadius: 8,
                     margin: '1.5%',
                     alignItems: 'center',
@@ -632,7 +632,7 @@ export default function AddLoanScreen() {
 
             <TouchableOpacity
               style={{
-                backgroundColor: '#3B82F6',
+                backgroundColor: theme.info,
                 padding: 16,
                 borderRadius: 8,
                 alignItems: 'center',
@@ -686,7 +686,7 @@ export default function AddLoanScreen() {
                 >
                   <Text style={{ fontSize: 16, color: theme.text }}>{t('banks.' + bank.id)}</Text>
                   {selectedBankId === bank.id && (
-                    <Ionicons name="checkmark" size={20} color="#3B82F6" />
+                    <Ionicons name="checkmark" size={20} color={theme.info} />
                   )}
                 </TouchableOpacity>
               ))}
@@ -715,7 +715,7 @@ export default function AddLoanScreen() {
                 />
                 <TouchableOpacity
                   style={{
-                    backgroundColor: '#3B82F6',
+                    backgroundColor: theme.info,
                     paddingHorizontal: 20,
                     borderRadius: 8,
                     marginLeft: 8,
@@ -765,7 +765,7 @@ export default function AddLoanScreen() {
                 />
                 <TouchableOpacity
                   style={{
-                    backgroundColor: '#3B82F6',
+                    backgroundColor: theme.info,
                     padding: 16,
                     borderRadius: 8,
                     alignItems: 'center',
@@ -828,7 +828,7 @@ export default function AddLoanScreen() {
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 borderWidth: repaymentDay === null ? 1 : 0,
-                borderColor: '#3B82F6',
+                borderColor: theme.info,
               }}
               onPress={() => {
                 setRepaymentDay(null);
@@ -837,7 +837,7 @@ export default function AddLoanScreen() {
             >
               <Text style={{ fontSize: 16, color: theme.text }}>{t('loan.repaymentDayDefault')}</Text>
               {repaymentDay === null && (
-                <Ionicons name="checkmark-circle" size={24} color="#3B82F6" />
+                <Ionicons name="checkmark-circle" size={24} color={theme.info} />
               )}
             </TouchableOpacity>
 
@@ -850,7 +850,7 @@ export default function AddLoanScreen() {
                       width: '14%',
                       aspectRatio: 1,
                       margin: '0.5%',
-                      backgroundColor: repaymentDay === day ? '#3B82F6' : theme.backgroundTertiary,
+                      backgroundColor: repaymentDay === day ? theme.info : theme.backgroundTertiary,
                       borderRadius: 8,
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -908,7 +908,7 @@ export default function AddLoanScreen() {
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 borderWidth: interestPaymentDay === null ? 1 : 0,
-                borderColor: '#3B82F6',
+                borderColor: theme.info,
               }}
               onPress={() => {
                 setInterestPaymentDay(null);
@@ -917,7 +917,7 @@ export default function AddLoanScreen() {
             >
               <Text style={{ fontSize: 16, color: theme.text }}>{t('loan.interestPaymentDayDefault')}</Text>
               {interestPaymentDay === null && (
-                <Ionicons name="checkmark-circle" size={24} color="#3B82F6" />
+                <Ionicons name="checkmark-circle" size={24} color={theme.info} />
               )}
             </TouchableOpacity>
 
@@ -930,7 +930,7 @@ export default function AddLoanScreen() {
                       width: '14%',
                       aspectRatio: 1,
                       margin: '0.5%',
-                      backgroundColor: interestPaymentDay === day ? '#3B82F6' : theme.backgroundTertiary,
+                      backgroundColor: interestPaymentDay === day ? theme.info : theme.backgroundTertiary,
                       borderRadius: 8,
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -987,7 +987,7 @@ export default function AddLoanScreen() {
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 borderWidth: linkedAssetId === null ? 1 : 0,
-                borderColor: '#3B82F6',
+                borderColor: theme.info,
               }}
               onPress={() => {
                 setLinkedAssetId(null);
@@ -996,7 +996,7 @@ export default function AddLoanScreen() {
             >
               <Text style={{ fontSize: 16, color: theme.text }}>{t('loan.noLinkedAccount')}</Text>
               {linkedAssetId === null && (
-                <Ionicons name="checkmark-circle" size={24} color="#3B82F6" />
+                <Ionicons name="checkmark-circle" size={24} color={theme.info} />
               )}
             </TouchableOpacity>
 
@@ -1021,7 +1021,7 @@ export default function AddLoanScreen() {
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       borderWidth: linkedAssetId === asset.id ? 1 : 0,
-                      borderColor: '#3B82F6',
+                      borderColor: theme.info,
                     }}
                     onPress={() => {
                       setLinkedAssetId(asset.id);
@@ -1036,7 +1036,7 @@ export default function AddLoanScreen() {
                       </Text>
                     </View>
                     {linkedAssetId === asset.id && (
-                      <Ionicons name="checkmark-circle" size={24} color="#3B82F6" />
+                      <Ionicons name="checkmark-circle" size={24} color={theme.info} />
                     )}
                   </TouchableOpacity>
                 ))}
