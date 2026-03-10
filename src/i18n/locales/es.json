@@ -2,9 +2,6 @@
   "app": {
     "tagline": "Comienza Tu Adopción de Bitcoin"
   },
-  "auth": {
-    "legacyBackupError": "Este archivo de respaldo es de una versión anterior. Por favor, cree un nuevo respaldo en el dispositivo original."
-  },
   "common": {
     "cancel": "Cancelar",
     "confirm": "Aceptar",
@@ -146,6 +143,7 @@
     "monthlyPayment": "Pago mensual"
   },
   "auth": {
+    "legacyBackupError": "Este archivo de respaldo es de una versión anterior. Por favor, cree un nuevo respaldo en el dispositivo original.",
     "enterPassword": "Ingresá tu contraseña",
     "password": "Contraseña",
     "login": "Iniciar sesión",
@@ -278,12 +276,10 @@
     "emailCopied": "Correo copiado al portapapeles.",
     "billingInfo": "Info de períodos de facturación",
     "billingInfoDetail": "Los períodos de facturación mostrados durante el registro de tarjetas se basan en datos oficiales de cada compañía. Si encuentras alguna discrepancia, avísanos por correo.",
-    "refundPolicy": "Politica de reembolso",
-    "refundPolicyDetail": "Debido a la naturaleza de los pagos de Lightning Network, los reembolsos se pueden solicitar dentro de los 7 dias posteriores a la fecha de pago.\n\nPara solicitar un reembolso, envie un correo a {{supportEmail}} con su Support ID (en Configuracion).\n\nLos reembolsos se procesan a traves de una factura Lightning proporcionada por el cliente.",
-    "emailOptional": "Correo electronico (opcional)",
+    "emailOptional": "Correo electrónico (opcional)",
     "emailPlaceholder": "Correo para soporte al cliente",
     "emailSaved": "Correo guardado",
-    "emailInvalid": "Formato de correo invalido",
+    "emailInvalid": "Formato de correo inválido",
     "paymentHistory": "Historial de pagos",
     "noPaymentHistory": "Sin historial de pagos",
     "receiptTier": "Plan",
@@ -659,7 +655,9 @@
     "samePassword": "Ingresá una contraseña diferente.",
     "success": "Contraseña cambiada exitosamente.",
     "wrongCurrent": "La contraseña actual es incorrecta.",
-    "failed": "Error al cambiar la contraseña."
+    "failed": "Error al cambiar la contraseña.",
+    "reEncrypting": "Reencriptando datos...",
+    "doNotCloseWarning": "No cierre la aplicación. Puede ocurrir pérdida de datos."
   },
   "editRecord": {
     "title": "Editar Registro",

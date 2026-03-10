@@ -978,27 +978,6 @@ export default function SettingsScreen() {
             </Text>
           </View>
 
-          <TouchableOpacity
-            style={{
-              backgroundColor: theme.backgroundSecondary,
-              borderRadius: 12,
-              padding: 16,
-              marginTop: 12,
-            }}
-            onPress={() => {
-              Alert.alert(
-                t('settings.refundPolicy'),
-                t('settings.refundPolicyDetail'),
-              );
-            }}
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Ionicons name="document-text-outline" size={20} color={theme.textSecondary} style={{ marginRight: 8 }} />
-              <Text style={{ fontSize: 14, color: theme.text }}>{t('settings.refundPolicy')}</Text>
-              <View style={{ flex: 1 }} />
-              <Ionicons name="chevron-forward" size={16} color={theme.textMuted} />
-            </View>
-          </TouchableOpacity>
         </View>
 
         {/* Dev tools */}

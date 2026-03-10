@@ -2,9 +2,6 @@
   "app": {
     "tagline": "ビットコイン家計簿を始めよう"
   },
-  "auth": {
-    "legacyBackupError": "このバックアップファイルは旧バージョンの形式です。元のデバイスで新しいバックアップを作成してください。"
-  },
   "common": {
     "cancel": "キャンセル",
     "confirm": "確認",
@@ -146,6 +143,7 @@
     "monthlyPayment": "月々の支払い"
   },
   "auth": {
+    "legacyBackupError": "このバックアップファイルは旧バージョンの形式です。元のデバイスで新しいバックアップを作成してください。",
     "enterPassword": "パスワードを入力してください",
     "password": "パスワード",
     "login": "ログイン",
@@ -278,8 +276,6 @@
     "emailCopied": "メールアドレスをクリップボードにコピーしました。",
     "billingInfo": "カード会社別請求期間情報",
     "billingInfoDetail": "カード登録時に表示される請求期間は各カード会社の公式データに基づいています。相違がある場合はメールでお知らせください。",
-    "refundPolicy": "返金ポリシー",
-    "refundPolicyDetail": "Lightning Networkの決済特性上、返金は決済日から7日以内にリクエストできます。\n\n返金をリクエストする場合は、設定のSupport IDを含めて{{supportEmail}}までメールでお問い合わせください。\n\n返金はお客様が提供するLightningインボイスを通じて処理されます。",
     "emailOptional": "メール（任意）",
     "emailPlaceholder": "カスタマーサポート用メール",
     "emailSaved": "メールが保存されました",
@@ -659,7 +655,9 @@
     "samePassword": "現在と異なるパスワードを入力してください。",
     "success": "パスワードが変更されました。",
     "wrongCurrent": "現在のパスワードが正しくありません。",
-    "failed": "パスワードの変更に失敗しました。"
+    "failed": "パスワードの変更に失敗しました。",
+    "reEncrypting": "データを再暗号化中...",
+    "doNotCloseWarning": "アプリを閉じないでください。データが失われる可能性があります。"
   },
   "editRecord": {
     "title": "記録を編集",
