@@ -133,19 +133,18 @@ export const useRecurringTransferStore = create<RecurringTransferState & Recurri
               : `[${i18n.t('recurring.auto')}] ${item.name}`,
           });
 
+          // 각 dueDate 처리 후 즉시 lastExecutedDate 갱신 (크래시 시 재실행 방지)
+          await get().updateRecurringTransfer(
+            item.id,
+            { lastExecutedDate: dueDate },
+            encryptionKey
+          );
+
           executed.push({
             name: item.name,
             amount: item.amount,
             date: dueDate,
           });
-        }
-
-        if (dueDates.length > 0) {
-          await get().updateRecurringTransfer(
-            item.id,
-            { lastExecutedDate: dueDates[dueDates.length - 1] },
-            encryptionKey
-          );
         }
       } catch (error) {
         errors.push(`${item.name}: ${error}`);

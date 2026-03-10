@@ -140,20 +140,18 @@ export const useRecurringStore = create<RecurringState & RecurringActions>((set,
             linkedAssetId: recurring.linkedAssetId || null,
           });
 
+          // 각 dueDate 처리 후 즉시 lastExecutedDate 갱신 (크래시 시 재실행 방지)
+          await get().updateRecurring(
+            recurring.id,
+            { lastExecutedDate: dueDate },
+            encryptionKey
+          );
+
           executed.push({
             name: recurring.name,
             amount: recurring.amount,
             date: dueDate,
           });
-        }
-
-        // lastExecutedDate 업데이트
-        if (dueDates.length > 0) {
-          await get().updateRecurring(
-            recurring.id,
-            { lastExecutedDate: dueDates[dueDates.length - 1] },
-            encryptionKey
-          );
         }
       } catch (error) {
         errors.push(`${recurring.name}: ${error}`);

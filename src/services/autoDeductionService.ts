@@ -26,6 +26,7 @@ const STORAGE_KEYS = {
   LAST_LOAN_DEDUCTION: 'lastLoanDeduction', // { loanId: 'YYYY-MM' }
   LAST_INSTALLMENT_DEDUCTION: 'lastInstallmentDeduction', // { installmentId: 'YYYY-MM' }
   PENDING_LOAN_TX: 'pendingLoanTransaction', // { loanId, yearMonth, step, paidMonths, remainingPrincipal }
+  PENDING_CARD_TX: 'pendingCardTransaction', // { cardId, yearMonth, step, amount }
 };
 
 // ─── 유틸리티 함수 ────────────────────────────────────────────
@@ -106,6 +107,18 @@ export async function processCardPayments(): Promise<{
     ? JSON.parse(lastDeductionStr)
     : {};
 
+  // 미완료 카드 트랜잭션 복구 (보수적: pre_deduction → pending 삭제)
+  try {
+    const pendingCardStr = await AsyncStorage.getItem(STORAGE_KEYS.PENDING_CARD_TX);
+    if (pendingCardStr) {
+      const pending = JSON.parse(pendingCardStr);
+      console.warn(`[AutoDeduction] 카드 pending TX 복구: ${pending.cardId} (${pending.yearMonth}, step: ${pending.step}) — 보수적 삭제 (미차감 허용)`);
+      await AsyncStorage.removeItem(STORAGE_KEYS.PENDING_CARD_TX);
+    }
+  } catch {
+    await AsyncStorage.removeItem(STORAGE_KEYS.PENDING_CARD_TX).catch(() => {});
+  }
+
   // 결제 계좌가 연결된 카드만 필터링
   const linkedCards = cards.filter(
     (card): card is Card & { linkedAssetId: string; paymentDay: number } =>
@@ -150,7 +163,13 @@ export async function processCardPayments(): Promise<{
         continue;
       }
 
-      // ⑤ 자산에서 차감
+      // ⑤ pending TX 저장 (자산 차감 전 — 크래시 시 보수적으로 삭제)
+      await AsyncStorage.setItem(
+        STORAGE_KEYS.PENDING_CARD_TX,
+        JSON.stringify({ cardId: card.id, yearMonth: currentYearMonth, step: 'pre_deduction', amount: payment.totalPayment })
+      );
+
+      // ⑥ 자산에서 차감
       const balanceResult = await adjustAssetBalance(
         card.linkedAssetId,
         -payment.totalPayment,
@@ -160,7 +179,10 @@ export async function processCardPayments(): Promise<{
         result.warnings.push({ assetName: balanceResult.assetName, requested: balanceResult.requested, actual: balanceResult.actual });
       }
 
-      // ⑥ 처리 기록 저장
+      // ⑦ pending 제거 (차감 완료)
+      await AsyncStorage.removeItem(STORAGE_KEYS.PENDING_CARD_TX);
+
+      // ⑧ 처리 기록 저장
       lastDeduction[card.id] = currentYearMonth;
       await AsyncStorage.setItem(STORAGE_KEYS.LAST_CARD_DEDUCTION, JSON.stringify(lastDeduction));
       result.processed++;
@@ -512,9 +534,10 @@ async function recoverPendingLoanTransaction(
 
     console.log(`[AutoDeduction] 미완료 대출 트랜잭션 복구: ${pending.loanId} (${pending.yearMonth}, step: ${pending.step})`);
 
-    // pre_deduction: 자산 차감 전에 크래시 → 아무것도 안 했으므로 pending만 삭제
+    // pre_deduction: 자산 차감 전 또는 차감 직후(asset_deducted 기록 전) 크래시
+    // 보수적 접근: pending 삭제 (이중차감보다 한 달 미차감이 안전)
     if (pending.step === 'pre_deduction') {
-      console.log('[AutoDeduction] pre_deduction 상태 — 자산 미차감, pending 삭제');
+      console.warn('[AutoDeduction] pre_deduction 상태 — 보수적 삭제 (차감 여부 불확실, 미차감 허용)');
       await AsyncStorage.removeItem(STORAGE_KEYS.PENDING_LOAN_TX);
       return;
     }
