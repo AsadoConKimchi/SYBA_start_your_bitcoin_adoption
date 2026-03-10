@@ -315,15 +315,20 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       }
     }
 
-    // 새 비밀번호로 v2 키 생성
+    // 새 비밀번호로 v2 키 생성 (progress 0~50%)
     const newSalt = await generateSalt();
     const newHash = hashPassword(newPassword, newSalt);
-    const newKey = await deriveKey(newPassword, newSalt, onProgress);
+    const newKey = await deriveKey(newPassword, newSalt, (p) => onProgress?.(p * 0.5));
 
-    // 모든 데이터를 새 키로 재암호화
+    // crash safety: 새 키를 먼저 저장 (reEncrypt 후 크래시해도 새 키로 접근 가능)
+    await saveSecure(SECURE_KEYS.ENCRYPTION_KEY, newKey);
+
+    // 모든 데이터를 새 키로 재암호화 (progress 50~100%)
     try {
-      await reEncryptAllData(resolvedOldKey, newKey);
+      await reEncryptAllData(resolvedOldKey, newKey, (p) => onProgress?.(0.5 + p * 0.5));
     } catch (error) {
+      // reEncrypt 실패 시 이전 키 복원
+      await saveSecure(SECURE_KEYS.ENCRYPTION_KEY, resolvedOldKey);
       console.error('데이터 재암호화 실패:', error);
       return false;
     }

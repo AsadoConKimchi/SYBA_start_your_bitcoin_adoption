@@ -273,9 +273,17 @@ export default function ChangePasswordScreen() {
                 textAlign: 'center',
                 zIndex: 1,
               }}>
-                🔓 {t('auth.decrypting')} {Math.round(progress * 100)}%
+                🔓 {progress < 0.5 ? t('auth.decrypting') : t('changePassword.reEncrypting')} {Math.round(progress * 100)}%
               </Text>
             </View>
+            <Text style={{
+              fontSize: 13,
+              color: theme.error,
+              textAlign: 'center',
+              marginTop: 12,
+            }}>
+              {t('changePassword.doNotCloseWarning')}
+            </Text>
             </View>
           ) : (
             <TouchableOpacity

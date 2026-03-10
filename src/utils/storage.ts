@@ -36,6 +36,7 @@ export const FILE_PATHS = {
   SNAPSHOTS: DATA_DIR + 'snapshots.enc',
   RECURRING: DATA_DIR + 'recurring.enc',
   RECURRING_TRANSFERS: DATA_DIR + 'recurring_transfers.enc',
+  REPAYMENT_RECORDS: DATA_DIR + 'repayment_records.enc',
 } as const;
 
 // 디렉토리 초기화
@@ -134,6 +135,7 @@ export async function checkDataIntegrity(
     FILE_PATHS.SNAPSHOTS,
     FILE_PATHS.RECURRING,
     FILE_PATHS.RECURRING_TRANSFERS,
+    FILE_PATHS.REPAYMENT_RECORDS,
   ];
 
   for (const path of filesToCheck) {
@@ -215,6 +217,7 @@ export async function createBackup(
     snapshots: await loadEncrypted(FILE_PATHS.SNAPSHOTS, encryptionKey, []),
     recurring: await loadEncrypted(FILE_PATHS.RECURRING, encryptionKey, []),
     recurringTransfers: await loadEncrypted(FILE_PATHS.RECURRING_TRANSFERS, encryptionKey, []),
+    repaymentRecords: await loadEncrypted(FILE_PATHS.REPAYMENT_RECORDS, encryptionKey, []),
     deductionRecords: {
       lastCardDeduction: lastCardDeduction ? JSON.parse(lastCardDeduction) : null,
       lastLoanDeduction: lastLoanDeduction ? JSON.parse(lastLoanDeduction) : null,
@@ -244,6 +247,7 @@ interface BackupData {
   snapshots?: unknown[]; // 선택적 (기존 백업 호환)
   recurring?: unknown[]; // 선택적 (기존 백업 호환)
   recurringTransfers?: unknown[]; // 선택적 (v1.1.0+ 백업)
+  repaymentRecords?: unknown[]; // 선택적 (v1.2.0+ 백업)
   deductionRecords?: {
     lastCardDeduction: Record<string, string> | null;
     lastLoanDeduction: Record<string, string> | null;
@@ -299,6 +303,8 @@ export async function restoreBackup(
     ...(backupData.recurring ? [saveEncrypted(FILE_PATHS.RECURRING, backupData.recurring, encryptionKey)] : []),
     // 정기이체가 있으면 복원 (v1.1.0+ 백업)
     ...(backupData.recurringTransfers ? [saveEncrypted(FILE_PATHS.RECURRING_TRANSFERS, backupData.recurringTransfers, encryptionKey)] : []),
+    // 상환 기록이 있으면 복원 (v1.2.0+ 백업)
+    ...(backupData.repaymentRecords ? [saveEncrypted(FILE_PATHS.REPAYMENT_RECORDS, backupData.repaymentRecords, encryptionKey)] : []),
   ]);
 
   // 자동차감 기록 복원
@@ -318,7 +324,8 @@ export async function restoreBackup(
 
 export async function reEncryptAllData(
   oldKey: string,
-  newKey: string
+  newKey: string,
+  onProgress?: (progress: number) => void
 ): Promise<void> {
   const filePaths = [
     { path: FILE_PATHS.LEDGER, default: [] },
@@ -331,21 +338,33 @@ export async function reEncryptAllData(
     { path: FILE_PATHS.SNAPSHOTS, default: [] },
     { path: FILE_PATHS.RECURRING, default: [] },
     { path: FILE_PATHS.RECURRING_TRANSFERS, default: [] },
+    { path: FILE_PATHS.REPAYMENT_RECORDS, default: [] },
   ];
+
+  // 존재하는 파일만 필터링
+  const existingFiles: string[] = [];
+  for (const { path } of filePaths) {
+    const fileInfo = await FileSystem.getInfoAsync(path);
+    if (fileInfo.exists) existingFiles.push(path);
+  }
+
+  const totalFiles = existingFiles.length;
+  let processedFiles = 0;
 
   // Phase 1: Decrypt all and write to temp files
   const tempFiles: string[] = [];
   try {
-    for (const { path } of filePaths) {
-      const fileInfo = await FileSystem.getInfoAsync(path);
-      if (!fileInfo.exists) continue;
-
+    for (const path of existingFiles) {
       const encrypted = await FileSystem.readAsStringAsync(path);
       const data = decrypt(encrypted, oldKey);
       const reEncrypted = await encrypt(data, newKey);
       const tempPath = path + '.tmp';
       await FileSystem.writeAsStringAsync(tempPath, reEncrypted);
       tempFiles.push(tempPath);
+
+      processedFiles++;
+      // Phase 1이 전체의 90%, Phase 2(rename)가 10%
+      onProgress?.(processedFiles / totalFiles * 0.9);
     }
 
     // Phase 2: Rename all temp files to final paths (fast, near-atomic)
@@ -353,6 +372,7 @@ export async function reEncryptAllData(
       const finalPath = tempPath.replace(/\.tmp$/, '');
       await FileSystem.moveAsync({ from: tempPath, to: finalPath });
     }
+    onProgress?.(1);
   } catch (error) {
     // Cleanup temp files on failure
     for (const tempPath of tempFiles) {
