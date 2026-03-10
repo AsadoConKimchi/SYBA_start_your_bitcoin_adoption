@@ -28,7 +28,7 @@ import {
   REPAYMENT_TYPE_DESCRIPTION_KEYS,
 } from '../../src/types/debt';
 import { getCurrentRegion } from '../../src/regions';
-import { processAllAutoDeductions, backfillLoanExpenseRecords } from '../../src/services/autoDeductionService';
+import { processAllAutoDeductions } from '../../src/services/autoDeductionService';
 
 const LOAN_TERMS = [12, 24, 36, 48, 60, 120, 240, 360]; // 개월
 
@@ -137,7 +137,6 @@ export default function AddLoanScreen() {
       // 추가 직후 즉시 소급 실행 (앱 재시작 없이)
       try {
         await processAllAutoDeductions();
-        await backfillLoanExpenseRecords();
       } catch (error) {
         console.error('[AddLoan] 즉시 실행 실패:', error);
       }
