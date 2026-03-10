@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
 import { Installment, Loan, RepaymentType } from '../types/debt';
+import { RepaymentRecord } from '../types/repayment';
 import {
   calculateInstallmentPayment,
   calculateLoanPayment,
@@ -9,10 +10,12 @@ import {
   isDueThisMonth,
 } from '../utils/debtCalculator';
 import { loadEncrypted, saveEncrypted, FILE_PATHS } from '../utils/storage';
+import { generateRepaymentRecords } from '../utils/repaymentRecords';
 
 interface DebtState {
   installments: Installment[];
   loans: Loan[];
+  repaymentRecords: RepaymentRecord[];
   isLoading: boolean;
 }
 
@@ -72,6 +75,10 @@ interface DebtActions {
 
   deleteLoan: (id: string, encryptionKey: string) => Promise<void>;
 
+  // 상환 기록
+  getRecordsForLoan: (loanId: string) => RepaymentRecord[];
+  markRecordAsPaid: (recordId: string, encryptionKey: string) => Promise<void>;
+
   // 헬퍼
   getInstallmentByExpenseId: (expenseId: string) => Installment | undefined;
   getActiveInstallments: () => Installment[];
@@ -83,19 +90,37 @@ interface DebtActions {
 export const useDebtStore = create<DebtState & DebtActions>((set, get) => ({
   installments: [],
   loans: [],
+  repaymentRecords: [],
   isLoading: true,
 
   // 데이터 로드
   loadDebts: async (encryptionKey: string) => {
     try {
-      const [installmentsData, loansData] = await Promise.all([
+      const [installmentsData, loansData, recordsData] = await Promise.all([
         loadEncrypted<Installment[]>(FILE_PATHS.INSTALLMENTS, encryptionKey, []),
         loadEncrypted<Loan[]>(FILE_PATHS.LOANS, encryptionKey, []),
+        loadEncrypted<RepaymentRecord[]>(FILE_PATHS.REPAYMENT_RECORDS, encryptionKey, []),
       ]);
+
+      // v1.1.x → v1.2.0 마이그레이션: 상환 기록이 없으면 기존 대출에서 생성
+      let records = recordsData;
+      if (records.length === 0 && loansData.length > 0) {
+        const allRecords: RepaymentRecord[] = [];
+        for (const loan of loansData) {
+          if (loan.status === 'cancelled') continue;
+          allRecords.push(...generateRepaymentRecords(loan));
+        }
+        if (allRecords.length > 0) {
+          records = allRecords;
+          await saveEncrypted(FILE_PATHS.REPAYMENT_RECORDS, records, encryptionKey);
+          if (__DEV__) { console.log(`[DebtStore] 상환 기록 마이그레이션 완료: ${records.length}건`); }
+        }
+      }
 
       set({
         installments: installmentsData,
         loans: loansData,
+        repaymentRecords: records,
         isLoading: false,
       });
     } catch (error) {
@@ -232,9 +257,17 @@ export const useDebtStore = create<DebtState & DebtActions>((set, get) => ({
     };
 
     const updated = [...get().loans, newLoan];
-    set({ loans: updated });
 
-    await saveEncrypted(FILE_PATHS.LOANS, updated, encryptionKey);
+    // 상환 기록 생성
+    const newRecords = generateRepaymentRecords(newLoan);
+    const allRecords = [...get().repaymentRecords, ...newRecords];
+
+    set({ loans: updated, repaymentRecords: allRecords });
+
+    await Promise.all([
+      saveEncrypted(FILE_PATHS.LOANS, updated, encryptionKey),
+      saveEncrypted(FILE_PATHS.REPAYMENT_RECORDS, allRecords, encryptionKey),
+    ]);
     return newLoan;
   },
 
@@ -273,8 +306,27 @@ export const useDebtStore = create<DebtState & DebtActions>((set, get) => ({
   // 대출 삭제
   deleteLoan: async (id, encryptionKey) => {
     const loans = get().loans.filter((item) => item.id !== id);
-    set({ loans });
-    await saveEncrypted(FILE_PATHS.LOANS, loans, encryptionKey);
+    const repaymentRecords = get().repaymentRecords.filter((r) => r.loanId !== id);
+    set({ loans, repaymentRecords });
+    await Promise.all([
+      saveEncrypted(FILE_PATHS.LOANS, loans, encryptionKey),
+      saveEncrypted(FILE_PATHS.REPAYMENT_RECORDS, repaymentRecords, encryptionKey),
+    ]);
+  },
+
+  // 특정 대출의 상환 기록 조회
+  getRecordsForLoan: (loanId: string) => {
+    return get().repaymentRecords.filter((r) => r.loanId === loanId);
+  },
+
+  // 상환 기록 납부 완료 처리
+  markRecordAsPaid: async (recordId: string, encryptionKey: string) => {
+    const repaymentRecords = get().repaymentRecords.map((r) => {
+      if (r.id !== recordId) return r;
+      return { ...r, status: 'paid' as const, paidAt: new Date().toISOString() };
+    });
+    set({ repaymentRecords });
+    await saveEncrypted(FILE_PATHS.REPAYMENT_RECORDS, repaymentRecords, encryptionKey);
   },
 
   // 지출 기록 ID로 할부 조회

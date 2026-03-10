@@ -1,6 +1,30 @@
 import { RepaymentType, RepaymentSchedule } from '../types/debt';
 
 /**
+ * Date → 'YYYY-MM-DD' 형식 (로컬 타임존 기준)
+ * toISOString()은 UTC 변환으로 날짜가 1일 밀릴 수 있어 로컬 포맷 사용
+ */
+function formatDateLocal(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+/**
+ * 시작일로부터 N개월 후의 날짜 계산 (월말 클램핑)
+ * ex) 1/31 + 1개월 → 2/28, 1/31 + 2개월 → 3/31
+ */
+function addMonthsClamped(startDate: Date, monthsToAdd: number): Date {
+  const targetYear = startDate.getFullYear();
+  const targetMonth = startDate.getMonth() + monthsToAdd;
+  const firstOfMonth = new Date(targetYear, targetMonth, 1);
+  const lastDayOfMonth = new Date(firstOfMonth.getFullYear(), firstOfMonth.getMonth() + 1, 0).getDate();
+  const day = Math.min(startDate.getDate(), lastDayOfMonth);
+  return new Date(firstOfMonth.getFullYear(), firstOfMonth.getMonth(), day);
+}
+
+/**
  * 할부 월 납부액 계산
  * @param totalAmount 총 결제 금액
  * @param months 할부 개월 수
@@ -131,13 +155,12 @@ export function generateRepaymentSchedule(
     case 'bullet': {
       const monthlyInterest = Math.ceil(principal * monthlyRate);
       for (let i = 1; i <= months; i++) {
-        const date = new Date(start);
-        date.setMonth(date.getMonth() + i);
+        const date = addMonthsClamped(start, i);
 
         const isLastMonth = i === months;
         schedule.push({
           month: i,
-          date: date.toISOString().split('T')[0],
+          date: formatDateLocal(date),
           principal: isLastMonth ? principal : 0,
           interest: monthlyInterest,
           total: isLastMonth ? principal + monthlyInterest : monthlyInterest,
@@ -156,8 +179,7 @@ export function generateRepaymentSchedule(
             (Math.pow(1 + monthlyRate, months) - 1);
 
       for (let i = 1; i <= months; i++) {
-        const date = new Date(start);
-        date.setMonth(date.getMonth() + i);
+        const date = addMonthsClamped(start, i);
 
         const interest = remaining * monthlyRate;
         const principalPayment = monthlyPayment - interest;
@@ -165,7 +187,7 @@ export function generateRepaymentSchedule(
 
         schedule.push({
           month: i,
-          date: date.toISOString().split('T')[0],
+          date: formatDateLocal(date),
           principal: Math.ceil(principalPayment),
           interest: Math.ceil(interest),
           total: Math.ceil(monthlyPayment),
@@ -179,15 +201,14 @@ export function generateRepaymentSchedule(
       const monthlyPrincipal = principal / months;
 
       for (let i = 1; i <= months; i++) {
-        const date = new Date(start);
-        date.setMonth(date.getMonth() + i);
+        const date = addMonthsClamped(start, i);
 
         const interest = remaining * monthlyRate;
         remaining -= monthlyPrincipal;
 
         schedule.push({
           month: i,
-          date: date.toISOString().split('T')[0],
+          date: formatDateLocal(date),
           principal: Math.ceil(monthlyPrincipal),
           interest: Math.ceil(interest),
           total: Math.ceil(monthlyPrincipal + interest),
@@ -205,9 +226,9 @@ export function generateRepaymentSchedule(
  * 할부/대출 종료일 계산
  */
 export function calculateEndDate(startDate: string, months: number): string {
-  const date = new Date(startDate);
-  date.setMonth(date.getMonth() + months);
-  return date.toISOString().split('T')[0];
+  const start = new Date(startDate);
+  const date = addMonthsClamped(start, months);
+  return formatDateLocal(date);
 }
 
 /**
@@ -229,8 +250,7 @@ export function calculatePaidMonths(startDate: string): number {
  */
 export function isDueThisMonth(startDate: string, paidMonths: number): boolean {
   const start = new Date(startDate);
-  const nextPaymentDate = new Date(start);
-  nextPaymentDate.setMonth(nextPaymentDate.getMonth() + paidMonths + 1);
+  const nextPaymentDate = addMonthsClamped(start, paidMonths + 1);
 
   const now = new Date();
   return (

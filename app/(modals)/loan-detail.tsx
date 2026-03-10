@@ -21,7 +21,7 @@ import { useAuthStore } from '../../src/stores/authStore';
 import { useAssetStore } from '../../src/stores/assetStore';
 import { isFiatAsset } from '../../src/types/asset';
 import { formatKrw, formatKrwPlain, getLocale } from '../../src/utils/formatters';
-import { calculateLoanPayment, generateRepaymentSchedule } from '../../src/utils/debtCalculator';
+import { calculateLoanPayment } from '../../src/utils/debtCalculator';
 import {
   RepaymentType,
   REPAYMENT_TYPE_LABELS,
@@ -37,7 +37,7 @@ export default function LoanDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { getEncryptionKey } = useAuthStore();
   const encryptionKey = getEncryptionKey();
-  const { loans, updateLoan, deleteLoan } = useDebtStore();
+  const { loans, updateLoan, deleteLoan, getRecordsForLoan } = useDebtStore();
   const { assets } = useAssetStore();
   const region = getCurrentRegion();
 
@@ -115,14 +115,8 @@ export default function LoanDetailScreen() {
   const progress = loan.paidMonths / loan.termMonths;
   const remainingMonths = loan.termMonths - loan.paidMonths;
 
-  // 상환 스케줄 계산
-  const schedule = generateRepaymentSchedule(
-    loan.principal,
-    loan.interestRate,
-    loan.termMonths,
-    loan.repaymentType,
-    loan.startDate
-  );
+  // 상환 기록 조회
+  const repaymentRecords = getRecordsForLoan(loan.id);
 
   const formatTermLabel = (months: number): string => {
     return t('installment.monthsFormat', { count: months });
@@ -478,24 +472,29 @@ export default function LoanDetailScreen() {
                 </View>
 
                 {/* 스케줄 목록 */}
-                {schedule.map((item) => {
-                  const isPaid = item.month <= loan.paidMonths;
+                {repaymentRecords.map((item) => {
+                  const statusColor = item.status === 'paid' ? theme.success
+                    : item.status === 'overdue' ? theme.error
+                    : theme.text;
+                  const bgColor = item.status === 'paid' ? theme.incomeButtonBg
+                    : item.status === 'overdue' ? '#FEE2E2'
+                    : theme.modalBackground;
                   return (
                     <View
-                      key={item.month}
+                      key={item.id}
                       style={{
                         flexDirection: 'row',
                         padding: 16,
                         borderBottomWidth: 1,
                         borderBottomColor: theme.backgroundTertiary,
-                        backgroundColor: isPaid ? theme.incomeButtonBg : theme.modalBackground,
+                        backgroundColor: bgColor,
                       }}
                     >
                       <Text
                         style={{
                           flex: 1,
                           fontSize: 12,
-                          color: isPaid ? theme.success : theme.text,
+                          color: statusColor,
                           textAlign: 'center',
                         }}
                       >
@@ -505,7 +504,7 @@ export default function LoanDetailScreen() {
                         style={{
                           flex: 2,
                           fontSize: 12,
-                          color: isPaid ? theme.success : theme.textSecondary,
+                          color: item.status === 'paid' ? theme.success : theme.textSecondary,
                           textAlign: 'center',
                         }}
                       >
@@ -515,7 +514,7 @@ export default function LoanDetailScreen() {
                         style={{
                           flex: 2,
                           fontSize: 12,
-                          color: isPaid ? theme.success : theme.text,
+                          color: statusColor,
                           textAlign: 'right',
                         }}
                       >
@@ -525,7 +524,7 @@ export default function LoanDetailScreen() {
                         style={{
                           flex: 2,
                           fontSize: 12,
-                          color: isPaid ? theme.success : theme.textMuted,
+                          color: item.status === 'paid' ? theme.success : theme.textMuted,
                           textAlign: 'right',
                         }}
                       >
@@ -536,7 +535,9 @@ export default function LoanDetailScreen() {
                           flex: 2,
                           fontSize: 12,
                           fontWeight: '600',
-                          color: isPaid ? theme.success : theme.info,
+                          color: item.status === 'paid' ? theme.success
+                            : item.status === 'overdue' ? theme.error
+                            : theme.info,
                           textAlign: 'right',
                         }}
                       >
