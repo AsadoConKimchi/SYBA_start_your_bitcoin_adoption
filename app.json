@@ -49,7 +49,14 @@
           "faceIDPermission": "생체 인증으로 앱에 로그인합니다"
         }
       ],
-      "expo-localization"
+      "expo-localization",
+      [
+        "@sentry/react-native/expo",
+        {
+          "organization": "syba",
+          "project": "syba-react-native"
+        }
+      ]
     ],
     "extra": {
       "router": {},

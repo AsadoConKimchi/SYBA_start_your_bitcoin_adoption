@@ -1034,5 +1034,38 @@
   "delete": {
     "deleteRecords": "기록도 삭제",
     "keepRecords": "기록 유지"
+  },
+  "support": {
+    "title": "고객지원",
+    "newTicket": "새 문의",
+    "myTickets": "내 문의 내역",
+    "noTickets": "문의 내역이 없습니다",
+    "category": "카테고리",
+    "categories": {
+      "payment": "결제 문제",
+      "subscription": "구독 관련",
+      "bug": "버그 신고",
+      "feature": "기능 요청",
+      "account": "계정 문제",
+      "other": "기타"
+    },
+    "subject": "제목",
+    "message": "내용",
+    "submit": "제출",
+    "status": {
+      "open": "접수됨",
+      "in_progress": "처리 중",
+      "waiting_user": "답변 대기",
+      "resolved": "해결됨",
+      "closed": "종료"
+    },
+    "loginRequired": "문의를 접수하려면 먼저 로그인해주세요",
+    "submitSuccess": "문의가 접수되었습니다",
+    "replyPlaceholder": "답변을 입력하세요...",
+    "ticketDetail": "문의 상세",
+    "admin": "관리자",
+    "you": "나",
+    "send": "전송",
+    "contactEmail": "이메일 문의"
   }
 }

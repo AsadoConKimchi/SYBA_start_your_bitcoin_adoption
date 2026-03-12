@@ -933,33 +933,17 @@ export default function SettingsScreen() {
                 A⚡ado 🌽 Kimchi
               </Text>
             </View>
-            <View
+            <TouchableOpacity
               style={{
                 flexDirection: 'row',
                 justifyContent: 'space-between',
                 alignItems: 'center',
               }}
+              onPress={() => router.push('/(modals)/support')}
             >
-              <Text style={{ fontSize: 14, color: theme.textSecondary }}>{t('settings.contact')}</Text>
-              <TouchableOpacity
-                style={{ flexShrink: 1, marginLeft: 8 }}
-                onPress={() => {
-                  Clipboard.setStringAsync('AsadoConKimchi@proton.me');
-                  Alert.alert(t('common.copied'), t('settings.emailCopied'));
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: 13,
-                    color: theme.info,
-                  }}
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                >
-                  AsadoConKimchi@proton.me
-                </Text>
-              </TouchableOpacity>
-            </View>
+              <Text style={{ fontSize: 14, color: theme.textSecondary }}>{t('support.title')}</Text>
+              <Ionicons name="chevron-forward" size={16} color={theme.textMuted} />
+            </TouchableOpacity>
           </View>
 
           <View

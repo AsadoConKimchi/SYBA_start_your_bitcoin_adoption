@@ -1027,5 +1027,38 @@
   "delete": {
     "deleteRecords": "Delete Records Too",
     "keepRecords": "Keep Records"
+  },
+  "support": {
+    "title": "Support",
+    "newTicket": "New Ticket",
+    "myTickets": "My Tickets",
+    "noTickets": "No tickets yet",
+    "category": "Category",
+    "categories": {
+      "payment": "Payment Issue",
+      "subscription": "Subscription",
+      "bug": "Bug Report",
+      "feature": "Feature Request",
+      "account": "Account Issue",
+      "other": "Other"
+    },
+    "subject": "Subject",
+    "message": "Message",
+    "submit": "Submit",
+    "status": {
+      "open": "Open",
+      "in_progress": "In Progress",
+      "waiting_user": "Awaiting Reply",
+      "resolved": "Resolved",
+      "closed": "Closed"
+    },
+    "loginRequired": "Please log in to submit tickets",
+    "submitSuccess": "Ticket submitted successfully",
+    "replyPlaceholder": "Type your reply...",
+    "ticketDetail": "Ticket Detail",
+    "admin": "Admin",
+    "you": "You",
+    "send": "Send",
+    "contactEmail": "Contact via Email"
   }
 }

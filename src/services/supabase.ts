@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { SUPABASE_CONFIG } from '../constants/supabase';
 import { CONFIG } from '../constants/config';
+import { captureError } from './errorReporting';
 import type { SubscriptionTier, SubscriptionPrice, DiscountCode, PriceCalculation } from '../types/subscription';
 
 // Supabase 클라이언트 생성 (환경변수 미설정 시 크래시 방지)
@@ -282,7 +283,7 @@ export async function createPayment(
     .single();
 
   if (error) {
-    console.error('결제 생성 실패:', error);
+    captureError(error, { context: '결제 생성 실패' });
     return null;
   }
 
@@ -324,6 +325,21 @@ export async function getPaymentHistory(userId: string): Promise<Payment[]> {
     .limit(20);
 
   if (error || !data) return [];
+  return data;
+}
+
+// ============================================================
+// 할인코드 사용 처리
+// ============================================================
+
+/** 할인코드 사용 횟수 atomic increment (RPC: use_discount_code) */
+export async function useDiscountCode(code: string): Promise<string | null> {
+  if (!supabase) return null;
+  const { data, error } = await supabase.rpc('use_discount_code', { p_code: code });
+  if (error || !data) {
+    captureError(error, { context: '할인코드 사용 처리 실패' });
+    return null;
+  }
   return data;
 }
 
@@ -418,7 +434,7 @@ export async function activateSubscription(
     .single();
 
   if (error) {
-    console.error('구독 활성화 실패:', error);
+    captureError(error, { context: '구독 활성화 실패' });
     return null;
   }
 

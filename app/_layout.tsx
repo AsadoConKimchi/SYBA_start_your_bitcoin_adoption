@@ -1,10 +1,10 @@
 import 'react-native-get-random-values';  // UUID 폴리필 - 반드시 최상단에!
 import '../global.css';
 import '../src/i18n';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { View, ActivityIndicator, Text } from 'react-native';
+import { View, ActivityIndicator, Text, AppState } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../src/stores/authStore';
 import { useSettingsStore } from '../src/stores/settingsStore';
@@ -15,6 +15,8 @@ import { ErrorBoundary } from '../src/components/ErrorBoundary';
 import { useTheme } from '../src/hooks/useTheme';
 import { fetchRemoteInstallmentRates } from '../src/constants/cardCompanies';
 import { recoverReEncryptIfNeeded } from '../src/utils/storage';
+import { initErrorReporting } from '../src/services/errorReporting';
+import { trackEvent, flushEvents } from '../src/services/analytics';
 
 export default function RootLayout() {
   const { isLoading: authLoading, initialize: initAuth } = useAuthStore();
@@ -34,6 +36,8 @@ export default function RootLayout() {
   );
 
   useEffect(() => {
+    initErrorReporting();
+
     const init = async () => {
       await loadSavedLanguage();
       await loadSavedRegion();
@@ -43,10 +47,17 @@ export default function RootLayout() {
       await loadCachedPrices();
       fetchPrices().catch(() => {});
       fetchRemoteInstallmentRates().catch(() => {});
+      trackEvent('app_open');
     };
     init().catch((error) => {
       console.error('App init failed:', error);
     });
+
+    // 앱 백그라운드 진입 시 분석 이벤트 전송
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'background') flushEvents();
+    });
+    return () => sub.remove();
   }, []);
 
   if (authLoading) {

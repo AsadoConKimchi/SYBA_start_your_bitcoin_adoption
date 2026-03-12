@@ -1027,5 +1027,38 @@
   "delete": {
     "deleteRecords": "Eliminar registros también",
     "keepRecords": "Mantener registros"
+  },
+  "support": {
+    "title": "Soporte",
+    "newTicket": "Nueva Consulta",
+    "myTickets": "Mis Consultas",
+    "noTickets": "No hay consultas",
+    "category": "Categoría",
+    "categories": {
+      "payment": "Problema de Pago",
+      "subscription": "Suscripción",
+      "bug": "Reporte de Error",
+      "feature": "Solicitud de Función",
+      "account": "Problema de Cuenta",
+      "other": "Otro"
+    },
+    "subject": "Asunto",
+    "message": "Mensaje",
+    "submit": "Enviar",
+    "status": {
+      "open": "Abierto",
+      "in_progress": "En Proceso",
+      "waiting_user": "Esperando Respuesta",
+      "resolved": "Resuelto",
+      "closed": "Cerrado"
+    },
+    "loginRequired": "Inicie sesión para enviar consultas",
+    "submitSuccess": "Consulta enviada exitosamente",
+    "replyPlaceholder": "Escriba su respuesta...",
+    "ticketDetail": "Detalle de Consulta",
+    "admin": "Admin",
+    "you": "Yo",
+    "send": "Enviar",
+    "contactEmail": "Contacto por Email"
   }
 }

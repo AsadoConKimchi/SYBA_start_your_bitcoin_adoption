@@ -42,6 +42,10 @@ export default function ModalsLayout() {
       {/* 설정 관련 */}
       <Stack.Screen name="change-password" />
       <Stack.Screen name="subscription" />
+
+      {/* 고객지원 */}
+      <Stack.Screen name="support" />
+      <Stack.Screen name="ticket-detail" />
     </Stack>
   );
 }

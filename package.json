@@ -26,6 +26,7 @@
     "@hookform/resolvers": "^5.2.2",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-community/datetimepicker": "^8.6.0",
+    "@sentry/react-native": "^8.3.0",
     "@supabase/supabase-js": "^2.93.3",
     "babel-preset-expo": "^54.0.10",
     "crypto-js": "^4.2.0",

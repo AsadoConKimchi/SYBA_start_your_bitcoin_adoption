@@ -9,11 +9,14 @@ import {
   getSubscriptionPrices,
   calculatePrice,
   validateDiscountCode,
+  useDiscountCode,
   updateUserEmail,
   getPaymentHistory,
   Subscription,
   Payment,
 } from '../services/supabase';
+import { captureError } from '../services/errorReporting';
+import { trackEvent } from '../services/analytics';
 import {
   createLightningInvoice,
   checkPaymentStatus,
@@ -34,6 +37,8 @@ import { getSecure, saveSecure } from '../utils/encryption';
 import type { SubscriptionTier, SubscriptionPrice, PriceCalculation } from '../types/subscription';
 
 const PENDING_INVOICE_KEY = 'SYBA_PENDING_INVOICE';
+const TIER_PRICE_CACHE_MS = 5 * 60 * 1000; // 5분 캐시
+let tierPricesCachedAt = 0;
 
 // 사용자 타입 (LNURL-auth 기반)
 interface User {
@@ -166,7 +171,7 @@ export const useSubscriptionStore = create<SubscriptionState & SubscriptionActio
                 await AsyncStorage.removeItem(PENDING_INVOICE_KEY);
               }
             } catch (e) {
-              console.error('[Subscription] 미확인 인보이스 복구 실패:', e);
+              captureError(e, { context: '미확인 인보이스 복구 실패' });
               await AsyncStorage.removeItem(PENDING_INVOICE_KEY);
             }
           }
@@ -177,7 +182,7 @@ export const useSubscriptionStore = create<SubscriptionState & SubscriptionActio
 
       set({ isLoading: false });
     } catch (error) {
-      console.error('구독 초기화 실패:', error);
+      captureError(error, { context: '구독 초기화 실패' });
       set({ isLoading: false });
     }
   },
@@ -207,7 +212,7 @@ export const useSubscriptionStore = create<SubscriptionState & SubscriptionActio
 
       return session.lnurl;
     } catch (error) {
-      console.error('[SubscriptionStore] LNURL-auth 시작 실패:', error);
+      captureError(error, { context: 'LNURL-auth 시작 실패' });
       set({ authStatus: 'error' });
       return null;
     }
@@ -254,7 +259,7 @@ export const useSubscriptionStore = create<SubscriptionState & SubscriptionActio
 
       return false;
     } catch (error) {
-      console.error('LNURL-auth 상태 확인 실패:', error);
+      captureError(error, { context: 'LNURL-auth 상태 확인 실패' });
       return false;
     }
   },
@@ -355,9 +360,10 @@ export const useSubscriptionStore = create<SubscriptionState & SubscriptionActio
         discountCodeId: price.discountCode?.id,
       }));
 
+      trackEvent('payment_start', user.id, { tier: selectedTier, amount: price.finalPrice });
       return invoice.paymentRequest;
     } catch (error) {
-      console.error('결제 시작 실패:', error);
+      captureError(error, { context: '결제 시작 실패' });
       return null;
     }
   },
@@ -375,11 +381,12 @@ export const useSubscriptionStore = create<SubscriptionState & SubscriptionActio
       );
       if (!paymentUpdated) {
         console.error('[Subscription] payment 상태 업데이트 실패:', pendingPayment.id);
+        return false;
       }
 
-      // 할인코드 사용 처리
-      if (pendingPayment.discount_code_id) {
-        // RPC로 atomic increment (이미 SQL function 정의됨)
+      // 할인코드 사용 횟수 증가 (atomic increment)
+      if (pendingPayment.discount_code_id && get().discountCode) {
+        await useDiscountCode(get().discountCode.trim());
       }
 
       const subscription = await activateSubscription(
@@ -398,6 +405,8 @@ export const useSubscriptionStore = create<SubscriptionState & SubscriptionActio
         lightningInvoice: null,
       });
 
+      trackEvent('payment_complete', user.id, { tier: subscription.tier });
+
       // 구독 만료 알림 스케줄링 (lifetime 제외)
       if (subscription.expires_at && !subscription.is_lifetime) {
         await requestNotificationPermissions();
@@ -406,7 +415,7 @@ export const useSubscriptionStore = create<SubscriptionState & SubscriptionActio
 
       return true;
     } catch (error) {
-      console.error('결제 확인 실패:', error);
+      captureError(error, { context: '결제 확인 실패' });
       return false;
     }
   },
@@ -429,17 +438,24 @@ export const useSubscriptionStore = create<SubscriptionState & SubscriptionActio
   // v2: 티어 & 할인코드
   // ============================================================
 
-  // DB에서 티어별 가격 로드
+  // DB에서 티어별 가격 로드 (5분 캐시)
   loadTierPrices: async () => {
+    const now = Date.now();
+    if (get().availableTiers.length > 0 && now - tierPricesCachedAt < TIER_PRICE_CACHE_MS) {
+      return; // 캐시 유효
+    }
+
     try {
       const prices = await getSubscriptionPrices();
       set({ availableTiers: prices });
+      tierPricesCachedAt = now;
 
       // 기본 선택 티어의 가격도 계산
       const calc = await calculatePrice('monthly');
       set({ priceCalculation: calc });
+      trackEvent('subscription_view', get().user?.id);
     } catch (error) {
-      console.error('티어 가격 로드 실패:', error);
+      captureError(error, { context: '티어 가격 로드 실패' });
     }
   },
 

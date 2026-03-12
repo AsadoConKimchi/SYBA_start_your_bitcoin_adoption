@@ -1027,5 +1027,38 @@
   "delete": {
     "deleteRecords": "記録も削除",
     "keepRecords": "記録を残す"
+  },
+  "support": {
+    "title": "サポート",
+    "newTicket": "新規お問い合わせ",
+    "myTickets": "お問い合わせ履歴",
+    "noTickets": "お問い合わせはありません",
+    "category": "カテゴリ",
+    "categories": {
+      "payment": "決済の問題",
+      "subscription": "サブスクリプション",
+      "bug": "バグ報告",
+      "feature": "機能リクエスト",
+      "account": "アカウントの問題",
+      "other": "その他"
+    },
+    "subject": "件名",
+    "message": "内容",
+    "submit": "送信",
+    "status": {
+      "open": "受付済",
+      "in_progress": "対応中",
+      "waiting_user": "返信待ち",
+      "resolved": "解決済",
+      "closed": "終了"
+    },
+    "loginRequired": "お問い合わせにはログインが必要です",
+    "submitSuccess": "お問い合わせを送信しました",
+    "replyPlaceholder": "返信を入力...",
+    "ticketDetail": "お問い合わせ詳細",
+    "admin": "管理者",
+    "you": "自分",
+    "send": "送信",
+    "contactEmail": "メールでお問い合わせ"
   }
 }
