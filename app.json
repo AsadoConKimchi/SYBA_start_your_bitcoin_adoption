@@ -16,14 +16,14 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.syba.finance",
-      "buildNumber": "6",
+      "buildNumber": "7",
       "infoPlist": {
         "NSFaceIDUsageDescription": "생체 인증으로 앱에 로그인합니다"
       }
     },
     "android": {
       "package": "com.syba.finance",
-      "versionCode": 6,
+      "versionCode": 7,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#F7931A"
