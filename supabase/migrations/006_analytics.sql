@@ -9,8 +9,8 @@ CREATE TABLE IF NOT EXISTS app_events (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_events_type_date ON app_events (event_type, created_at DESC);
-CREATE INDEX idx_events_user ON app_events (user_id) WHERE user_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_events_type_date ON app_events (event_type, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_events_user ON app_events (user_id) WHERE user_id IS NOT NULL;
 
 -- DAU 뷰
 CREATE OR REPLACE VIEW v_daily_active_users AS

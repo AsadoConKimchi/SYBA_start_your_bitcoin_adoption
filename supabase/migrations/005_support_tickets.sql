@@ -33,10 +33,10 @@ CREATE TABLE IF NOT EXISTS ticket_messages (
 );
 
 -- 3. 인덱스
-CREATE INDEX idx_tickets_user ON support_tickets (user_id);
-CREATE INDEX idx_tickets_status ON support_tickets (status);
-CREATE INDEX idx_tickets_created ON support_tickets (created_at DESC);
-CREATE INDEX idx_ticket_messages_ticket ON ticket_messages (ticket_id);
+CREATE INDEX IF NOT EXISTS idx_tickets_user ON support_tickets (user_id);
+CREATE INDEX IF NOT EXISTS idx_tickets_status ON support_tickets (status);
+CREATE INDEX IF NOT EXISTS idx_tickets_created ON support_tickets (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_ticket_messages_ticket ON ticket_messages (ticket_id);
 
 -- 4. 메시지 추가 시 티켓 updated_at 자동 갱신
 CREATE OR REPLACE FUNCTION update_ticket_timestamp()
@@ -47,6 +47,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_update_ticket_timestamp ON ticket_messages;
 CREATE TRIGGER trg_update_ticket_timestamp
   AFTER INSERT ON ticket_messages
   FOR EACH ROW
