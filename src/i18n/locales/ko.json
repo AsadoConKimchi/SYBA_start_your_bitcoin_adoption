@@ -304,7 +304,10 @@
     "language": "언어",
     "region": "지역",
     "recurringManagement": "고정비용 관리",
-    "recurringTransferManagement": "고정이체 관리"
+    "recurringTransferManagement": "고정이체 관리",
+    "adminDashboard": "관리자 대시보드",
+    "adminDashboardSub": "사용자, 결제, 티켓 관리",
+    "adminTokenFailed": "토큰 생성에 실패했습니다"
   },
   "expense": {
     "title": "지출 입력",

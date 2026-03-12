@@ -304,7 +304,10 @@
     "language": "言語",
     "region": "地域",
     "recurringManagement": "固定費管理",
-    "recurringTransferManagement": "定期振替管理"
+    "recurringTransferManagement": "定期振替管理",
+    "adminDashboard": "管理者ダッシュボード",
+    "adminDashboardSub": "ユーザー、決済、チケット管理",
+    "adminTokenFailed": "トークンの作成に失敗しました"
   },
   "expense": {
     "title": "支出を追加",

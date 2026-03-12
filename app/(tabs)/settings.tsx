@@ -8,6 +8,7 @@ import {
   Alert,
   Modal,
   Platform,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -29,6 +30,7 @@ import { generateCSVTemplate } from '../../src/utils/csvTemplate';
 import { parseCSV, executeImport } from '../../src/utils/csvImport';
 import { CONFIG, AutoLockTime } from '../../src/constants/config';
 import { SUPABASE_CONFIG } from '../../src/constants/supabase';
+import { isAdmin } from '../../src/constants/admin';
 import {
   requestNotificationPermissions,
   cancelAllSubscriptionNotifications,
@@ -961,6 +963,53 @@ export default function SettingsScreen() {
               {t('settings.billingInfoDetail')}
             </Text>
           </View>
+
+          {/* 어드민 대시보드 버튼 — linking_key가 ADMIN_LINKING_KEYS에 포함된 경우에만 표시 */}
+          {user?.linking_key && isAdmin(user.linking_key) && (
+            <TouchableOpacity
+              style={{
+                backgroundColor: theme.primary,
+                borderRadius: 12,
+                padding: 16,
+                marginTop: 12,
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+              onPress={async () => {
+                try {
+                  const { supabase } = require('../../src/services/supabase');
+                  if (!supabase) {
+                    Alert.alert(t('common.error'), t('settings.adminTokenFailed'));
+                    return;
+                  }
+
+                  const { data, error } = await supabase.functions.invoke('admin-token', {
+                    body: { action: 'create', linking_key: user.linking_key },
+                  });
+
+                  if (error || !data?.token) {
+                    Alert.alert(t('common.error'), t('settings.adminTokenFailed'));
+                    return;
+                  }
+
+                  await Linking.openURL(`https://syba-sats.vercel.app/admin?token=${data.token}`);
+                } catch (e) {
+                  Alert.alert(t('common.error'), t('settings.adminTokenFailed'));
+                }
+              }}
+            >
+              <View>
+                <Text style={{ fontSize: 14, fontWeight: '600', color: '#FFFFFF' }}>
+                  {t('settings.adminDashboard')}
+                </Text>
+                <Text style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>
+                  {t('settings.adminDashboardSub')}
+                </Text>
+              </View>
+              <Ionicons name="open-outline" size={18} color="#FFFFFF" />
+            </TouchableOpacity>
+          )}
 
         </View>
 

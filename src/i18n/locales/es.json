@@ -304,7 +304,10 @@
     "language": "Idioma",
     "region": "Región",
     "recurringManagement": "Gastos Fijos",
-    "recurringTransferManagement": "Transferencias Recurrentes"
+    "recurringTransferManagement": "Transferencias Recurrentes",
+    "adminDashboard": "Panel de administración",
+    "adminDashboardSub": "Gestionar usuarios, pagos, tickets",
+    "adminTokenFailed": "Error al crear el token"
   },
   "expense": {
     "title": "Agregar Gasto",

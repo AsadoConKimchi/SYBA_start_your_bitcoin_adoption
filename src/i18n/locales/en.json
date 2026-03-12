@@ -304,7 +304,10 @@
     "language": "Language",
     "region": "Region",
     "recurringManagement": "Recurring Expenses",
-    "recurringTransferManagement": "Recurring Transfers"
+    "recurringTransferManagement": "Recurring Transfers",
+    "adminDashboard": "Admin Dashboard",
+    "adminDashboardSub": "Manage users, payments, tickets",
+    "adminTokenFailed": "Failed to create token"
   },
   "expense": {
     "title": "Add Expense",
