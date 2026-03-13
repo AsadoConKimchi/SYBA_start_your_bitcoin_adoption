@@ -1,6 +1,7 @@
 import {
   calculateInstallmentPayment,
   calculateLoanPayment,
+  calculatePaidMonths,
   generateRepaymentSchedule,
   calculateEndDate,
   isDueThisMonth,
@@ -133,6 +134,86 @@ describe('calculateEndDate', () => {
 
   it('일반 날짜', () => {
     expect(calculateEndDate('2026-03-15', 6)).toBe('2026-09-15');
+  });
+});
+
+describe('calculatePaidMonths', () => {
+  it('상환일 전에는 1 적게 반환', () => {
+    const now = new Date();
+    // 2년 전 같은 달, 25일 시작 (repaymentDay=25)
+    const startDate = new Date(now.getFullYear() - 2, now.getMonth(), 1);
+    const startDateStr = formatDateLocal(startDate);
+
+    const withoutDay = calculatePaidMonths(startDateStr);
+    const withDay = calculatePaidMonths(startDateStr, 25);
+
+    if (now.getDate() < 25) {
+      // 오늘이 25일 전이면 repaymentDay 지정 시 1 적어야 함
+      expect(withDay).toBe(withoutDay - 1);
+    } else {
+      // 25일 이후면 동일
+      expect(withDay).toBe(withoutDay);
+    }
+  });
+
+  it('상환일이 지난 후에는 정상 반환', () => {
+    const now = new Date();
+    // repaymentDay를 오늘 이전(1일)으로 설정
+    const startDate = new Date(now.getFullYear() - 1, now.getMonth(), 1);
+    const startDateStr = formatDateLocal(startDate);
+
+    const result = calculatePaidMonths(startDateStr, 1);
+    // 1일은 항상 지나있으므로 (now.getDate() >= 1) 12개월
+    expect(result).toBe(12);
+  });
+
+  it('repaymentDay 미지정 시 startDate의 일자 사용', () => {
+    const now = new Date();
+    const day = 28;
+    const startDate = new Date(now.getFullYear() - 1, now.getMonth(), day);
+    const startDateStr = formatDateLocal(startDate);
+
+    const withExplicit = calculatePaidMonths(startDateStr, day);
+    const withDefault = calculatePaidMonths(startDateStr);
+
+    expect(withDefault).toBe(withExplicit);
+  });
+});
+
+describe('generateRepaymentSchedule - repaymentDay', () => {
+  it('repaymentDay 전달 시 해당 일자로 날짜 생성', () => {
+    const schedule = generateRepaymentSchedule(
+      12000000, 5, 3, 'equalPrincipal', '2026-01-10', 25
+    );
+
+    expect(schedule).toHaveLength(3);
+    // repaymentDay=25이므로 모든 회차가 25일
+    expect(schedule[0].date).toBe('2026-02-25');
+    expect(schedule[1].date).toBe('2026-03-25');
+    expect(schedule[2].date).toBe('2026-04-25');
+  });
+
+  it('repaymentDay 미전달 시 startDate 일자 사용 (하위 호환)', () => {
+    const schedule = generateRepaymentSchedule(
+      12000000, 5, 3, 'equalPrincipal', '2026-01-10'
+    );
+
+    expect(schedule).toHaveLength(3);
+    // startDate=10일이므로 10일 유지
+    expect(schedule[0].date).toBe('2026-02-10');
+    expect(schedule[1].date).toBe('2026-03-10');
+    expect(schedule[2].date).toBe('2026-04-10');
+  });
+
+  it('repaymentDay=31 월말 클램핑 적용', () => {
+    const schedule = generateRepaymentSchedule(
+      12000000, 5, 3, 'equalPrincipal', '2026-01-15', 31
+    );
+
+    expect(schedule).toHaveLength(3);
+    expect(schedule[0].date).toBe('2026-02-28'); // 2월 28일
+    expect(schedule[1].date).toBe('2026-03-31');
+    expect(schedule[2].date).toBe('2026-04-30');
   });
 });
 

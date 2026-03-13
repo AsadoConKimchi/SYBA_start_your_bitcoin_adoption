@@ -144,6 +144,7 @@ export const useDebtStore = create<DebtState & DebtActions>((set, get) => ({
     );
 
     const paidMonths = data.paidMonths ?? calculatePaidMonths(data.startDate);
+    // 할부는 repaymentDay 개념 없음
     const remainingMonths = Math.max(0, data.months - paidMonths);
 
     // 잔액 계산: 원금에서 납부한 금액을 빼는 방식 (반올림 오차 방지)
@@ -229,7 +230,7 @@ export const useDebtStore = create<DebtState & DebtActions>((set, get) => ({
       data.repaymentType
     );
 
-    const paidMonths = data.paidMonths ?? calculatePaidMonths(data.startDate);
+    const paidMonths = data.paidMonths ?? calculatePaidMonths(data.startDate, data.repaymentDay);
 
     // 잔여 원금 계산 (상환 방식에 따라 다름)
     let remainingPrincipal = data.principal;
@@ -238,7 +239,7 @@ export const useDebtStore = create<DebtState & DebtActions>((set, get) => ({
         // 원리금균등: 스케줄에서 정확한 잔여원금 추출
         const schedule = generateRepaymentSchedule(
           data.principal, data.interestRate, data.termMonths,
-          data.repaymentType, data.startDate
+          data.repaymentType, data.startDate, data.repaymentDay
         );
         const targetEntry = schedule[Math.min(paidMonths, schedule.length) - 1];
         remainingPrincipal = targetEntry ? targetEntry.remainingPrincipal : 0;

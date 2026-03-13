@@ -34,7 +34,8 @@ export async function scheduleLoanRepaymentNotifications(loans: Loan[]): Promise
       loan.interestRate,
       loan.termMonths,
       loan.repaymentType,
-      loan.startDate
+      loan.startDate,
+      loan.repaymentDay
     );
 
     // 아직 상환 안 된 다음 회차
@@ -170,7 +171,8 @@ export function createLoanRepaymentRecordData(loan: Loan): {
     loan.interestRate,
     loan.termMonths,
     loan.repaymentType,
-    loan.startDate
+    loan.startDate,
+    loan.repaymentDay
   );
 
   const nextPayment = schedule.find((s) => s.month === loan.paidMonths + 1);
@@ -209,7 +211,8 @@ export function getTodayLoanRepayments(loans: Loan[]): Loan[] {
       loan.interestRate,
       loan.termMonths,
       loan.repaymentType,
-      loan.startDate
+      loan.startDate,
+      loan.repaymentDay
     );
 
     const nextPayment = schedule.find((s) => s.month === loan.paidMonths + 1);
@@ -235,7 +238,8 @@ export function getThisMonthLoanRepayments(loans: Loan[]): { loan: Loan; payment
       loan.interestRate,
       loan.termMonths,
       loan.repaymentType,
-      loan.startDate
+      loan.startDate,
+      loan.repaymentDay
     );
 
     const nextPayment = schedule.find((s) => s.month === loan.paidMonths + 1);
