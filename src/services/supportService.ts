@@ -51,12 +51,14 @@ export async function createTicket(
   category: TicketCategory,
   subject: string,
   message: string,
+  diagnosticData?: Record<string, unknown>,
 ): Promise<SupportTicket | null> {
   return callSupportApi<SupportTicket>('create_ticket', {
     userId,
     category,
     subject,
     message,
+    ...(diagnosticData ? { diagnosticData } : {}),
   });
 }
 

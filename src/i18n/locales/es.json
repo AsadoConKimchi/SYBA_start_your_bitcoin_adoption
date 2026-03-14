@@ -646,7 +646,9 @@
     "discountLabel": "Descuento",
     "discountAppliedAmount": "Descuento -{{amount}} sats aplicado",
     "lifetimeActive": "Suscripción de por vida activa",
-    "payOnWeb": "Pagar en la web"
+    "payOnWeb": "Pagar en la web",
+    "subscribeOnWeb": "Suscribirse en la web",
+    "webPaymentNote": "El pago con Lightning se abrirá en tu navegador"
   },
   "changePassword": {
     "title": "Cambiar Contraseña",
@@ -1063,5 +1065,20 @@
     "you": "Yo",
     "send": "Enviar",
     "contactEmail": "Contacto por Email"
+  },
+  "freeStats": {
+    "title": "Resumen del Mes",
+    "vsLastMonth": "vs Mes Anterior",
+    "totalInSats": "Gasto Total ="
+  },
+  "diagnostics": {
+    "title": "Diagnóstico",
+    "generate": "Generar Reporte de Diagnóstico",
+    "generating": "Generando...",
+    "description": "Este reporte no contiene datos financieros. Solo incluye el estado de la app y metadatos de archivos.",
+    "shareTitle": "Reporte de Diagnóstico SYBA",
+    "success": "Reporte generado",
+    "error": "Error al generar el reporte",
+    "attachToTicket": "Adjuntar datos de diagnóstico"
   }
 }

@@ -49,7 +49,7 @@ serve(async (req) => {
           return jsonError('Daily ticket limit reached (max 5)', 429)
         }
 
-        const { category, subject, message } = params
+        const { category, subject, message, diagnosticData } = params
         if (!category || !subject || !message) {
           return jsonError('category, subject, and message are required', 400)
         }
@@ -65,6 +65,7 @@ serve(async (req) => {
             subject,
             status: 'open',
             priority: 'normal',
+            ...(diagnosticData ? { diagnostic_data: diagnosticData } : {}),
           })
           .select()
           .single()

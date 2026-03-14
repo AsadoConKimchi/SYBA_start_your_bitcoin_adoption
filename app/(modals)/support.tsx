@@ -8,6 +8,7 @@ import {
   Alert,
   ActivityIndicator,
   Modal,
+  Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -15,7 +16,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useSubscriptionStore } from '../../src/stores/subscriptionStore';
+import { useAuthStore } from '../../src/stores/authStore';
 import { createTicket, getMyTickets } from '../../src/services/supportService';
+import { generateDiagnosticReport } from '../../src/services/diagnosticService';
 import { SUPPORT_EMAIL } from '../../src/constants/config';
 import type { SupportTicket, TicketCategory, TicketStatus } from '../../src/types/support';
 import { TICKET_CATEGORIES } from '../../src/types/support';
@@ -33,6 +36,7 @@ export default function SupportScreen() {
   const { t } = useTranslation();
   const { theme } = useTheme();
   const { user } = useSubscriptionStore();
+  const { encryptionKey } = useAuthStore();
 
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -43,6 +47,7 @@ export default function SupportScreen() {
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [attachDiagnostics, setAttachDiagnostics] = useState(false);
 
   const loadTickets = useCallback(async () => {
     if (!user) {
@@ -59,6 +64,12 @@ export default function SupportScreen() {
     loadTickets();
   }, [loadTickets]);
 
+  // 카테고리 변경 시 진단 데이터 첨부 기본값 설정
+  const handleCategoryChange = (cat: TicketCategory) => {
+    setCategory(cat);
+    setAttachDiagnostics(cat === 'bug' || cat === 'account');
+  };
+
   const handleSubmit = async () => {
     if (!user) return;
     if (!subject.trim() || !message.trim()) {
@@ -67,7 +78,18 @@ export default function SupportScreen() {
     }
 
     setIsSubmitting(true);
-    const ticket = await createTicket(user.id, category, subject.trim(), message.trim());
+
+    // 진단 데이터 생성
+    let diagnosticData: Record<string, unknown> | undefined;
+    if (attachDiagnostics && encryptionKey) {
+      try {
+        diagnosticData = await generateDiagnosticReport(encryptionKey) as unknown as Record<string, unknown>;
+      } catch {
+        // 진단 데이터 생성 실패 시 무시하고 티켓만 제출
+      }
+    }
+
+    const ticket = await createTicket(user.id, category, subject.trim(), message.trim(), diagnosticData);
     setIsSubmitting(false);
 
     if (ticket) {
@@ -76,6 +98,7 @@ export default function SupportScreen() {
       setSubject('');
       setMessage('');
       setCategory('other');
+      setAttachDiagnostics(false);
       loadTickets();
     }
   };
@@ -206,7 +229,7 @@ export default function SupportScreen() {
               {TICKET_CATEGORIES.map((cat) => (
                 <TouchableOpacity
                   key={cat}
-                  onPress={() => setCategory(cat)}
+                  onPress={() => handleCategoryChange(cat)}
                   style={{
                     paddingHorizontal: 12,
                     paddingVertical: 6,
@@ -266,6 +289,31 @@ export default function SupportScreen() {
               placeholderTextColor={theme.textMuted}
               maxLength={2000}
             />
+
+            {/* 진단 데이터 첨부 토글 */}
+            <View style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              backgroundColor: theme.cardBackground,
+              borderRadius: 8,
+              padding: 12,
+              marginBottom: 12,
+            }}>
+              <View style={{ flex: 1, marginRight: 12 }}>
+                <Text style={{ fontSize: 14, color: theme.text }}>
+                  {t('diagnostics.attachToTicket')}
+                </Text>
+                <Text style={{ fontSize: 11, color: theme.textMuted, marginTop: 2 }}>
+                  {t('diagnostics.description')}
+                </Text>
+              </View>
+              <Switch
+                value={attachDiagnostics}
+                onValueChange={setAttachDiagnostics}
+                trackColor={{ false: theme.textMuted, true: theme.primary }}
+              />
+            </View>
 
             {/* 제출 버튼 */}
             <TouchableOpacity

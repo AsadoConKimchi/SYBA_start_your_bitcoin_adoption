@@ -646,7 +646,9 @@
     "discountLabel": "割引",
     "discountAppliedAmount": "割引 -{{amount}} sats 適用済み",
     "lifetimeActive": "永久サブスクリプション有効",
-    "payOnWeb": "ウェブで決済"
+    "payOnWeb": "ウェブで決済",
+    "subscribeOnWeb": "ウェブで購読する",
+    "webPaymentNote": "ブラウザでLightning決済が行われます"
   },
   "changePassword": {
     "title": "パスワード変更",
@@ -1063,5 +1065,20 @@
     "you": "自分",
     "send": "送信",
     "contactEmail": "メールでお問い合わせ"
+  },
+  "freeStats": {
+    "title": "今月のまとめ",
+    "vsLastMonth": "先月比",
+    "totalInSats": "合計支出 ="
+  },
+  "diagnostics": {
+    "title": "診断データ",
+    "generate": "診断レポート生成",
+    "generating": "生成中...",
+    "description": "このレポートには金融データは含まれません。アプリの状態とファイルのメタデータのみが含まれます。",
+    "shareTitle": "SYBA 診断レポート",
+    "success": "レポートが生成されました",
+    "error": "レポートの生成に失敗しました",
+    "attachToTicket": "診断データを添付"
   }
 }

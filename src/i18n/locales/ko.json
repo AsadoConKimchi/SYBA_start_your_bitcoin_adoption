@@ -653,7 +653,9 @@
     "discountLabel": "할인",
     "discountAppliedAmount": "할인 -{{amount}} sats 적용됨",
     "lifetimeActive": "평생 구독 활성화",
-    "payOnWeb": "웹에서 결제하기"
+    "payOnWeb": "웹에서 결제하기",
+    "subscribeOnWeb": "웹에서 구독하기",
+    "webPaymentNote": "외부 브라우저에서 Lightning 결제가 진행됩니다"
   },
   "changePassword": {
     "title": "비밀번호 변경",
@@ -1070,5 +1072,20 @@
     "you": "나",
     "send": "전송",
     "contactEmail": "이메일 문의"
+  },
+  "freeStats": {
+    "title": "이번 달 요약",
+    "vsLastMonth": "지난달 대비",
+    "totalInSats": "총 지출 ="
+  },
+  "diagnostics": {
+    "title": "진단 데이터",
+    "generate": "진단 리포트 생성",
+    "generating": "생성 중...",
+    "description": "이 리포트에는 금융 데이터가 포함되지 않습니다. 앱 상태와 파일 메타데이터만 포함됩니다.",
+    "shareTitle": "SYBA 진단 리포트",
+    "success": "리포트가 생성되었습니다",
+    "error": "리포트 생성 실패",
+    "attachToTicket": "진단 데이터 첨부"
   }
 }

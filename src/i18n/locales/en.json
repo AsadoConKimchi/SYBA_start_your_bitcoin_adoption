@@ -646,7 +646,9 @@
     "discountLabel": "Discount",
     "discountAppliedAmount": "Discount -{{amount}} sats applied",
     "lifetimeActive": "Lifetime Subscription Active",
-    "payOnWeb": "Pay on Web"
+    "payOnWeb": "Pay on Web",
+    "subscribeOnWeb": "Subscribe on Web",
+    "webPaymentNote": "Lightning payment will open in your browser"
   },
   "changePassword": {
     "title": "Change Password",
@@ -1063,5 +1065,20 @@
     "you": "You",
     "send": "Send",
     "contactEmail": "Contact via Email"
+  },
+  "freeStats": {
+    "title": "This Month Summary",
+    "vsLastMonth": "vs Last Month",
+    "totalInSats": "Total Spending ="
+  },
+  "diagnostics": {
+    "title": "Diagnostics",
+    "generate": "Generate Diagnostic Report",
+    "generating": "Generating...",
+    "description": "This report does not contain financial data. Only app state and file metadata are included.",
+    "shareTitle": "SYBA Diagnostic Report",
+    "success": "Report generated",
+    "error": "Failed to generate report",
+    "attachToTicket": "Attach diagnostic data"
   }
 }
