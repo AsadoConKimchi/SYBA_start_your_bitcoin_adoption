@@ -143,8 +143,12 @@ export const useDebtStore = create<DebtState & DebtActions>((set, get) => ({
       data.interestRate || 0
     );
 
-    const paidMonths = data.paidMonths ?? calculatePaidMonths(data.startDate);
-    // 할부는 repaymentDay 개념 없음
+    // 할부는 repaymentDay 개념 없으므로 day 무시 (월 단위만 비교)
+    const paidMonths = data.paidMonths ?? (() => {
+      const start = new Date(data.startDate);
+      const now = new Date();
+      return Math.max(0, (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth()));
+    })();
     const remainingMonths = Math.max(0, data.months - paidMonths);
 
     // 잔액 계산: 원금에서 납부한 금액을 빼는 방식 (반올림 오차 방지)

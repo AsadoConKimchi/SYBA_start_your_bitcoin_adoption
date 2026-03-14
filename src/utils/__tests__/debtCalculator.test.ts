@@ -167,6 +167,43 @@ describe('calculatePaidMonths', () => {
     expect(result).toBe(12);
   });
 
+  it('repaymentDay=31 월말 클램핑 — 짧은 달에서 올바르게 처리', () => {
+    // 4월(30일까지)에 repaymentDay=31이면 effectiveDay=30으로 클램핑
+    // 4/30에 테스트: 30 < 30 = false → 차감 없음 (정상)
+    // 실제 날짜에 의존하지 않는 방식으로 검증
+    const now = new Date();
+    const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+
+    // 2년 전 시작, repaymentDay=31
+    const startDate = new Date(now.getFullYear() - 2, now.getMonth(), 1);
+    const startDateStr = formatDateLocal(startDate);
+
+    const result = calculatePaidMonths(startDateStr, 31);
+    const effectiveDay = Math.min(31, lastDayOfMonth);
+
+    if (now.getDate() < effectiveDay) {
+      // 상환일 전이면 24 - 1 = 23
+      expect(result).toBe(23);
+    } else {
+      // 상환일 이후면 24
+      expect(result).toBe(24);
+    }
+  });
+
+  it('repaymentDay=29 — 2월(28일)에서 클램핑', () => {
+    // 2월에 repaymentDay=29 → effectiveDay=28 (평년) 또는 29 (윤년)
+    // 이 테스트는 클램핑 로직이 적용되는지 확인
+    const now = new Date();
+    const startDate = new Date(now.getFullYear() - 1, now.getMonth(), 1);
+    const startDateStr = formatDateLocal(startDate);
+
+    const withDay29 = calculatePaidMonths(startDateStr, 29);
+    const withDay1 = calculatePaidMonths(startDateStr, 1);
+
+    // repaymentDay=1은 항상 지남, repaymentDay=29는 상황에 따라 다름
+    expect(withDay1).toBeGreaterThanOrEqual(withDay29);
+  });
+
   it('repaymentDay 미지정 시 startDate의 일자 사용', () => {
     const now = new Date();
     const day = 28;

@@ -269,8 +269,10 @@ export function calculatePaidMonths(startDate: string, repaymentDay?: number): n
   const monthDiff = now.getMonth() - start.getMonth();
   let totalMonths = yearDiff * 12 + monthDiff;
 
-  // 이번 달 상환일이 아직 안 지났으면 1 차감
-  const effectiveDay = repaymentDay ?? start.getDate();
+  // 이번 달 상환일이 아직 안 지났으면 1 차감 (월말 클램핑 적용)
+  const rawDay = repaymentDay ?? start.getDate();
+  const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const effectiveDay = Math.min(rawDay, lastDayOfMonth);
   if (now.getDate() < effectiveDay) {
     totalMonths = Math.max(0, totalMonths - 1);
   }

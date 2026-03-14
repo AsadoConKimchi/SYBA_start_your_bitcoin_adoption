@@ -14,7 +14,8 @@ export function generateRepaymentRecords(loan: Loan): RepaymentRecord[] {
     loan.interestRate,
     loan.termMonths,
     loan.repaymentType,
-    loan.startDate
+    loan.startDate,
+    loan.repaymentDay
   );
 
   const today = new Date();
